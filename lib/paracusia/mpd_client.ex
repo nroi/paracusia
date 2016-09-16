@@ -197,8 +197,8 @@ defmodule Paracusia.MpdClient do
     "OK MPD" <> _ = recv_until_newline(sock_active)
     :ok = :gen_tcp.send(sock_active, "password #{password}\n")
     :ok = :gen_tcp.send(sock_passive, "password #{password}\n")
-    ok_or_raise(sock_passive)
-    ok_or_raise(sock_active)
+    :ok = ok_from_socket(sock_passive)
+    :ok = ok_from_socket(sock_active)
     :ok = :gen_tcp.send(sock_active, "idle\n")
     :inet.setopts(sock_active, [active: :once])
     {:ok, genevent_pid} = GenEvent.start_link()
@@ -223,14 +223,14 @@ defmodule Paracusia.MpdClient do
     end
   end
 
-  defp ok_or_raise(socket) do
+  defp ok_from_socket(socket) do
     case :gen_tcp.recv(socket, 3) do
       {:ok, "OK\n"} -> :ok
       {:ok, "ACK"} ->
         complete_msg = read_until_next_newline(socket, "ACK")
         case Regex.run(~r/ACK \[(.*)\] {(.*)} (.*)/, complete_msg, [capture: :all_but_first]) do
           [errorcode, command, message] ->
-            raise "error #{errorcode} while executing command #{command}: #{message}"
+            {:error, {errorcode, "error #{errorcode} while executing command #{command}: #{message}"}}
         end
     end
   end
@@ -392,7 +392,7 @@ defmodule Paracusia.MpdClient do
       Logger.warn "Cannot seek while player is stopped!"
     else
       :ok = :gen_tcp.send(socket, "seekcur #{seconds}\n")
-      ok_or_raise(socket)
+      ok_from_socket(socket)
     end
   end
 
@@ -410,8 +410,8 @@ defmodule Paracusia.MpdClient do
   def handle_call({:add, uri}, _from,
                   state = {%PlayerState{}, cs = %ConnState{}}) do
     :ok = :gen_tcp.send(cs.sock_passive, "add \"#{uri}\"\n")
-    ok_or_raise(cs.sock_passive)
-    {:reply, :ok, state}
+    reply = ok_from_socket(cs.sock_passive)
+    {:reply, reply, state}
   end
 
   def handle_call({:debug, data}, _from,
@@ -463,64 +463,64 @@ defmodule Paracusia.MpdClient do
 
   def handle_call({:setvol, volume}, _from, state = {%PlayerState{}, cs = %ConnState{}}) do
     :ok = :gen_tcp.send(cs.sock_passive, "setvol #{volume}\n")
-    ok_or_raise(cs.sock_passive)
-    {:reply, :ok, state}
+    reply = ok_from_socket(cs.sock_passive)
+    {:reply, reply, state}
   end
 
   def handle_call({:play, song_id}, _from,
                   state = {%PlayerState{}, cs = %ConnState{}}) do
     :ok = :gen_tcp.send(cs.sock_passive, "playid #{song_id}\n")
-    ok_or_raise(cs.sock_passive)
-    {:reply, :ok, state}
+    reply = ok_from_socket(cs.sock_passive)
+    {:reply, reply, state}
   end
 
   def handle_call(:play, _from,
                   state = {%PlayerState{}, cs = %ConnState{}}) do
     :ok = :gen_tcp.send(cs.sock_passive, "play\n")
-    ok_or_raise(cs.sock_passive)
-    {:reply, :ok, state}
+    reply = ok_from_socket(cs.sock_passive)
+    {:reply, reply, state}
   end
 
   def handle_call(:next, _from,
                   state = {%PlayerState{}, cs = %ConnState{}}) do
     :ok = :gen_tcp.send(cs.sock_passive, "next\n")
-    ok_or_raise(cs.sock_passive)
-    {:reply, :ok, state}
+    reply = ok_from_socket(cs.sock_passive)
+    {:reply, reply, state}
   end
 
   def handle_call(:previous, _from,
                   state = {%PlayerState{}, cs = %ConnState{}}) do
     :ok = :gen_tcp.send(cs.sock_passive, "previous\n")
-    ok_or_raise(cs.sock_passive)
-    {:reply, :ok, state}
+    reply = ok_from_socket(cs.sock_passive)
+    {:reply, reply, state}
   end
 
   def handle_call(:stop, _from,
                   state = {%PlayerState{}, cs = %ConnState{}}) do
     :ok = :gen_tcp.send(cs.sock_passive, "stop\n")
-    ok_or_raise(cs.sock_passive)
-    {:reply, :ok, state}
+    reply = ok_from_socket(cs.sock_passive)
+    {:reply, reply, state}
   end
 
   def handle_call(:pause, _from,
                   state = {%PlayerState{}, cs = %ConnState{}}) do
     :ok = :gen_tcp.send(cs.sock_passive, "pause\n")
-    ok_or_raise(cs.sock_passive)
-    {:reply, :ok, state}
+    reply = ok_from_socket(cs.sock_passive)
+    {:reply, reply, state}
   end
 
   def handle_call({:delete, song_id}, _from,
                   state = {%PlayerState{}, cs = %ConnState{}}) do
     :ok = :gen_tcp.send(cs.sock_passive, "deleteid #{song_id}\n")
-    ok_or_raise(cs.sock_passive)
-    {:reply, :ok, state}
+    reply = ok_from_socket(cs.sock_passive)
+    {:reply, reply, state}
   end
 
   def handle_call({:send_and_ack, msg}, _from,
                   state = {%PlayerState{}, cs = %ConnState{}}) do
     :ok = :gen_tcp.send(cs.sock_passive, msg)
-    ok_or_raise(cs.sock_passive)
-    {:reply, :ok, state}
+    reply = ok_from_socket(cs.sock_passive)
+    {:reply, reply, state}
   end
 
   def handle_call({:seek_to_percent, percent}, _from,
@@ -548,7 +548,7 @@ defmodule Paracusia.MpdClient do
 
   def handle_info(:send_ping, state = {%PlayerState{}, cs = %ConnState{}}) do
     :ok = :gen_tcp.send(cs.sock_passive, "ping\n")
-    ok_or_raise(cs.sock_passive)
+    :ok = ok_from_socket(cs.sock_passive)
     {:noreply, state}
   end
 
