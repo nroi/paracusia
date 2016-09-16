@@ -77,10 +77,6 @@ defmodule Paracusia.MpdClient do
     GenServer.call(__MODULE__, :status)
   end
 
-  def stopped? do
-    status["state"] == "stop"
-  end
-
   def debug(data) do
     GenServer.call(__MODULE__, {:debug, data})
   end
