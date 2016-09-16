@@ -227,8 +227,9 @@ defmodule Paracusia.MpdClient do
     event_handler = Application.get_env(:paracusia, :event_handler)
     :ok = GenEvent.add_handler(genevent_pid, event_handler, nil)
     {:ok, _} = :timer.send_interval(6000, :send_ping)
+    {:ok, playlist} = playlist_from_socket(sock_passive)
     mpd_state = %PlayerState{current_song: current_song_from_socket(sock_passive),
-                             playlist: playlist_from_socket(sock_passive),
+                             playlist: playlist,
                              status: status_from_socket(sock_passive)}
     _ = Logger.info "initial mpd state is: #{inspect mpd_state}"
     conn_state = %ConnState{:sock_passive => sock_passive,
@@ -388,7 +389,8 @@ defmodule Paracusia.MpdClient do
       ps.current_song
     end
     new_playlist = if Enum.member?(events, :playlist_changed) do
-      playlist_from_socket(socket)
+      {:ok, playlist} = playlist_from_socket(socket)
+      playlist
     else
       ps.playlist
     end
@@ -443,8 +445,8 @@ defmodule Paracusia.MpdClient do
 
   def handle_call(:playlistinfo, _from,
                   state = {%PlayerState{}, cs = %ConnState{}}) do
-    songs = playlist_from_socket(cs.sock_passive)
-    {:reply, songs, state}
+    answer = playlist_from_socket(cs.sock_passive)
+    {:reply, answer, state}
   end
 
   def handle_call(:status, _from, state = {%PlayerState{}, cs = %ConnState{}}) do
@@ -546,11 +548,7 @@ defmodule Paracusia.MpdClient do
       _ = Logger.warn "Cannot seek while player is stopped"
       {:noreply, state}
     else
-      duration = case ps.current_song do
-        nil -> nil
-        song -> song.duration_in_secs
-      end
-      IO.puts "duration: #{duration}"
+      duration = ps.current_song["Time"] |> String.to_integer
       secs = duration * (percent/100)
       answer = seek_to_seconds(cs.sock_passive, secs, ps.status.state)
       {:reply, answer, state}
