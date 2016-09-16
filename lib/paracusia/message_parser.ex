@@ -53,6 +53,7 @@ defmodule Paracusia.MessageParser do
       duration_in_secs: duration_in_secs}
   end
 
+  @spec songs(String.t) :: [map]
   def songs(m) do
     proplists = parse_items(m)
     proplists |> Enum.map(&proplist2song(&1))
