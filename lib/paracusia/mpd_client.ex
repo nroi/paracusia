@@ -26,31 +26,31 @@ defmodule Paracusia.MpdClient do
   end
 
   def play(song_id) do
-    GenServer.cast(__MODULE__, {:play, song_id})
+    GenServer.call(__MODULE__, {:play, song_id})
   end
 
-  def play() do
-    GenServer.cast(__MODULE__, :play)
+  def play do
+    GenServer.call(__MODULE__, :play)
   end
 
-  def next() do
-    GenServer.cast(__MODULE__, :next)
+  def next do
+    GenServer.call(__MODULE__, :next)
   end
 
-  def previous() do
-    GenServer.cast(__MODULE__, :previous)
+  def previous do
+    GenServer.call(__MODULE__, :previous)
   end
 
-  def stop() do
-    GenServer.cast(__MODULE__, :stop)
+  def stop do
+    GenServer.call(__MODULE__, :stop)
   end
 
-  def pause() do
-    GenServer.cast(__MODULE__, :pause)
+  def cast do
+    GenServer.call(__MODULE__, :pause)
   end
 
   def delete(song_id) do
-    GenServer.cast(__MODULE__, {:delete, song_id})
+    GenServer.call(__MODULE__, {:delete, song_id})
   end
 
   def repeat(state) do
@@ -105,11 +105,11 @@ defmodule Paracusia.MpdClient do
   end
 
   def seek_to_percent(percent) do
-    GenServer.cast(__MODULE__, {:seek_to_percent, percent})
+    GenServer.call(__MODULE__, {:seek_to_percent, percent})
   end
 
   def seek(seconds) do
-    GenServer.cast(__MODULE__, {:seek, seconds})
+    GenServer.call(__MODULE__, {:seek, seconds})
   end
 
   def playlist_state do
@@ -122,7 +122,7 @@ defmodule Paracusia.MpdClient do
   Sets the volume. Volume must be between 0 and 100.
   """
   def setvol(volume) do
-    GenServer.cast(__MODULE__, {:setvol, volume})
+    GenServer.call(__MODULE__, {:setvol, volume})
   end
 
   defp boolean_to_binary(false), do: 0
@@ -178,7 +178,7 @@ defmodule Paracusia.MpdClient do
   def init([]) do
     # TODO if MPD_HOST is an absolute path, we should attempt to connect to a unix domain socket.
     {hostname, password} = case System.get_env("MPD_HOST") do
-      nil -> 'localhost'
+      nil -> {'localhost', nil}
       hostname -> case String.split(hostname, "@") do
         [hostname] -> to_charlist hostname
         [password, hostname] -> {to_charlist(hostname), password}
@@ -432,7 +432,7 @@ defmodule Paracusia.MpdClient do
     {:reply, answer, state}
   end
 
-  def handle_call({:comment_property, uri}, _,
+  def handle_call({:comment_property, uri}, _from,
                   state = {%PlayerState{}, cs = %ConnState{}}) do
     :ok = :gen_tcp.send(cs.sock_passive, "readcomments \"#{uri}\"\n")
     case recv_until_ok(cs.sock_passive) do
@@ -461,59 +461,59 @@ defmodule Paracusia.MpdClient do
     {:reply, ps, state}
   end
 
-  def handle_cast({:setvol, volume}, state = {%PlayerState{}, cs = %ConnState{}}) do
+  def handle_call({:setvol, volume}, _from, state = {%PlayerState{}, cs = %ConnState{}}) do
     :ok = :gen_tcp.send(cs.sock_passive, "setvol #{volume}\n")
     ok_or_raise(cs.sock_passive)
-    {:noreply, state}
+    {:reply, :ok, state}
   end
 
-  def handle_cast({:play, song_id},
+  def handle_call({:play, song_id}, _from,
                   state = {%PlayerState{}, cs = %ConnState{}}) do
     :ok = :gen_tcp.send(cs.sock_passive, "playid #{song_id}\n")
     ok_or_raise(cs.sock_passive)
-    {:noreply, state}
+    {:reply, :ok, state}
   end
 
-  def handle_cast(:play,
+  def handle_call(:play, _from,
                   state = {%PlayerState{}, cs = %ConnState{}}) do
     :ok = :gen_tcp.send(cs.sock_passive, "play\n")
     ok_or_raise(cs.sock_passive)
-    {:noreply, state}
+    {:reply, :ok, state}
   end
 
-  def handle_cast(:next,
+  def handle_call(:next, _from,
                   state = {%PlayerState{}, cs = %ConnState{}}) do
     :ok = :gen_tcp.send(cs.sock_passive, "next\n")
     ok_or_raise(cs.sock_passive)
-    {:noreply, state}
+    {:reply, :ok, state}
   end
 
-  def handle_cast(:previous,
+  def handle_call(:previous, _from,
                   state = {%PlayerState{}, cs = %ConnState{}}) do
     :ok = :gen_tcp.send(cs.sock_passive, "previous\n")
     ok_or_raise(cs.sock_passive)
-    {:noreply, state}
+    {:reply, :ok, state}
   end
 
-  def handle_cast(:stop,
+  def handle_call(:stop, _from,
                   state = {%PlayerState{}, cs = %ConnState{}}) do
     :ok = :gen_tcp.send(cs.sock_passive, "stop\n")
     ok_or_raise(cs.sock_passive)
-    {:noreply, state}
+    {:reply, :ok, state}
   end
 
-  def handle_cast(:pause,
+  def handle_call(:pause, _from,
                   state = {%PlayerState{}, cs = %ConnState{}}) do
     :ok = :gen_tcp.send(cs.sock_passive, "pause\n")
     ok_or_raise(cs.sock_passive)
-    {:noreply, state}
+    {:reply, :ok, state}
   end
 
-  def handle_cast({:delete, song_id},
+  def handle_call({:delete, song_id}, _from,
                   state = {%PlayerState{}, cs = %ConnState{}}) do
     :ok = :gen_tcp.send(cs.sock_passive, "deleteid #{song_id}\n")
     ok_or_raise(cs.sock_passive)
-    {:noreply, state}
+    {:reply, :ok, state}
   end
 
   def handle_call({:send_and_ack, msg}, _from,
@@ -523,10 +523,10 @@ defmodule Paracusia.MpdClient do
     {:reply, :ok, state}
   end
 
-  def handle_cast({:seek_to_percent, percent},
+  def handle_call({:seek_to_percent, percent}, _from,
                   state = {ps = %PlayerState{}, cs = %ConnState{}}) do
     if ps.status.state == :stop do
-      Logger.warn "Cannot seek while player is stopped!"
+      Logger.warn "Cannot seek while player is stopped"
       {:noreply, state}
     else
       duration = case ps.current_song do
@@ -536,14 +536,14 @@ defmodule Paracusia.MpdClient do
       IO.puts "duration: #{duration}"
       secs = duration * (percent/100)
       seek_to_seconds(cs.sock_passive, secs, ps.status.state)
-      {:noreply, state}
+      {:reply, :ok, state}
     end
   end
 
-  def handle_cast({:seek, seconds},
+  def handle_call({:seek, seconds}, _from,
                   state = {ps = %PlayerState{}, cs = %ConnState{}}) do
     seek_to_seconds(cs.sock_passive, seconds, ps.status.state)
-    {:noreply, state}
+    {:reply, :ok, state}
   end
 
   def handle_info(:send_ping, state = {%PlayerState{}, cs = %ConnState{}}) do
