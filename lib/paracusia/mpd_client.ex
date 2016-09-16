@@ -147,7 +147,7 @@ defmodule Paracusia.MpdClient do
           # note that some errors are harmless, e.g. when a file contained in the database is
           # deleted, running commands such as readcomments will fail. Hence, we just log the error
           # instead of crashing.
-          Logger.warn "error #{errorcode} while executing command #{command}: #{message}"
+          _ = Logger.warn "error #{errorcode} while executing command #{command}: #{message}"
           :error
         nil ->
           recv_until_ok(sock, complete_msg)
@@ -159,7 +159,7 @@ defmodule Paracusia.MpdClient do
     list_uris("")
   end
   def list_uris(path) do
-    Logger.info "list uris for path #{path}"
+    _ = Logger.info "list uris for path #{path}"
     lsinfo(path) |> Enum.flat_map(fn item ->
       case item do
         [{"directory", dir} | _] -> list_uris(dir)
@@ -196,15 +196,15 @@ defmodule Paracusia.MpdClient do
     :ok = ok_from_socket(sock_passive)
     :ok = ok_from_socket(sock_active)
     :ok = :gen_tcp.send(sock_active, "idle\n")
-    :inet.setopts(sock_active, [active: :once])
+    :ok = :inet.setopts(sock_active, [active: :once])
     {:ok, genevent_pid} = GenEvent.start_link()
     event_handler = Application.get_env(:paracusia, :event_handler)
-    GenEvent.add_handler(genevent_pid, event_handler, nil)
+    :ok = GenEvent.add_handler(genevent_pid, event_handler, nil)
     {:ok, _} = :timer.send_interval(6000, :send_ping)
     mpd_state = %PlayerState{current_song: current_song_from_socket(sock_passive),
                              playlist: playlist_from_socket(sock_passive),
                              status: status_from_socket(sock_passive)}
-    Logger.info "initial mpd state is: #{inspect mpd_state}"
+    _ = Logger.info "initial mpd state is: #{inspect mpd_state}"
     conn_state = %ConnState{:sock_passive => sock_passive,
                             :sock_active => sock_active,
                             :genevent_pid => genevent_pid,
@@ -242,7 +242,7 @@ defmodule Paracusia.MpdClient do
     answer = case recv_until_ok(socket) do
       {:ok, m} -> MessageParser.parse_newline_separated(m)
     end
-    Logger.info "answer: #{inspect answer}"
+    _  = Logger.info "answer: #{inspect answer}"
     nil_or_else = fn(x, f) ->
       case x do
         nil -> nil
@@ -298,7 +298,7 @@ defmodule Paracusia.MpdClient do
   end
 
   defp process_message(msg = "ACK " <> _, _genevent_pid, events) do
-    case Regex.run(~r/ACK \[(.*)\] {(.*)} (.*)\n/, msg, [capture: :all_but_first]) do
+    _ = case Regex.run(~r/ACK \[(.*)\] {(.*)} (.*)\n/, msg, [capture: :all_but_first]) do
       [errorcode, command, message] ->
         Logger.warn "error #{errorcode} while executing command #{command}: #{message}"
      end
@@ -381,7 +381,7 @@ defmodule Paracusia.MpdClient do
 
   defp seek_to_seconds(socket, seconds, state) do
     if state == :stop do
-      Logger.warn "Cannot seek while player is stopped!"
+      _ = Logger.warn "Cannot seek while player is stopped!"
     else
       :ok = :gen_tcp.send(socket, "seekcur #{seconds}\n")
       ok_from_socket(socket)
@@ -390,9 +390,9 @@ defmodule Paracusia.MpdClient do
 
   def handle_call({:lsinfo, uri}, _from,
                   state = {%PlayerState{}, cs = %ConnState{}}) do
-    Logger.info "lsinfo #{uri}"
+    _ = Logger.info "lsinfo #{uri}"
     :ok = :gen_tcp.send(cs.sock_passive, "lsinfo \"#{uri}\"\n")
-    Logger.info "done."
+    _ = Logger.info "done."
     answer = with {:ok, m} <- recv_until_ok(cs.sock_passive) do
       MessageParser.parse_items(m)
     end
@@ -515,7 +515,7 @@ defmodule Paracusia.MpdClient do
   def handle_call({:seek_to_percent, percent}, _from,
                   state = {ps = %PlayerState{}, cs = %ConnState{}}) do
     if ps.status.state == :stop do
-      Logger.warn "Cannot seek while player is stopped"
+      _ = Logger.warn "Cannot seek while player is stopped"
       {:noreply, state}
     else
       duration = case ps.current_song do
@@ -524,15 +524,15 @@ defmodule Paracusia.MpdClient do
       end
       IO.puts "duration: #{duration}"
       secs = duration * (percent/100)
-      seek_to_seconds(cs.sock_passive, secs, ps.status.state)
-      {:reply, :ok, state}
+      answer = seek_to_seconds(cs.sock_passive, secs, ps.status.state)
+      {:reply, answer, state}
     end
   end
 
   def handle_call({:seek, seconds}, _from,
                   state = {ps = %PlayerState{}, cs = %ConnState{}}) do
-    seek_to_seconds(cs.sock_passive, seconds, ps.status.state)
-    {:reply, :ok, state}
+    answer = seek_to_seconds(cs.sock_passive, seconds, ps.status.state)
+    {:reply, answer, state}
   end
 
   def handle_info(:send_ping, state = {%PlayerState{}, cs = %ConnState{}}) do
@@ -543,7 +543,7 @@ defmodule Paracusia.MpdClient do
 
   def handle_info({:tcp, _, msg},
                   {ps = %PlayerState{}, cs = %ConnState{:status => :new}}) do
-    Logger.info "msg from mpd: >#{msg}<"
+    _ = Logger.info "msg from mpd: >#{msg}<"
     complete_msg =
       if String.ends_with?(msg, "OK\n") do
         msg
@@ -555,11 +555,11 @@ defmodule Paracusia.MpdClient do
     events = process_message(complete_msg, cs.genevent_pid)
     new_ps = new_ps_from_events(ps, events, cs.sock_passive)
     Enum.each(events, &(GenEvent.notify(cs.genevent_pid, {&1, new_ps})))
-    Logger.info "Received the following idle events: #{inspect events}"
+    _ = Logger.info "Received the following idle events: #{inspect events}"
     # We have received this message as a result of having sent idle. We need to resend idle
     # each time after we have obtained a new idle message.
     :ok = :gen_tcp.send(cs.sock_active, "idle\n")
-    :inet.setopts(cs.sock_active, [active: :once])
+    :ok = :inet.setopts(cs.sock_active, [active: :once])
     {:noreply, {new_ps, cs}}
   end
 
