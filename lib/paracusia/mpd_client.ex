@@ -45,7 +45,7 @@ defmodule Paracusia.MpdClient do
     GenServer.call(__MODULE__, :stop)
   end
 
-  def cast do
+  def pause do
     GenServer.call(__MODULE__, :pause)
   end
 
@@ -274,10 +274,6 @@ defmodule Paracusia.MpdClient do
       :songid => answer["songid"] |> nil_or_else.(&String.to_integer(&1)),
       :nextsong => answer["nextsong"] |> nil_or_else.(&String.to_integer(&1)),
       :time => answer["time"],
-      # :time => answer["time"] |> nil_or_else.(fn timestr ->
-        # case String.split(timestr, ":") do
-          # [pre, post] => [
-        # ,
       :elapsed => answer["elapsed"] |> nil_or_else.(&String.to_float(&1)),
       :duration => answer["duration"],
       :bitrate => answer["bitrate"] |> nil_or_else.(&String.to_integer(&1)),
@@ -401,8 +397,8 @@ defmodule Paracusia.MpdClient do
     Logger.info "lsinfo #{uri}"
     :ok = :gen_tcp.send(cs.sock_passive, "lsinfo \"#{uri}\"\n")
     Logger.info "done."
-    answer = case recv_until_ok(cs.sock_passive) do
-      {:ok, m} -> MessageParser.parse_items(m)
+    answer = with {:ok, m} <- recv_until_ok(cs.sock_passive) do
+      MessageParser.parse_items(m)
     end
     {:reply, answer, state}
   end
@@ -435,21 +431,18 @@ defmodule Paracusia.MpdClient do
   def handle_call({:comment_property, uri}, _from,
                   state = {%PlayerState{}, cs = %ConnState{}}) do
     :ok = :gen_tcp.send(cs.sock_passive, "readcomments \"#{uri}\"\n")
-    case recv_until_ok(cs.sock_passive) do
-      {:ok, answer} ->
-        lines = case answer |> String.trim_trailing("\n") |> String.split("\n") do
-          [""] -> []  # map over empty sequence if server has replied with newline
-          x    -> x
+    answer = with {:ok, reply} <- recv_until_ok(cs.sock_passive) do
+      lines = case reply |> String.trim_trailing("\n") |> String.split("\n") do
+        [""] -> []  # map over empty sequence if server has replied with newline
+        x    -> x
+      end
+      lines |> Enum.reduce(%{}, fn (line, acc) ->
+        case String.split(line, ": ", parts: 2) do
+          [key, val] -> Map.put(acc, key, val)
         end
-        answer = lines |> Enum.reduce(%{}, fn (line, acc) ->
-          case String.split(line, ": ", parts: 2) do
-            [key, val] -> Map.put(acc, key, val)
-          end
-        end)
-        {:reply, answer, state}
-      :error ->
-        {:reply, :error, state}
+      end)
     end
+    {:reply, answer, state}
   end
 
   def handle_call(:current_song, _from,
