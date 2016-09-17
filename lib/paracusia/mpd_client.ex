@@ -88,6 +88,10 @@ defmodule Paracusia.MpdClient do
     GenServer.call(__MODULE__, {:find, query})
   end
 
+  def count(query) do
+    GenServer.call(__MODULE__, {:count, query})
+  end
+
   def status do
     GenServer.call(__MODULE__, :status)
   end
@@ -432,7 +436,16 @@ defmodule Paracusia.MpdClient do
                   state = {%PlayerState{}, cs = %ConnState{}}) do
     :ok = :gen_tcp.send(cs.sock_passive, "find #{query}\n")
     answer = with {:ok, m} <- recv_until_ok(cs.sock_passive) do
-      {:ok, MessageParser.parse_items(m)}
+      {:ok, MessageParser.parse_newline_separated(m)}
+    end
+    {:reply, answer, state}
+  end
+
+  def handle_call({:count, query}, _from,
+                  state = {%PlayerState{}, cs = %ConnState{}}) do
+    :ok = :gen_tcp.send(cs.sock_passive, "count #{query}\n")
+    answer = with {:ok, m} <- recv_until_ok(cs.sock_passive) do
+      {:ok, MessageParser.parse_newline_separated(m)}
     end
     {:reply, answer, state}
   end
