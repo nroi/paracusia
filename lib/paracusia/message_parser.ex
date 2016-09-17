@@ -40,6 +40,10 @@ defmodule Paracusia.MessageParser do
       |> Map.new
   end
 
+  @doc"""
+  Given a a string such as "file: …\nartist: …\n…directory: …\nartist: …\n…", where a new entry
+  starts with either "file" or "directory", return the corresponding list of maps.
+  """
   def parse_items(m) do
     # Note that we just assume that each new item starts with "file: …" or "directory: …"
     # This seems to be the case, but it's not officially documented anywhere.
