@@ -14,7 +14,6 @@ defmodule Paracusia.MpdClient do
   Connect to the MPD server.
   """
   def start_link(handler) do
-    # ignore version info from mpd server
     GenServer.start_link(__MODULE__, [], name: __MODULE__)
   end
 
@@ -333,6 +332,7 @@ defmodule Paracusia.MpdClient do
   defp process_message(msg = "ACK " <> _, _genevent_pid, events) do
     _ = case Regex.run(~r/ACK \[(.*)\] {(.*)} (.*)\n/, msg, [capture: :all_but_first]) do
       [errorcode, command, message] ->
+        # TODO return {:error, reason} instead?
         Logger.warn "error #{errorcode} while executing command #{command}: #{message}"
      end
      events
@@ -413,13 +413,10 @@ defmodule Paracusia.MpdClient do
     }
   end
 
-  defp seek_to_seconds(socket, seconds, state) do
-    if state == :stop do
-      _ = Logger.warn "Cannot seek while player is stopped!"
-    else
-      :ok = :gen_tcp.send(socket, "seekcur #{seconds}\n")
-      ok_from_socket(socket)
-    end
+  # TODO test if this yields the expected results when seeking while stopped.
+  defp seek_to_seconds(socket, seconds) do
+    :ok = :gen_tcp.send(socket, "seekcur #{seconds}\n")
+    ok_from_socket(socket)
   end
 
   def handle_call({:lsinfo, uri}, _from,
@@ -555,20 +552,15 @@ defmodule Paracusia.MpdClient do
 
   def handle_call({:seek_to_percent, percent}, _from,
                   state = {ps = %PlayerState{}, cs = %ConnState{}}) do
-    if ps.status.state == :stop do
-      _ = Logger.warn "Cannot seek while player is stopped"
-      {:noreply, state}
-    else
-      duration = ps.current_song["Time"] |> String.to_integer
-      secs = duration * (percent/100)
-      answer = seek_to_seconds(cs.sock_passive, secs, ps.status.state)
-      {:reply, answer, state}
-    end
+    duration = ps.current_song["Time"] |> String.to_integer
+    secs = duration * (percent/100)
+    answer = seek_to_seconds(cs.sock_passive, secs)
+    {:reply, answer, state}
   end
 
   def handle_call({:seek, seconds}, _from,
                   state = {ps = %PlayerState{}, cs = %ConnState{}}) do
-    answer = seek_to_seconds(cs.sock_passive, seconds, ps.status.state)
+    answer = seek_to_seconds(cs.sock_passive, seconds)
     {:reply, answer, state}
   end
 
