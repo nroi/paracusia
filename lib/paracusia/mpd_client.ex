@@ -92,6 +92,17 @@ defmodule Paracusia.MpdClient do
     GenServer.call(__MODULE__, {:findadd, query})
   end
 
+  @doc"""
+  Lists unique tags values of the specified type. TYPE can be any tag supported by MPD or file.
+  Additional arguments may specify a filter like the one in the find command. The group keyword may
+  be used (repeatedly) to group the results by one or more tags.
+  Note that unlike other functions, list returns a string as delivered by MPD, i.e., it is not
+  parsed and converted into a map.
+  """
+  def list(query) do
+    GenServer.call(__MODULE__, {:list, query})
+  end
+
   def count(query) do
     GenServer.call(__MODULE__, {:count, query})
   end
@@ -441,6 +452,15 @@ defmodule Paracusia.MpdClient do
     :ok = :gen_tcp.send(cs.sock_passive, "findadd #{query}\n")
     answer = with {:ok, m} <- recv_until_ok(cs.sock_passive) do
       {:ok, MessageParser.parse_newline_separated(m)}
+    end
+    {:reply, answer, state}
+  end
+
+  def handle_call({:list, query}, _from,
+                  state = {%PlayerState{}, cs = %ConnState{}}) do
+    :ok = :gen_tcp.send(cs.sock_passive, "list #{query}\n")
+    answer = with {:ok, m} <- recv_until_ok(cs.sock_passive) do
+      {:ok, m}
     end
     {:reply, answer, state}
   end
