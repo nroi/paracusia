@@ -150,6 +150,24 @@ defmodule Paracusia.MpdClient do
     GenServer.call(__MODULE__, {:lsinfo, uri})
   end
 
+  @doc"""
+  Updates the music database. `uri` is a particular directory or song/file to update.
+  Returns the job id of the update job.
+  """
+  @spec update(String.t) :: {:ok, integer} | {:error, {String.t, String.t}}
+  def update(uri) do
+    GenServer.call(__MODULE__, {:update, uri})
+  end
+
+  @doc"""
+  Updates the entire music database (i.e., not restricted to a given uri).
+  Returns the job id of the update job.
+  """
+  @spec update() :: {:ok, integer} | {:error, {String.t, String.t}}
+  def update do
+    GenServer.call(__MODULE__, :update)
+  end
+
   @spec add(String.t) :: :ok | {:error, {String.t, String.t}}
   def add(uri) do
     GenServer.call(__MODULE__, {:add, uri})
@@ -465,6 +483,26 @@ defmodule Paracusia.MpdClient do
     :ok = :gen_tcp.send(cs.sock_passive, "lsinfo \"#{uri}\"\n")
     answer = with {:ok, m} <- recv_until_ok(cs.sock_passive) do
       {:ok, MessageParser.parse_items(m)}
+    end
+    {:reply, answer, state}
+  end
+
+  def handle_call(:update, _from,
+                  state = {%PlayerState{}, cs = %ConnState{}}) do
+    :ok = :gen_tcp.send(cs.sock_passive, "update\n")
+    answer = with {:ok, "updating_db: " <> rest} <- recv_until_ok(cs.sock_passive) do
+      job_id = rest |> String.replace_suffix("\n", "") |> String.to_integer
+      {:ok, job_id}
+    end
+    {:reply, answer, state}
+  end
+
+  def handle_call({:update, uri}, _from,
+                  state = {%PlayerState{}, cs = %ConnState{}}) do
+    :ok = :gen_tcp.send(cs.sock_passive, "update \"#{uri}\"\n")
+    answer = with {:ok, "updating_db: " <> rest} <- recv_until_ok(cs.sock_passive) do
+      job_id = rest |> String.replace_suffix("\n", "") |> String.to_integer
+      {:ok, job_id}
     end
     {:reply, answer, state}
   end
