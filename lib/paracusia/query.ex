@@ -64,6 +64,16 @@ defmodule Paracusia.Query do
     end
   end
 
+  defmacro query({:findadd, _, [keyval]}) do
+    quote do
+      query_string =
+        # "Parameters have the same meaning as for find." (MPD protocol spec)
+        Paracusia.Query.merge_find(unquote(keyval), "")
+        |> String.replace_suffix(" ", "")
+      MpdClient.findadd(query_string)
+    end
+  end
+
   defmacro query({:count, _, [keyval]}) do
     quote do
       query_string =
