@@ -29,6 +29,18 @@ defmodule Paracusia.MessageParser do
     item
   end
 
+  @doc"""
+  Given a string like "directory: …\nfile: …,", return the corresponding list of tuples.
+  """
+  def parse_uris(m) do
+    m |> String.split("\n", trim: true)
+      |> Enum.map(fn item ->
+        case item |> String.split(": ", parts: 2) do
+          [first, second] -> {first, second}
+        end
+      end)
+  end
+
   # Given a newline separated string (such as "volume: -1\nrepeat: 0\n), return the
   # corresponding map.
   def parse_newline_separated(m) do

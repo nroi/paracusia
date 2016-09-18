@@ -118,6 +118,16 @@ defmodule Paracusia.MpdClient do
   end
 
   @doc"""
+  Lists all songs and directories in URI. Usage of the 'listll' command is discouraged by the author
+  of MPD. See https://musicpd.org/doc/protocol/database.html for details.
+  Returns a string of tuples, where the first entry is the property (e.g. "file"), the second entry
+  is the corresponding value.
+  """
+  def listall(uri) do
+    GenServer.call(__MODULE__, {:listall, uri})
+  end
+
+  @doc"""
   Given a query in the format "{TAG} {NEEDLE} [...] [group] [GROUPTYPE]", count the number of songs
   and their total playtime in the db matching the given tag exactly. The group keyword may be used
   to group the results by a tag.
@@ -482,6 +492,15 @@ defmodule Paracusia.MpdClient do
     :ok = :gen_tcp.send(cs.sock_passive, "list #{query}\n")
     answer = with {:ok, m} <- recv_until_ok(cs.sock_passive) do
       {:ok, m}
+    end
+    {:reply, answer, state}
+  end
+
+  def handle_call({:listall, uri}, _from,
+                  state = {%PlayerState{}, cs = %ConnState{}}) do
+    :ok = :gen_tcp.send(cs.sock_passive, "listall #{uri}\n")
+    answer = with {:ok, m} <- recv_until_ok(cs.sock_passive) do
+      {:ok, MessageParser.parse_uris(m)}
     end
     {:reply, answer, state}
   end
