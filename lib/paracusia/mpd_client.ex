@@ -213,7 +213,7 @@ defmodule Paracusia.MpdClient do
     {hostname, password} = case System.get_env("MPD_HOST") do
       nil -> {'localhost', nil}
       hostname -> case String.split(hostname, "@") do
-        [hostname] -> to_charlist hostname
+        [hostname] -> {to_charlist(hostname), nil}
         [password, hostname] -> {to_charlist(hostname), password}
       end
     end
@@ -227,10 +227,12 @@ defmodule Paracusia.MpdClient do
     {:ok, sock_active}  = :gen_tcp.connect(hostname, port, [:binary, active: :false])
     "OK MPD" <> _ = recv_until_newline(sock_passive)
     "OK MPD" <> _ = recv_until_newline(sock_active)
-    :ok = :gen_tcp.send(sock_active, "password #{password}\n")
-    :ok = :gen_tcp.send(sock_passive, "password #{password}\n")
-    :ok = ok_from_socket(sock_passive)
-    :ok = ok_from_socket(sock_active)
+    if password do
+      :ok = :gen_tcp.send(sock_active, "password #{password}\n")
+      :ok = :gen_tcp.send(sock_passive, "password #{password}\n")
+      :ok = ok_from_socket(sock_passive)
+      :ok = ok_from_socket(sock_active)
+    end
     :ok = :gen_tcp.send(sock_active, "idle\n")
     :ok = :inet.setopts(sock_active, [active: :once])
     {:ok, genevent_pid} = GenEvent.start_link()
