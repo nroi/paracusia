@@ -84,25 +84,46 @@ defmodule Paracusia.MpdClient do
     GenServer.call(__MODULE__, {:send_and_ack, msg})
   end
 
+  @doc"""
+  Given a query in the format "{TYPE} {WHAT} [...]", find songs in the db that are exactly WHAT.
+  TYPE can be any tag supported by MPD as well as 'any', 'file', 'base' and 'modified-since'.
+  See https://musicpd.org/doc/protocol/database.html for details.
+  Users are advised to use the Paracusia.Query.query macro instead.
+  """
   def find(query) do
     GenServer.call(__MODULE__, {:find, query})
   end
 
+  @doc"""
+  Given a query in the format "{TYPE} {WHAT} [...]", find songs in the db that are exactly WHAT and
+  adds them to current playlist. Parameters have the same meaning as for find.
+  See https://musicpd.org/doc/protocol/database.html for details.
+  Users are advised to use the Paracusia.Query.query macro instead.
+  """
   def findadd(query) do
     GenServer.call(__MODULE__, {:findadd, query})
   end
 
   @doc"""
-  Lists unique tags values of the specified type. TYPE can be any tag supported by MPD or file.
+  Given a query in the format "{TYPE} [FILTERTYPE] [FILTERWHAT] [...] [group] [GROUPTYPE] [...]",
+  list unique tags values of the specified type. TYPE can be any tag supported by MPD or file.
   Additional arguments may specify a filter like the one in the find command. The group keyword may
   be used (repeatedly) to group the results by one or more tags.
-  Note that unlike other functions, list returns a string as delivered by MPD, i.e., it is not
+  Note that unlike other functions, 'list' returns the string as delivered by MPD, i.e., it is not
   parsed and converted into a map.
+  See https://musicpd.org/doc/protocol/database.html for details.
   """
   def list(query) do
     GenServer.call(__MODULE__, {:list, query})
   end
 
+  @doc"""
+  Given a query in the format "{TAG} {NEEDLE} [...] [group] [GROUPTYPE]", count the number of songs
+  and their total playtime in the db matching the given tag exactly. The group keyword may be used
+  to group the results by a tag.
+  See https://musicpd.org/doc/protocol/database.html for details.
+  Users are advised to use the Paracusia.Query.query macro instead.
+  """
   def count(query) do
     GenServer.call(__MODULE__, {:count, query})
   end
