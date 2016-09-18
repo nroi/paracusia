@@ -100,7 +100,6 @@ defmodule Paracusia.MpdClient do
     GenServer.call(__MODULE__, {:debug, data})
   end
 
-  # TODO return a Map instead of tuples.
   def lsinfo(uri) do
     GenServer.call(__MODULE__, {:lsinfo, uri})
   end
@@ -417,7 +416,6 @@ defmodule Paracusia.MpdClient do
     }
   end
 
-  # TODO test if this yields the expected results when seeking while stopped.
   defp seek_to_seconds(socket, seconds) do
     :ok = :gen_tcp.send(socket, "seekcur #{seconds}\n")
     ok_from_socket(socket)
