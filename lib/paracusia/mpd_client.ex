@@ -332,15 +332,6 @@ defmodule Paracusia.MpdClient do
     process_message(msg, genevent_pid, [])
   end
 
-  defp process_message(msg = "ACK " <> _, _genevent_pid, events) do
-    _ = case Regex.run(~r/ACK \[(.*)\] {(.*)} (.*)\n/, msg, [capture: :all_but_first]) do
-      [errorcode, command, message] ->
-        # TODO return {:error, reason} instead?
-        Logger.warn "error #{errorcode} while executing command #{command}: #{message}"
-     end
-     events
-  end
-
   defp process_message("changed: database\n" <> rest, genevent_pid, events) do
     process_message(rest, genevent_pid, [:database_changed | events])
   end
