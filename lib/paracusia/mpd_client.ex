@@ -5,9 +5,6 @@ defmodule Paracusia.MpdClient do
   alias Paracusia.PlayerState
   alias Paracusia.ConnectionState, as: ConnState
 
-  # TODO MPD uses "OK\n" as message separator. Can this cause problems when we have e.g. songs named
-  # "OK", in the sense that the name is confused with the message separator?
-
   ## Client API
 
   @doc """
@@ -25,59 +22,118 @@ defmodule Paracusia.MpdClient do
     GenServer.call(__MODULE__, :playlistinfo)
   end
 
+  @doc"""
+  Begins playing the playlist at song number songpos.
+  """
   @spec play(integer | String.t) :: :ok | {:error, {String.t, String.t}}
-  def play(song_id) do
-    GenServer.call(__MODULE__, {:play, song_id})
+  def play(songpos) do
+    GenServer.call(__MODULE__, {:send_and_ack, "play #{songpos}\n"})
   end
 
+  @doc"""
+  Continues playing the current song.
+  """
   @spec play() :: :ok | {:error, {String.t, String.t}}
   def play do
-    GenServer.call(__MODULE__, :play)
+    GenServer.call(__MODULE__, {:send_and_ack, "play\n"})
   end
 
+  @doc"""
+  Begins playing the playlist at song songid.
+  """
+  @spec playid(String.t) :: :ok | {:error, {String.t, String.t}}
+  def playid(songid) do
+    GenServer.call(__MODULE__, {:send_and_ack, "playid #{songid}\n"})
+  end
+
+  @doc"""
+  Continues playing the current song.
+  """
+  # TODO what is the difference to play/0?
+  @spec playid() :: :ok | {:error, {String.t, String.t}}
+  def playid() do
+    GenServer.call(__MODULE__, {:send_and_ack, "playid\n"})
+  end
+
+  @doc"""
+  Plays next song in the playlist.
+  """
   @spec next() :: :ok | {:error, {String.t, String.t}}
   def next do
-    GenServer.call(__MODULE__, :next)
+    GenServer.call(__MODULE__, {:send_and_ack, "next\n"})
   end
 
+  @doc"""
+  Plays previous song in the playlist.
+  """
   @spec previous() :: :ok | {:error, {String.t, String.t}}
   def previous do
-    GenServer.call(__MODULE__, :previous)
+    GenServer.call(__MODULE__, {:send_and_ack, "previous\n"})
   end
 
+  @doc"""
+  Stops playing.
+  """
   @spec stop() :: :ok | {:error, {String.t, String.t}}
   def stop do
-    GenServer.call(__MODULE__, :stop)
+    GenServer.call(__MODULE__, {:send_and_ack, "stop\n"})
   end
 
-  @spec pause() :: :ok | {:error, {String.t, String.t}}
-  def pause do
-    GenServer.call(__MODULE__, :pause)
-  end
+  @doc"""
+  Toggles pause/resumes playing.
+  """
+  @spec pause(true | false) :: :ok | {:error, {String.t, String.t}}
+  def pause(true), do:
+    GenServer.call(__MODULE__, {:send_and_ack, "pause 1\n"})
+  def pause(false), do:
+    GenServer.call(__MODULE__, {:send_and_ack, "pause 0\n"})
 
+  @doc"""
+  Deletes a song from the playlist.
+  """
   @spec delete(integer | String.t) :: :ok | {:error, {String.t, String.t}}
   def delete(song_id) do
-    GenServer.call(__MODULE__, {:delete, song_id})
+    GenServer.call(__MODULE__, {:send_and_ack, "delete #{song_id}\n"})
   end
 
+  @doc"""
+  Deletes all songs from `start` up to `until`, excluding `until`. Indexing starts at zero.
+  """
+  @spec delete(integer, integer) :: :ok | {:error, {String.t, String.t}}
+  def delete(start, until) do
+    GenServer.call(__MODULE__, {:send_and_ack, "delete #{start}:#{until}\n"})
+  end
+
+  @doc"""
+  Sets repeat state to true or false.
+  """
   @spec repeat(boolean) :: :ok | {:error, {String.t, String.t}}
   def repeat(state) do
     msg = "repeat #{boolean_to_binary(state)}\n"
     GenServer.call(__MODULE__, {:send_and_ack, msg})
   end
 
+  @doc"""
+  Sets random state to true or false.
+  """
   @spec random(boolean) :: :ok | {:error, {String.t, String.t}}
   def random(state) do
     msg = "random #{boolean_to_binary(state)}\n"
     GenServer.call(__MODULE__, {:send_and_ack, msg})
   end
 
+  @doc"""
+  Sets single state to true or false.
+  """
   @spec single(boolean) :: :ok | {:error, {String.t, String.t}}
   def single(state) do
     msg = "single #{boolean_to_binary(state)}\n"
     GenServer.call(__MODULE__, {:send_and_ack, msg})
   end
 
+  @doc"""
+  Sets consume state to true or false.
+  """
   @spec consume(boolean) :: :ok | {:error, {String.t, String.t}}
   def consume(state) do
     msg = "consume #{boolean_to_binary(state)}\n"
@@ -654,55 +710,6 @@ defmodule Paracusia.MpdClient do
 
   def handle_call({:setvol, volume}, _from, state = {%PlayerState{}, cs = %ConnState{}}) do
     :ok = :gen_tcp.send(cs.sock_passive, "setvol #{volume}\n")
-    reply = ok_from_socket(cs.sock_passive)
-    {:reply, reply, state}
-  end
-
-  def handle_call({:play, song_id}, _from,
-                  state = {%PlayerState{}, cs = %ConnState{}}) do
-    :ok = :gen_tcp.send(cs.sock_passive, "playid #{song_id}\n")
-    reply = ok_from_socket(cs.sock_passive)
-    {:reply, reply, state}
-  end
-
-  def handle_call(:play, _from,
-                  state = {%PlayerState{}, cs = %ConnState{}}) do
-    :ok = :gen_tcp.send(cs.sock_passive, "play\n")
-    reply = ok_from_socket(cs.sock_passive)
-    {:reply, reply, state}
-  end
-
-  def handle_call(:next, _from,
-                  state = {%PlayerState{}, cs = %ConnState{}}) do
-    :ok = :gen_tcp.send(cs.sock_passive, "next\n")
-    reply = ok_from_socket(cs.sock_passive)
-    {:reply, reply, state}
-  end
-
-  def handle_call(:previous, _from,
-                  state = {%PlayerState{}, cs = %ConnState{}}) do
-    :ok = :gen_tcp.send(cs.sock_passive, "previous\n")
-    reply = ok_from_socket(cs.sock_passive)
-    {:reply, reply, state}
-  end
-
-  def handle_call(:stop, _from,
-                  state = {%PlayerState{}, cs = %ConnState{}}) do
-    :ok = :gen_tcp.send(cs.sock_passive, "stop\n")
-    reply = ok_from_socket(cs.sock_passive)
-    {:reply, reply, state}
-  end
-
-  def handle_call(:pause, _from,
-                  state = {%PlayerState{}, cs = %ConnState{}}) do
-    :ok = :gen_tcp.send(cs.sock_passive, "pause\n")
-    reply = ok_from_socket(cs.sock_passive)
-    {:reply, reply, state}
-  end
-
-  def handle_call({:delete, song_id}, _from,
-                  state = {%PlayerState{}, cs = %ConnState{}}) do
-    :ok = :gen_tcp.send(cs.sock_passive, "deleteid #{song_id}\n")
     reply = ok_from_socket(cs.sock_passive)
     {:reply, reply, state}
   end
