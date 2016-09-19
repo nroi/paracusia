@@ -89,11 +89,11 @@ defmodule Paracusia.MpdClient do
     GenServer.call(__MODULE__, {:send_and_ack, "pause 0\n"})
 
   @doc"""
-  Deletes a song from the playlist.
+  Remove the song at position `pos` from the playlist.
   """
   @spec delete(integer | String.t) :: :ok | {:error, {String.t, String.t}}
-  def delete(song_id) do
-    GenServer.call(__MODULE__, {:send_and_ack, "delete #{song_id}\n"})
+  def delete(pos) do
+    GenServer.call(__MODULE__, {:send_and_ack, "delete #{pos}\n"})
   end
 
   @doc"""
@@ -102,6 +102,19 @@ defmodule Paracusia.MpdClient do
   @spec delete(integer, integer) :: :ok | {:error, {String.t, String.t}}
   def delete(start, until) do
     GenServer.call(__MODULE__, {:send_and_ack, "delete #{start}:#{until}\n"})
+  end
+
+  @spec deleteid(integer | String.t) :: :ok | {:error, {String.t, String.t}}
+  def delete(song_id) do
+    GenServer.call(__MODULE__, {:send_and_ack, "delete #{song_id}\n"})
+  end
+
+  @doc"""
+  Deletes the song with the given id from the playlist.
+  """
+  @spec deleteid(integer | String.t) :: :ok | {:error, {String.t, String.t}}
+  def deleteid(song_id) do
+    GenServer.call(__MODULE__, {:send_and_ack, "deleteid #{song_id}\n"})
   end
 
   @doc"""
