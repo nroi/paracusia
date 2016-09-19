@@ -85,6 +85,54 @@ defmodule Paracusia.MpdClient do
   end
 
   @doc"""
+  Sets crossfading between songs.
+  """
+  @spec crossfade(integer) :: :ok | {:error, {String.t, String.t}}
+  def crossfade(seconds) do
+    GenServer.call(__MODULE__, {:send_and_ack, "crossfade #{seconds}\n"})
+  end
+
+  @doc"""
+  Sets the threshold at which songs will be overlapped. Like crossfading but doesn't fade the track
+  volume, just overlaps. The songs need to have MixRamp tags added by an external tool. 0dB is the
+  normalized maximum volume so use negative values. In the absence of mixramp tags, crossfading will
+  be used.
+  """
+  @spec mixrampdb(integer) :: :ok | {:error, {String.t, String.t}}
+  def mixrampdb(decibels) do
+    GenServer.call(__MODULE__, {:send_and_ack, "mixrampdb #{decibels}\n"})
+  end
+
+  @doc"""
+  Sets the replay gain mode. Changing the mode during playback may take several seconds, because the
+  new settings does not affect the buffered data.
+  """
+  @spec replay_gain_mode(:off | :track | :album | :auto) :: :ok | {:error, {String.t, String.t}}
+  def replay_gain_mode(:off), do:
+    GenServer.call(__MODULE__, {:send_and_ack, "replay_gain_mode off\n"})
+  def replay_gain_mode(:track), do:
+    GenServer.call(__MODULE__, {:send_and_ack, "replay_gain_mode track\n"})
+  def replay_gain_mode(:album), do:
+    GenServer.call(__MODULE__, {:send_and_ack, "replay_gain_mode album\n"})
+  def replay_gain_mode(:auto), do:
+    GenServer.call(__MODULE__, {:send_and_ack, "replay_gain_mode auto\n"})
+
+  @doc"""
+  Prints replay gain options. Currently, only the variable replay_gain_mode is returned.
+  """
+  @spec replay_gain_status() :: {:ok, String.t} | {:error, {String.t, String.t}}
+  def replay_gain_status, do:
+    GenServer.call(__MODULE__, {:send_and_recv, "replay_gain_status\n"})
+
+  @doc"""
+  Changes volume by amount CHANGE.
+  Note: volume is deprecated, use setvol instead.
+  """
+  @spec volume(integer) :: :ok | {:error, {String.t, String.t}}
+  def volume(change), do:
+    GenServer.call(__MODULE__, {:send_and_ack, "volume #{change}\n"})
+
+  @doc"""
   Given a query in the format "{TYPE} {WHAT} [...]", find songs in the db that are exactly WHAT.
   TYPE can be any tag supported by MPD as well as 'any', 'file', 'base' and 'modified-since'.
   See https://musicpd.org/doc/protocol/database.html for details.
@@ -164,7 +212,7 @@ defmodule Paracusia.MpdClient do
   Returns the job id of the update job.
   """
   @spec update() :: {:ok, integer} | {:error, {String.t, String.t}}
-  def update do
+  def update() do
     GenServer.call(__MODULE__, :update)
   end
 
@@ -325,7 +373,8 @@ defmodule Paracusia.MpdClient do
         complete_msg = read_until_next_newline(socket, "ACK")
         case Regex.run(~r/ACK \[(.*)\] {(.*)} (.*)/, complete_msg, [capture: :all_but_first]) do
           [errorcode, command, message] ->
-            {:error, {errorcode, "error #{errorcode} while executing command #{command}: #{message}"}}
+            {:error, {errorcode,
+              "error #{errorcode} while executing command #{command}: #{message}"}}
         end
     end
   end
@@ -662,6 +711,13 @@ defmodule Paracusia.MpdClient do
                   state = {%PlayerState{}, cs = %ConnState{}}) do
     :ok = :gen_tcp.send(cs.sock_passive, msg)
     reply = ok_from_socket(cs.sock_passive)
+    {:reply, reply, state}
+  end
+
+  def handle_call({:send_and_recv, msg}, _from,
+                  state = {%PlayerState{}, cs = %ConnState{}}) do
+    :ok = :gen_tcp.send(cs.sock_passive, msg)
+    reply = recv_until_ok(cs.sock_passive)
     {:reply, reply, state}
   end
 
