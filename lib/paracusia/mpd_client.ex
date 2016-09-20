@@ -10,7 +10,7 @@ defmodule Paracusia.MpdClient do
   @doc """
   Connect to the MPD server.
   """
-  def start_link(handler) do
+  def start_link() do
     GenServer.start_link(__MODULE__, [], name: __MODULE__)
   end
 
@@ -102,11 +102,6 @@ defmodule Paracusia.MpdClient do
   @spec delete(integer, integer) :: :ok | {:error, {String.t, String.t}}
   def delete(start, until) do
     GenServer.call(__MODULE__, {:send_and_ack, "delete #{start}:#{until}\n"})
-  end
-
-  @spec deleteid(integer | String.t) :: :ok | {:error, {String.t, String.t}}
-  def delete(song_id) do
-    GenServer.call(__MODULE__, {:send_and_ack, "delete #{song_id}\n"})
   end
 
   @doc"""
@@ -413,8 +408,12 @@ defmodule Paracusia.MpdClient do
     :ok = :gen_tcp.send(sock_active, "idle\n")
     :ok = :inet.setopts(sock_active, [active: :once])
     {:ok, genevent_pid} = GenEvent.start_link()
-    event_handler = Application.get_env(:paracusia, :event_handler)
-    :ok = GenEvent.add_handler(genevent_pid, event_handler, nil)
+    case Application.get_env(:paracusia, :event_handler) do
+      nil ->
+        :ok = GenEvent.add_handler(genevent_pid, Paracusia.DefaultEventHandler, nil)
+      event_handler ->
+        :ok = GenEvent.add_handler(genevent_pid, event_handler, nil)
+    end
     {:ok, _} = :timer.send_interval(6000, :send_ping)
     {:ok, playlist} = playlist_from_socket(sock_passive)
     mpd_state = %PlayerState{current_song: current_song_from_socket(sock_passive),
@@ -750,7 +749,7 @@ defmodule Paracusia.MpdClient do
   end
 
   def handle_call({:seek, seconds}, _from,
-                  state = {ps = %PlayerState{}, cs = %ConnState{}}) do
+                  state = {%PlayerState{}, cs = %ConnState{}}) do
     answer = seek_to_seconds(cs.sock_passive, seconds)
     {:reply, answer, state}
   end
