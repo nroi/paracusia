@@ -1,5 +1,4 @@
 defmodule Paracusia.MessageParser do
-  alias Paracusia.Song
 
   def format_time(seconds) do
     justify = fn i ->
