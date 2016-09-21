@@ -31,4 +31,9 @@ defmodule Paracusia.DefaultEventHandler do
     Logger.info "database changed."
     {:ok, state}
   end
+
+  def handle_event({:outputs_changed, _}, state = nil) do
+    Logger.info "outputs changed."
+    {:ok, state}
+  end
 end

@@ -51,8 +51,45 @@ defmodule Paracusia.MessageParser do
       |> Map.new
   end
 
+  def boolean_to_binary(false), do: 0
+  def boolean_to_binary(true), do: 1
+  def string_to_boolean("0"), do: false
+  def string_to_boolean("1"), do: true
+
+  defp stringmap_to_intmap(m = %{"outputenabled" => outputenabled, "outputid" => outputid}) do
+    %{m | "outputenabled" => string_to_boolean(outputenabled),
+          "outputid"      => String.to_integer(outputid)}
+  end
+
   @doc"""
-  Given a a string such as "file: …\nartist: …\n…directory: …\nartist: …\n…", where a new entry
+  Given a string composed newline-separated  strings starting with "outputid: …", return the
+  corresoponding list of maps.
+  """
+  def parse_outputs(m) do
+    split_at_id = m
+      |> String.trim_trailing("\n")
+      |> String.split("\n", trim: true)
+      |> Enum.reduce([], fn (item, acc) ->
+        case item do
+          "outputid: " <> _rest ->
+            [[item] | acc]
+          _ ->
+            [x | xs ] = acc
+            [[item | x] | xs]
+        end
+      end)
+    string_map = split_at_id |> Enum.map(fn list ->
+      list |> Enum.map(fn item ->
+        case item |> String.split(": ", parts: 2) do
+          [key,  value] -> {key, value}
+        end
+      end) |> Map.new
+    end) |> Enum.reverse
+    string_map |> Enum.map(&stringmap_to_intmap(&1))
+  end
+
+  @doc"""
+  Given a string such as "file: …\nartist: …\n…directory: …\nartist: …\n…", where a new entry
   starts with either "file" or "directory", return the corresponding list of maps.
   """
   def parse_items(m) do

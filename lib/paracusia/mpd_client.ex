@@ -4,6 +4,7 @@ defmodule Paracusia.MpdClient do
   alias Paracusia.MessageParser
   alias Paracusia.PlayerState
   alias Paracusia.ConnectionState, as: ConnState
+  import Paracusia.MessageParser, only: [string_to_boolean: 1, boolean_to_binary: 1]
 
   ## Client API
 
@@ -254,10 +255,6 @@ defmodule Paracusia.MpdClient do
     GenServer.call(__MODULE__, :status)
   end
 
-  def debug(data) do
-    GenServer.call(__MODULE__, {:debug, data})
-  end
-
   def lsinfo(uri) do
     GenServer.call(__MODULE__, {:lsinfo, uri})
   end
@@ -321,10 +318,13 @@ defmodule Paracusia.MpdClient do
     GenServer.call(__MODULE__, {:setvol, volume})
   end
 
-  defp boolean_to_binary(false), do: 0
-  defp boolean_to_binary(true), do: 1
-  defp string_to_boolean("0"), do: false
-  defp string_to_boolean("1"), do: true
+  def outputs do
+    GenServer.call(__MODULE__, :outputs)
+  end
+
+  def debug(data) do
+    GenServer.call(__MODULE__, {:debug, data})
+  end
 
   @spec recv_until_newline(port, String.t) :: String.t
   defp recv_until_newline(sock, prev_answer \\ "") do
@@ -418,13 +418,19 @@ defmodule Paracusia.MpdClient do
     {:ok, playlist} = playlist_from_socket(sock_passive)
     mpd_state = %PlayerState{current_song: current_song_from_socket(sock_passive),
                              playlist: playlist,
-                             status: status_from_socket(sock_passive)}
+                             status: status_from_socket(sock_passive),
+                             outputs: outputs_from_socket(sock_passive),
+                           }
     _ = Logger.info "initial mpd state is: #{inspect mpd_state}"
     conn_state = %ConnState{:sock_passive => sock_passive,
                             :sock_active => sock_active,
                             :genevent_pid => genevent_pid,
                             :status => :new}
     {:ok, {mpd_state, conn_state}}
+  end
+
+  def player_state do
+    GenServer.call(__MODULE__, :player_state)
   end
 
   defp read_until_next_newline(socket, prev_msg) do
@@ -460,7 +466,6 @@ defmodule Paracusia.MpdClient do
     answer = case recv_until_ok(socket) do
       {:ok, m} -> MessageParser.parse_newline_separated(m)
     end
-    _  = Logger.info "answer: #{inspect answer}"
     nil_or_else = fn(x, f) ->
       case x do
         nil -> nil
@@ -540,7 +545,7 @@ defmodule Paracusia.MpdClient do
   end
 
   defp process_message("changed: output\n" <> rest, genevent_pid, events) do
-    process_message(rest, genevent_pid, [:output_changed | events])
+    process_message(rest, genevent_pid, [:outputs_changed | events])
   end
 
   defp process_message("changed: options\n" <> rest, genevent_pid, events) do
@@ -564,6 +569,11 @@ defmodule Paracusia.MpdClient do
   end
 
   defp new_ps_from_events(ps, events, socket) do
+    new_outputs = if Enum.member?(events, :outputs_changed) do
+      outputs_from_socket(socket)
+    else
+      ps.outputs
+    end
     new_current_song = if Enum.member?(events, :player_changed) do
       current_song_from_socket(socket)
     else
@@ -586,13 +596,21 @@ defmodule Paracusia.MpdClient do
     %PlayerState{
       :current_song => new_current_song,
       :playlist => new_playlist,
-      :status => new_status
+      :status => new_status,
+      :outputs => new_outputs,
     }
   end
 
   defp seek_to_seconds(socket, seconds) do
     :ok = :gen_tcp.send(socket, "seekcur #{seconds}\n")
     ok_from_socket(socket)
+  end
+
+  defp outputs_from_socket(socket) do
+    :ok = :gen_tcp.send(socket, "outputs\n")
+    with {:ok, m} <- recv_until_ok(socket) do
+      MessageParser.parse_outputs(m)
+    end
   end
 
   def handle_call({:lsinfo, uri}, _from,
@@ -726,6 +744,11 @@ defmodule Paracusia.MpdClient do
     {:reply, reply, state}
   end
 
+  def handle_call(:outputs, _from, state = {%PlayerState{}, cs = %ConnState{}}) do
+    reply = outputs_from_socket(cs.sock_passive)
+    {:reply, reply, state}
+  end
+
   def handle_call({:send_and_ack, msg}, _from,
                   state = {%PlayerState{}, cs = %ConnState{}}) do
     :ok = :gen_tcp.send(cs.sock_passive, msg)
@@ -752,6 +775,11 @@ defmodule Paracusia.MpdClient do
                   state = {%PlayerState{}, cs = %ConnState{}}) do
     answer = seek_to_seconds(cs.sock_passive, seconds)
     {:reply, answer, state}
+  end
+
+  def handle_call(:player_state, _from,
+                  state = {ps = %PlayerState{}, %ConnState{}}) do
+    {:reply, ps, state}
   end
 
   def handle_info(:send_ping, state = {%PlayerState{}, cs = %ConnState{}}) do
