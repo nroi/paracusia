@@ -397,31 +397,6 @@ defmodule Paracusia.MpdClient do
     end
   end
 
-  @doc"""
-  Lists all existing uris.
-  """
-  def list_uris do
-    list_uris("")
-  end
-
-  @doc"""
-  Lists all uris inside the directory.
-  """
-  def list_uris(directory) do
-    _ = Logger.info "list uris for uri #{directory}"
-    with {:ok, items} <- lsinfo(directory) do
-      items |> Enum.flat_map(fn item ->
-        case {item["file"], item["directory"]} do
-          {nil, nil}  -> raise "Expected map to contain either file, or directory."
-          {file, nil} -> [file]
-          {nil, dir}  -> list_uris(dir)
-          {_, _}      -> raise "Expected map to contain either file, or directory (not both)."
-        end
-      end)
-    end
-  end
-
-
   ## Server Callbacks
 
   def init([]) do
