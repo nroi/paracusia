@@ -255,6 +255,10 @@ defmodule Paracusia.MpdClient do
     GenServer.call(__MODULE__, :status)
   end
 
+  def stats do
+    GenServer.call(__MODULE__, :stats)
+  end
+
   def lsinfo(uri) do
     GenServer.call(__MODULE__, {:lsinfo, uri})
   end
@@ -736,6 +740,22 @@ defmodule Paracusia.MpdClient do
 
   def handle_call(:status, _from, state = {%PlayerState{}, cs = %ConnState{}}) do
     answer = status_from_socket(cs.sock_passive)
+    {:reply, answer, state}
+  end
+
+  def handle_call(:stats, _from, state = {%PlayerState{}, cs = %ConnState{}}) do
+    :ok = :gen_tcp.send(cs.sock_passive, "stats\n")
+    {:ok, reply} = recv_until_ok(cs.sock_passive)
+    string_map = reply |> MessageParser.parse_newline_separated
+    answer = %PlayerState.Stats{
+      artists: String.to_integer(string_map["artists"]),
+      albums: String.to_integer(string_map["albums"]),
+      songs: String.to_integer(string_map["songs"]),
+      uptime: String.to_integer(string_map["uptime"]),
+      db_playtime: String.to_integer(string_map["db_playtime"]),
+      db_update: String.to_integer(string_map["db_update"]),
+      playtime: String.to_integer(string_map["playtime"])
+    }
     {:reply, answer, state}
   end
 
