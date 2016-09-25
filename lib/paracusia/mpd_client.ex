@@ -191,7 +191,7 @@ defmodule Paracusia.MpdClient do
     GenServer.call(__MODULE__, {:send_and_recv, "replay_gain_status\n"})
 
   @doc"""
-  Changes volume by amount CHANGE.
+  Changes volume by amount `change`.
   Note: volume is deprecated, use setvol instead.
   """
   @spec volume(integer) :: :ok | {:error, {String.t, String.t}}
@@ -253,7 +253,7 @@ defmodule Paracusia.MpdClient do
   end
 
   @doc"""
-  Returns the current status of the player and the volume level.
+  Returns the current status of the player.
   """
   @spec status() :: {:ok, %Paracusia.PlayerState.Status{}} | {:error, {String.t, String.t}}
   def status do
@@ -286,7 +286,8 @@ defmodule Paracusia.MpdClient do
   end
 
   @doc"""
-  Updates the entire music database (i.e., not restricted to a given uri).
+  Updates the entire music database.
+  Unlike Paracusia.Mpdclientupdate/1, the update is not restricted to a given uri.
   Returns the job id of the update job.
   """
   @spec update() :: {:ok, integer} | {:error, {String.t, String.t}}
@@ -294,21 +295,25 @@ defmodule Paracusia.MpdClient do
     GenServer.call(__MODULE__, :update)
   end
 
+  @doc"""
+  Adds the file `uri` to the playlist.
+  Directories are added recursively. `uri` can also be a single file.
+  """
   @spec add(String.t) :: :ok | {:error, {String.t, String.t}}
   def add(uri) do
     GenServer.call(__MODULE__, {:add, uri})
   end
 
-  @spec comment_property(String.t) :: :ok | {:error, {String.t, String.t}}
-  def comment_property(uri) do
-    GenServer.call(__MODULE__, {:comment_property, uri})
+  @spec readcomments(String.t) :: :ok | {:error, {String.t, String.t}}
+  def readcomments(uri) do
+    GenServer.call(__MODULE__, {:readcomments, uri})
   end
 
   @doc"""
   Returns a map that contains, at the minimum, the following keys: file, Pos and Id.
   """
-  def current_song do
-    GenServer.call(__MODULE__, :current_song)
+  def currentsong do
+    GenServer.call(__MODULE__, :currentsong)
   end
 
   @spec seek_to_percent(integer) :: :ok | {:error, {String.t, String.t}}
@@ -755,7 +760,7 @@ defmodule Paracusia.MpdClient do
     {:reply, answer, state}
   end
 
-  def handle_call({:comment_property, uri}, _from,
+  def handle_call({:readcomments, uri}, _from,
                   state = {%PlayerState{}, cs = %ConnState{}}) do
     :ok = :gen_tcp.send(cs.sock_passive, "readcomments \"#{uri}\"\n")
     answer = with {:ok, reply} <- recv_until_ok(cs.sock_passive) do
@@ -772,7 +777,7 @@ defmodule Paracusia.MpdClient do
     {:reply, answer, state}
   end
 
-  def handle_call(:current_song, _from,
+  def handle_call(:currentsong, _from,
                   state = {%PlayerState{}, cs = %ConnState{}}) do
     {:reply, current_song_from_socket(cs.sock_passive), state}
   end
