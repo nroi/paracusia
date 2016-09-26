@@ -100,6 +100,8 @@ defmodule Paracusia.MessageParser do
       |> String.split("\n", trim: true)
       |> Enum.reduce([], fn (item, acc) ->
         case item do
+          "playlist: " <> _rest ->
+            [[item] | acc]
           "file: " <> _rest ->
             [[item] | acc]
           "directory: " <> _rest ->
