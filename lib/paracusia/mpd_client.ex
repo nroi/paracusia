@@ -219,16 +219,12 @@ defmodule Paracusia.MpdClient do
   end
 
   @doc"""
-  Given a query in the format "{TYPE} [FILTERTYPE] [FILTERWHAT] [...] [group] [GROUPTYPE] [...]",
-  list unique tags values of the specified type. TYPE can be any tag supported by MPD or file.
-  Additional arguments may specify a filter like the one in the find command. The group keyword may
-  be used (repeatedly) to group the results by one or more tags.
-  Note that unlike other functions, 'list' returns the string as delivered by MPD, i.e., it is not
-  parsed and converted into a map.
-  See https://musicpd.org/doc/protocol/database.html for details.
+  Returns all unique tag values of the specified type. `type` can be any tag supported by MPD or
+  'file'.
   """
-  def list(query) do
-    GenServer.call(__MODULE__, {:list, query})
+  def list(type) do
+    # note that we don't make full use of the 'list' command, since we only allow to specify a type.
+    GenServer.call(__MODULE__, {:list, type})
   end
 
   @doc"""
@@ -691,11 +687,11 @@ defmodule Paracusia.MpdClient do
     {:reply, answer, state}
   end
 
-  def handle_call({:list, query}, _from,
+  def handle_call({:list, type}, _from,
                   state = {%PlayerState{}, cs = %ConnState{}}) do
-    :ok = :gen_tcp.send(cs.sock_passive, "list #{query}\n")
+    :ok = :gen_tcp.send(cs.sock_passive, "list #{type}\n")
     answer = with {:ok, m} <- recv_until_ok(cs.sock_passive) do
-      {:ok, m}
+      {:ok, m |> MessageParser.parse_newline_separated_enum}
     end
     {:reply, answer, state}
   end

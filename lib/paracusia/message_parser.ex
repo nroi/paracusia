@@ -40,6 +40,17 @@ defmodule Paracusia.MessageParser do
       end)
   end
 
+
+  # Given a enumeration such as "Artist: Beatles\nArtist: Lady Gaga\n…", return the corresponding
+  # list, e.g. ["Beatles", "Lady Gaga"].
+  def parse_newline_separated_enum(m) do
+    m |> String.split("\n", trim: true)
+      |> Enum.map(fn item -> case String.split(item, ": ", parts: 2) do
+                               [_, value] -> value
+                             end
+                  end)
+  end
+
   # Given a newline separated string (such as "volume: -1\nrepeat: 0\n), return the
   # corresponding map.
   def parse_newline_separated(m) do
