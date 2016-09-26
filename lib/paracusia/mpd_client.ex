@@ -202,7 +202,7 @@ defmodule Paracusia.MpdClient do
   Given a query in the format "{TYPE} {WHAT} [...]", find songs in the db that are exactly WHAT.
   TYPE can be any tag supported by MPD as well as 'any', 'file', 'base' and 'modified-since'.
   See https://musicpd.org/doc/protocol/database.html for details.
-  Users are advised to use the Paracusia.Query.query macro instead.
+  Users are advised to use the `Paracusia.Query.query` macro instead.
   """
   def find(query) do
     GenServer.call(__MODULE__, {:find, query})
@@ -212,7 +212,7 @@ defmodule Paracusia.MpdClient do
   Given a query in the format "{TYPE} {WHAT} [...]", find songs in the db that are exactly WHAT and
   adds them to current playlist. Parameters have the same meaning as for find.
   See https://musicpd.org/doc/protocol/database.html for details.
-  Users are advised to use the Paracusia.Query.query macro instead.
+  Users are advised to use the `Paracusia.Query.query` macro instead.
   """
   def findadd(query) do
     GenServer.call(__MODULE__, {:findadd, query})
@@ -232,10 +232,10 @@ defmodule Paracusia.MpdClient do
   end
 
   @doc"""
-  Lists all songs and directories in URI. Usage of the 'listll' command is discouraged by the author
-  of MPD. See https://musicpd.org/doc/protocol/database.html for details.
-  Returns a string of tuples, where the first entry is the property (e.g. "file"), the second entry
-  is the corresponding value.
+  Lists all songs and directories in URI. Usage of the 'listall' command is discouraged by the
+  author of MPD. See https://musicpd.org/doc/protocol/database.html for details. Returns a string
+  of tuples, where the first entry is the property (e.g. "file"), the second entry is the
+  corresponding value.
   """
   def listall(uri) do
     GenServer.call(__MODULE__, {:listall, uri})
@@ -246,7 +246,7 @@ defmodule Paracusia.MpdClient do
   and their total playtime in the db matching the given tag exactly. The group keyword may be used
   to group the results by a tag.
   See https://musicpd.org/doc/protocol/database.html for details.
-  Users are advised to use the Paracusia.Query.query macro instead.
+  Users are advised to use the `Paracusia.Query.query` macro instead.
   """
   def count(query) do
     GenServer.call(__MODULE__, {:count, query})
