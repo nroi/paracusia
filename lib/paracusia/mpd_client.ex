@@ -6,6 +6,8 @@ defmodule Paracusia.MpdClient do
   alias Paracusia.ConnectionState, as: ConnState
   import Paracusia.MessageParser, only: [string_to_boolean: 1, boolean_to_binary: 1]
 
+  @type mpd_error :: {:error, {String.t, String.t}}
+
   # TODO consistency: Make sure that all public functions return {:ok, _} or :{error, _}
   ## Client API
 
@@ -19,7 +21,7 @@ defmodule Paracusia.MpdClient do
   @doc """
   Returns the current playlist.
   """
-  @spec playlistinfo() :: {:ok, map} | {:error, {String.t, String.t}}
+  @spec playlistinfo() :: {:ok, map} | mpd_error
   def playlistinfo do
     GenServer.call(__MODULE__, :playlistinfo)
   end
@@ -27,7 +29,7 @@ defmodule Paracusia.MpdClient do
   @doc"""
   Begins playing the playlist at song number songpos.
   """
-  @spec play(integer | String.t) :: :ok | {:error, {String.t, String.t}}
+  @spec play(integer | String.t) :: :ok | mpd_error
   def play(songpos) do
     GenServer.call(__MODULE__, {:send_and_ack, "play #{songpos}\n"})
   end
@@ -35,7 +37,7 @@ defmodule Paracusia.MpdClient do
   @doc"""
   Continues playing the current song.
   """
-  @spec play() :: :ok | {:error, {String.t, String.t}}
+  @spec play() :: :ok | mpd_error
   def play do
     GenServer.call(__MODULE__, {:send_and_ack, "play\n"})
   end
@@ -43,7 +45,7 @@ defmodule Paracusia.MpdClient do
   @doc"""
   Begins playing the playlist at song songid.
   """
-  @spec playid(String.t) :: :ok | {:error, {String.t, String.t}}
+  @spec playid(String.t) :: :ok | mpd_error
   def playid(songid) do
     GenServer.call(__MODULE__, {:send_and_ack, "playid #{songid}\n"})
   end
@@ -52,7 +54,7 @@ defmodule Paracusia.MpdClient do
   Continues playing the current song.
   """
   # TODO what is the difference to play/0?
-  @spec playid() :: :ok | {:error, {String.t, String.t}}
+  @spec playid() :: :ok | mpd_error
   def playid() do
     GenServer.call(__MODULE__, {:send_and_ack, "playid\n"})
   end
@@ -60,7 +62,7 @@ defmodule Paracusia.MpdClient do
   @doc"""
   Plays next song in the playlist.
   """
-  @spec next() :: :ok | {:error, {String.t, String.t}}
+  @spec next() :: :ok | mpd_error
   def next do
     GenServer.call(__MODULE__, {:send_and_ack, "next\n"})
   end
@@ -68,7 +70,7 @@ defmodule Paracusia.MpdClient do
   @doc"""
   Plays previous song in the playlist.
   """
-  @spec previous() :: :ok | {:error, {String.t, String.t}}
+  @spec previous() :: :ok | mpd_error
   def previous do
     GenServer.call(__MODULE__, {:send_and_ack, "previous\n"})
   end
@@ -76,7 +78,7 @@ defmodule Paracusia.MpdClient do
   @doc"""
   Stops playing.
   """
-  @spec stop() :: :ok | {:error, {String.t, String.t}}
+  @spec stop() :: :ok | mpd_error
   def stop do
     GenServer.call(__MODULE__, {:send_and_ack, "stop\n"})
   end
@@ -84,7 +86,7 @@ defmodule Paracusia.MpdClient do
   @doc"""
   Toggles pause/resumes playing.
   """
-  @spec pause(true | false) :: :ok | {:error, {String.t, String.t}}
+  @spec pause(true | false) :: :ok | mpd_error
   def pause(true), do:
     GenServer.call(__MODULE__, {:send_and_ack, "pause 1\n"})
   def pause(false), do:
@@ -93,7 +95,7 @@ defmodule Paracusia.MpdClient do
   @doc"""
   Remove the song at position `pos` from the playlist.
   """
-  @spec delete(integer | String.t) :: :ok | {:error, {String.t, String.t}}
+  @spec delete(integer | String.t) :: :ok | mpd_error
   def delete(pos) do
     GenServer.call(__MODULE__, {:send_and_ack, "delete #{pos}\n"})
   end
@@ -101,7 +103,7 @@ defmodule Paracusia.MpdClient do
   @doc"""
   Deletes all songs from `start` up to `until`, excluding `until`. Indexing starts at zero.
   """
-  @spec delete(integer, integer) :: :ok | {:error, {String.t, String.t}}
+  @spec delete(integer, integer) :: :ok | mpd_error
   def delete(start, until) do
     GenServer.call(__MODULE__, {:send_and_ack, "delete #{start}:#{until}\n"})
   end
@@ -109,7 +111,7 @@ defmodule Paracusia.MpdClient do
   @doc"""
   Deletes the song with the given id from the playlist.
   """
-  @spec deleteid(integer | String.t) :: :ok | {:error, {String.t, String.t}}
+  @spec deleteid(integer | String.t) :: :ok | mpd_error
   def deleteid(song_id) do
     GenServer.call(__MODULE__, {:send_and_ack, "deleteid #{song_id}\n"})
   end
@@ -117,7 +119,7 @@ defmodule Paracusia.MpdClient do
   @doc"""
   Sets repeat state to true or false.
   """
-  @spec repeat(boolean) :: :ok | {:error, {String.t, String.t}}
+  @spec repeat(boolean) :: :ok | mpd_error
   def repeat(state) do
     msg = "repeat #{boolean_to_binary(state)}\n"
     GenServer.call(__MODULE__, {:send_and_ack, msg})
@@ -126,7 +128,7 @@ defmodule Paracusia.MpdClient do
   @doc"""
   Sets random state to true or false.
   """
-  @spec random(boolean) :: :ok | {:error, {String.t, String.t}}
+  @spec random(boolean) :: :ok | mpd_error
   def random(state) do
     msg = "random #{boolean_to_binary(state)}\n"
     GenServer.call(__MODULE__, {:send_and_ack, msg})
@@ -135,7 +137,7 @@ defmodule Paracusia.MpdClient do
   @doc"""
   Sets single state to true or false.
   """
-  @spec single(boolean) :: :ok | {:error, {String.t, String.t}}
+  @spec single(boolean) :: :ok | mpd_error
   def single(state) do
     msg = "single #{boolean_to_binary(state)}\n"
     GenServer.call(__MODULE__, {:send_and_ack, msg})
@@ -144,7 +146,7 @@ defmodule Paracusia.MpdClient do
   @doc"""
   Sets consume state to true or false.
   """
-  @spec consume(boolean) :: :ok | {:error, {String.t, String.t}}
+  @spec consume(boolean) :: :ok | mpd_error
   def consume(state) do
     msg = "consume #{boolean_to_binary(state)}\n"
     GenServer.call(__MODULE__, {:send_and_ack, msg})
@@ -153,7 +155,7 @@ defmodule Paracusia.MpdClient do
   @doc"""
   Sets crossfading between songs.
   """
-  @spec crossfade(integer) :: :ok | {:error, {String.t, String.t}}
+  @spec crossfade(integer) :: :ok | mpd_error
   def crossfade(seconds) do
     GenServer.call(__MODULE__, {:send_and_ack, "crossfade #{seconds}\n"})
   end
@@ -164,7 +166,7 @@ defmodule Paracusia.MpdClient do
   normalized maximum volume so use negative values. In the absence of mixramp tags, crossfading will
   be used.
   """
-  @spec mixrampdb(integer) :: :ok | {:error, {String.t, String.t}}
+  @spec mixrampdb(integer) :: :ok | mpd_error
   def mixrampdb(decibels) do
     GenServer.call(__MODULE__, {:send_and_ack, "mixrampdb #{decibels}\n"})
   end
@@ -173,7 +175,7 @@ defmodule Paracusia.MpdClient do
   Sets the replay gain mode. Changing the mode during playback may take several seconds, because the
   new settings does not affect the buffered data.
   """
-  @spec replay_gain_mode(:off | :track | :album | :auto) :: :ok | {:error, {String.t, String.t}}
+  @spec replay_gain_mode(:off | :track | :album | :auto) :: :ok | mpd_error
   def replay_gain_mode(:off), do:
     GenServer.call(__MODULE__, {:send_and_ack, "replay_gain_mode off\n"})
   def replay_gain_mode(:track), do:
@@ -186,7 +188,7 @@ defmodule Paracusia.MpdClient do
   @doc"""
   Prints replay gain options. Currently, only the variable replay_gain_mode is returned.
   """
-  @spec replay_gain_status() :: {:ok, String.t} | {:error, {String.t, String.t}}
+  @spec replay_gain_status() :: {:ok, String.t} | mpd_error
   def replay_gain_status, do:
     GenServer.call(__MODULE__, {:send_and_recv, "replay_gain_status\n"})
 
@@ -194,7 +196,7 @@ defmodule Paracusia.MpdClient do
   Changes volume by amount `change`.
   Note: volume is deprecated, use setvol instead.
   """
-  @spec volume(integer) :: :ok | {:error, {String.t, String.t}}
+  @spec volume(integer) :: :ok | mpd_error
   def volume(change), do:
     GenServer.call(__MODULE__, {:send_and_ack, "volume #{change}\n"})
 
@@ -251,7 +253,7 @@ defmodule Paracusia.MpdClient do
   @doc"""
   Returns the current status of the player.
   """
-  @spec status() :: {:ok, %Paracusia.PlayerState.Status{}} | {:error, {String.t, String.t}}
+  @spec status() :: {:ok, %Paracusia.PlayerState.Status{}} | mpd_error
   def status do
     GenServer.call(__MODULE__, :status)
   end
@@ -259,7 +261,7 @@ defmodule Paracusia.MpdClient do
   @doc"""
   Returns statistics.
   """
-  @spec stats() :: {:ok, %Paracusia.PlayerState.Stats{}} | {:error, {String.t, String.t}}
+  @spec stats() :: {:ok, %Paracusia.PlayerState.Stats{}} | mpd_error
   def stats do
     GenServer.call(__MODULE__, :stats)
   end
@@ -267,7 +269,7 @@ defmodule Paracusia.MpdClient do
   @doc"""
   Returns the contents of the directory `uri`.
   """
-  @spec lsinfo(String.t) :: {:ok, map} | {:error, {String.t, String.t}}
+  @spec lsinfo(String.t) :: {:ok, map} | mpd_error
   def lsinfo(uri) do
     GenServer.call(__MODULE__, {:lsinfo, uri})
   end
@@ -276,7 +278,7 @@ defmodule Paracusia.MpdClient do
   Updates the music database. `uri` is a particular directory or song/file to update.
   Returns the job id of the update job.
   """
-  @spec update(String.t) :: {:ok, integer} | {:error, {String.t, String.t}}
+  @spec update(String.t) :: {:ok, integer} | mpd_error
   def update(uri) do
     GenServer.call(__MODULE__, {:update, uri})
   end
@@ -286,21 +288,12 @@ defmodule Paracusia.MpdClient do
   Unlike Paracusia.Mpdclientupdate/1, the update is not restricted to a given uri.
   Returns the job id of the update job.
   """
-  @spec update() :: {:ok, integer} | {:error, {String.t, String.t}}
+  @spec update() :: {:ok, integer} | mpd_error
   def update() do
     GenServer.call(__MODULE__, :update)
   end
 
-  @doc"""
-  Adds the file `uri` to the playlist.
-  Directories are added recursively. `uri` can also be a single file.
-  """
-  @spec add(String.t) :: :ok | {:error, {String.t, String.t}}
-  def add(uri) do
-    GenServer.call(__MODULE__, {:add, uri})
-  end
-
-  @spec readcomments(String.t) :: :ok | {:error, {String.t, String.t}}
+  @spec readcomments(String.t) :: :ok | mpd_error
   def readcomments(uri) do
     GenServer.call(__MODULE__, {:readcomments, uri})
   end
@@ -312,12 +305,12 @@ defmodule Paracusia.MpdClient do
     GenServer.call(__MODULE__, :currentsong)
   end
 
-  @spec seek_to_percent(integer) :: :ok | {:error, {String.t, String.t}}
+  @spec seek_to_percent(integer) :: :ok | mpd_error
   def seek_to_percent(percent) do
     GenServer.call(__MODULE__, {:seek_to_percent, percent})
   end
 
-  @spec seek(integer) :: :ok | {:error, {String.t, String.t}}
+  @spec seek(integer) :: :ok | mpd_error
   def seek(seconds) do
     GenServer.call(__MODULE__, {:seek, seconds})
   end
@@ -331,7 +324,7 @@ defmodule Paracusia.MpdClient do
   @doc"""
   Sets the volume. Volume must be between 0 and 100.
   """
-  @spec setvol(integer) :: :ok | {:error, {String.t, String.t}}
+  @spec setvol(integer) :: :ok | mpd_error
   def setvol(volume) do
     GenServer.call(__MODULE__, {:setvol, volume})
   end
@@ -352,7 +345,7 @@ defmodule Paracusia.MpdClient do
     end
   end
 
-  @spec recv_until_ok(port, String.t) :: {:ok, String.t} | {:error, {String.t, String.t}}
+  @spec recv_until_ok(port, String.t) :: {:ok, String.t} | mpd_error
   defp recv_until_ok(sock, prev_answer \\ "") do
     complete_msg = recv_until_newline(sock, prev_answer)
     if complete_msg |> String.ends_with?("OK\n") do
