@@ -67,9 +67,12 @@ defmodule Paracusia.MessageParser do
   def string_to_boolean("0"), do: false
   def string_to_boolean("1"), do: true
 
-  defp stringmap_to_intmap(m = %{"outputenabled" => outputenabled, "outputid" => outputid}) do
-    %{m | "outputenabled" => string_to_boolean(outputenabled),
-          "outputid"      => String.to_integer(outputid)}
+  defp outputs_from_map(%{"outputenabled" => enabled, "outputid" => id, "outputname" => name}) do
+    %Paracusia.MpdClient.AudioOutputs{
+      :outputenabled => string_to_boolean(enabled),
+      :outputid => String.to_integer(id),
+      :outputname => name
+    }
   end
 
   @doc"""
@@ -96,7 +99,7 @@ defmodule Paracusia.MessageParser do
         end
       end) |> Map.new
     end) |> Enum.reverse
-    string_map |> Enum.map(&stringmap_to_intmap(&1))
+    string_map |> Enum.map(&outputs_from_map(&1))
   end
 
   @doc"""
