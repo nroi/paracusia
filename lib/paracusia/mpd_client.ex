@@ -336,37 +336,6 @@ defmodule Paracusia.MpdClient do
     GenServer.call(__MODULE__, {:setvol, volume})
   end
 
-  @doc"""
-  Returns a map containing information about all audio outputs.
-  """
-  def outputs do
-    GenServer.call(__MODULE__, :outputs)
-  end
-
-  @doc"""
-  Turns an output off.
-  """
-  @spec disableoutput(integer) :: :ok | {:error, {String.t, String.t}}
-  def disableoutput(id) do
-    GenServer.call(__MODULE__, {:send_and_ack, "disableoutput #{id}\n"})
-  end
-
-  @doc"""
-  Turns an output on.
-  """
-  @spec enableoutput(integer) :: :ok | {:error, {String.t, String.t}}
-  def enableoutput(id) do
-    GenServer.call(__MODULE__, {:send_and_ack, "enableoutput #{id}\n"})
-  end
-
-  @doc"""
-  Turns an output on or off, depending on the current state.
-  """
-  @spec toggleoutput(integer) :: :ok | {:error, {String.t, String.t}}
-  def toggleoutput(id) do
-    GenServer.call(__MODULE__, {:send_and_ack, "toggleoutput #{id}\n"})
-  end
-
   def debug(data) do
     GenServer.call(__MODULE__, {:debug, data})
   end
@@ -827,6 +796,7 @@ defmodule Paracusia.MpdClient do
   end
 
   def handle_info(:send_ping, state = {%PlayerState{}, cs = %ConnState{}}) do
+    # TODO code duplication: remember to use this function in the MpdClient.Connection Module
     :ok = :gen_tcp.send(cs.sock_passive, "ping\n")
     :ok = ok_from_socket(cs.sock_passive)
     {:noreply, state}
