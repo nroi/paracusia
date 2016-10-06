@@ -812,8 +812,12 @@ defmodule Paracusia.MpdClient do
     {:reply, answer, state}
   end
 
-  def handle_call(:player_state, _from,
-                  state = {ps = %PlayerState{}, %ConnState{}}) do
+  def handle_call(:kill, _from, state = {%PlayerState{}, cs = %ConnState{}}) do
+    :ok = :gen_tcp.send(cs.sock_passive, "kill\n")
+    {:reply, :ok, state}
+  end
+
+  def handle_call(:player_state, _from, state = {ps = %PlayerState{}, %ConnState{}}) do
     {:reply, ps, state}
   end
 
