@@ -374,14 +374,14 @@ defmodule Paracusia.MpdClient do
                                      max_attempts: max_attempts]) do
     if attempt > max_attempts do
       reason = "Connection establishment failed, maximum number of connection attempts exceeded."
-      Logger.error reason
+      _ = Logger.error reason
       raise reason
     end
     case :gen_tcp.connect(hostname, port, [:binary, active: false]) do
       {:ok, sock} -> sock
       {:error, :econnrefused} ->
         :timer.sleep(retry_after)
-        Logger.error "Connection refused, retry after #{retry_after} ms."
+        _ = Logger.error "Connection refused, retry after #{retry_after} ms."
         connect_retry(hostname, port,
                       [attempt: attempt + 1, retry_after: retry_after, max_attempts: max_attempts])
     end
@@ -435,7 +435,7 @@ defmodule Paracusia.MpdClient do
                              playlist: playlist,
                              status: status,
                              outputs: outputs}
-    _ = Logger.info "initial mpd state is: #{inspect mpd_state}"
+    _ = Logger.debug "initial mpd state is: #{inspect mpd_state}"
     conn_state = %ConnState{:sock_passive => sock_passive,
                             :sock_active => sock_active,
                             :genevent_pid => genevent_pid,
@@ -839,7 +839,6 @@ defmodule Paracusia.MpdClient do
 
   def handle_info({:tcp, _, msg},
                   {ps = %PlayerState{}, cs = %ConnState{:status => :new}}) do
-    _ = Logger.info "msg from mpd: >#{msg}<"
     complete_msg =
       if String.ends_with?(msg, "OK\n") do
         msg
@@ -851,7 +850,7 @@ defmodule Paracusia.MpdClient do
     events = process_message(complete_msg, cs.genevent_pid)
     new_ps = new_ps_from_events(ps, events, cs.sock_passive)
     Enum.each(events, &(GenEvent.notify(cs.genevent_pid, {&1, new_ps})))
-    _ = Logger.info "Received the following idle events: #{inspect events}"
+    _ = Logger.debug "Received the following idle events: #{inspect events}"
     # We have received this message as a result of having sent idle. We need to resend idle
     # each time after we have obtained a new idle message.
     :ok = :gen_tcp.send(cs.sock_active, "idle\n")
@@ -860,7 +859,7 @@ defmodule Paracusia.MpdClient do
   end
 
   def terminate(:shutdown, {%PlayerState{}, cs = %ConnState{}}) do
-    Logger.debug "Teardown connection to MPD."
+    _ = Logger.debug "Teardown connection to MPD."
     :ok = :gen_tcp.send(cs.sock_active, "close\n")
     :ok = :gen_tcp.send(cs.sock_passive, "close\n")
     :ok = :gen_tcp.close(cs.sock_active)
