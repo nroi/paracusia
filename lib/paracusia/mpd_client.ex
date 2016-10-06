@@ -388,6 +388,7 @@ defmodule Paracusia.MpdClient do
   end
 
   def init([retry_after: retry_after, max_attempts: max_attempts]) do
+    :erlang.process_flag(:trap_exit, true)
     # TODO if MPD_HOST is an absolute path, we should attempt to connect to a unix domain socket.
     {hostname, password} = case System.get_env("MPD_HOST") do
       nil -> {'localhost', nil}
@@ -848,6 +849,15 @@ defmodule Paracusia.MpdClient do
     :ok = :gen_tcp.send(cs.sock_active, "idle\n")
     :ok = :inet.setopts(cs.sock_active, [active: :once])
     {:noreply, {new_ps, cs}}
+  end
+
+  def terminate(:shutdown, {%PlayerState{}, cs = %ConnState{}}) do
+    Logger.debug "Teardown connection to MPD."
+    :ok = :gen_tcp.send(cs.sock_active, "close\n")
+    :ok = :gen_tcp.send(cs.sock_passive, "close\n")
+    :ok = :gen_tcp.close(cs.sock_active)
+    :ok = :gen_tcp.close(cs.sock_passive)
+    :ok
   end
 
 end
