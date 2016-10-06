@@ -632,6 +632,12 @@ defmodule Paracusia.MpdClient do
     end
   end
 
+  defp ping(socket) do
+    :ok = :gen_tcp.send(socket, "ping\n")
+    ok_from_socket(socket)
+  end
+
+
   def handle_call({:lsinfo, uri}, _from,
                   state = {%PlayerState{}, cs = %ConnState{}}) do
     :ok = :gen_tcp.send(cs.sock_passive, "lsinfo \"#{uri}\"\n")
@@ -822,10 +828,12 @@ defmodule Paracusia.MpdClient do
     {:reply, ps, state}
   end
 
+  def handle_call(:ping, _from, state = {%PlayerState{}, cs = %ConnState{}}) do
+    {:reply, ping(cs.sock_passive), state}
+  end
+
   def handle_info(:send_ping, state = {%PlayerState{}, cs = %ConnState{}}) do
-    # TODO code duplication: remember to use this function in the MpdClient.Connection Module
-    :ok = :gen_tcp.send(cs.sock_passive, "ping\n")
-    :ok = ok_from_socket(cs.sock_passive)
+    :ok = ping(cs.sock_passive)
     {:noreply, state}
   end
 
