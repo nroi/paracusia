@@ -37,4 +37,9 @@ defmodule Paracusia.DefaultEventHandler do
     _ = Logger.info "outputs changed."
     {:ok, state}
   end
+
+  def handle_event({:stored_playlist_changed, %PlayerState{}}, state = nil) do
+    _ = Logger.info "stored playlists changed."
+    {:ok, state}
+  end
 end
