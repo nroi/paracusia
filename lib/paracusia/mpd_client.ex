@@ -6,6 +6,10 @@ defmodule Paracusia.MpdClient do
   alias Paracusia.ConnectionState, as: ConnState
   import Paracusia.MessageParser, only: [string_to_boolean: 1, boolean_to_binary: 1]
 
+  @typedoc"""
+  See https://musicpd.org/doc/protocol/response_syntax.html#failure_response_syntax for more
+  details.
+  """
   @type mpd_error :: {:error, {String.t, String.t}}
 
   # TODO consistency: Make sure that all public functions return {:ok, _} or :{error, _}

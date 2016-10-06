@@ -1,10 +1,13 @@
 defmodule Paracusia.MpdClient.Playlists do
   alias Paracusia.MessageParser
   alias Paracusia.MpdClient
+
   @moduledoc"""
   Functions related to stored playlists.
+
   See also: https://musicpd.org/doc/protocol/playlist_files.html
   """
+
 
   @doc"""
   Returns a list containing all songs in the given playlist.
