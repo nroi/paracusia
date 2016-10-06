@@ -12,8 +12,8 @@ defmodule Paracusia.MpdClient do
   @doc """
   Connect to the MPD server.
   """
-  def start_link() do
-    GenServer.start_link(__MODULE__, [], name: __MODULE__)
+  def start_link(opts) do
+    GenServer.start_link(__MODULE__, opts, name: __MODULE__)
   end
 
   @doc """
@@ -369,7 +369,25 @@ defmodule Paracusia.MpdClient do
 
   ## Server Callbacks
 
-  def init([]) do
+  defp connect_retry(hostname, port, [attempt: attempt,
+                                     retry_after: retry_after,
+                                     max_attempts: max_attempts]) do
+    if attempt > max_attempts do
+      reason = "Connection establishment failed, maximum number of connection attempts exceeded."
+      Logger.error reason
+      raise reason
+    end
+    case :gen_tcp.connect(hostname, port, [:binary, active: false]) do
+      {:ok, sock} -> sock
+      {:error, :econnrefused} ->
+        :timer.sleep(retry_after)
+        Logger.error "Connection refused, retry after #{retry_after} ms."
+        connect_retry(hostname, port,
+                      [attempt: attempt + 1, retry_after: retry_after, max_attempts: max_attempts])
+    end
+  end
+
+  def init([retry_after: retry_after, max_attempts: max_attempts]) do
     # TODO if MPD_HOST is an absolute path, we should attempt to connect to a unix domain socket.
     {hostname, password} = case System.get_env("MPD_HOST") do
       nil -> {'localhost', nil}
@@ -384,7 +402,11 @@ defmodule Paracusia.MpdClient do
         {p, ""} -> p
       end
     end
-    {:ok, sock_passive} = :gen_tcp.connect(hostname, port, [:binary, active: false])
+    # When the GenServer is restarted as a result of the MPD server restarting (and therefore
+    # closing its connection to Paracusia), connecting to MPD may fail if MPD takes longer to
+    # restart than Paracusia. For that reason, we retry connection establishment.
+    sock_passive = connect_retry(hostname, port,
+                                 attempt: 1, retry_after: retry_after, max_attempts: max_attempts)
     {:ok, sock_active}  = :gen_tcp.connect(hostname, port, [:binary, active: :false])
     "OK MPD" <> _ = recv_until_newline(sock_passive)
     "OK MPD" <> _ = recv_until_newline(sock_active)

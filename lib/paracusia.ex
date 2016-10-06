@@ -7,7 +7,7 @@ defmodule Paracusia do
     import Supervisor.Spec, warn: false
 
     children = [
-      worker(Paracusia.MpdClient, [])
+      worker(Paracusia.MpdClient, [[retry_after: 100, max_attempts: 3]])
     ]
 
     # See http://elixir-lang.org/docs/stable/elixir/Supervisor.html
