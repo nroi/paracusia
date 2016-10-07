@@ -1,4 +1,5 @@
 defmodule Paracusia.MpdClient.Queue do
+  alias Paracusia.MpdTypes
   alias Paracusia.MpdClient
   alias Paracusia.MessageParser
 
@@ -7,37 +8,13 @@ defmodule Paracusia.MpdClient.Queue do
 
   See also: https://musicpd.org/doc/protocol/queue.html
 
-  Note that, unlike the official specification, we use the term "queue" rather than "playlist' in
+  Note that, unlike the official specification, we use the term "queue" rather than "playlist" in
   order to distinguish between MPD playlists saved in the playlists directory in m3u format, and the
   current playlist.
   Furthermore, we use the term `id` when referring to the unique identifier of a song in the entire
   database, and the term `position` when referring to a zero-based index inside the queue.
   """
 
-
-  @typedoc"""
-  As described at https://musicpd.org/doc/protocol/tags.html
-  """
-  @type tag :: :artist |
-               :artistsort |
-               :album |
-               :albumsort |
-               :albumartist |
-               :albumartistsort |
-               :title |
-               :track |
-               :name |
-               :genre |
-               :date |
-               :composer |
-               :performer |
-               :comment |
-               :disc |
-               :musicbrainz_artistid |
-               :musicbrainz_albumid |
-               :musicbrainz_albumartistid |
-               :musicbrainz_trackid |
-               :musicbrainz_releasetrackid
 
   @typedoc"""
   positions are used to identify the position of a song in the queue. The first song in the queue
@@ -63,20 +40,20 @@ defmodule Paracusia.MpdClient.Queue do
   Adds the file `uri` to the queue.
   Directories are added recursively. `uri` can also be a single file.
   """
-  @spec add(String.t) :: :ok | MpdClient.mpd_error
+  @spec add(String.t) :: :ok | MpdTypes.mpd_error
   def add(uri) do
-    MpdClient.send_and_ack('add "#{uri}"\n')
+    MpdClient.send_and_ack(~s(add "#{uri}"\n))
   end
 
 
   @doc"""
   Adds the `uri` at the given position to the queue (non-recursively) and returns the song id.
   """
-  @spec add_id(String.t, position) :: {:ok, id} | MpdClient.mpd_error
+  @spec add_id(String.t, position) :: {:ok, id} | MpdTypes.mpd_error
   def add_id(uri, position) do
     msg = case position do
-      nil -> 'addid "#{uri}"\n'
-      pos -> 'addid "#{uri}" #{pos}\n'
+      nil -> ~s(addid "#{uri}"\n)
+      pos -> ~s(addid "#{uri}" #{pos}"\n)
     end
     with {:ok, reply} <- MpdClient.send_and_recv(msg) do
       id = case reply do
@@ -92,9 +69,9 @@ defmodule Paracusia.MpdClient.Queue do
   @doc"""
   Adds the `uri` to the end of the queue (non-recursively) and returns the song id.
   """
-  @spec add_id(String.t) :: {:ok, id} | MpdClient.mpd_error
+  @spec add_id(String.t) :: {:ok, id} | MpdTypes.mpd_error
   def add_id(uri) do
-    msg = 'addid "#{uri}"\n'
+    msg = ~s(addid "#{uri}"\n)
     with {:ok, reply} <- MpdClient.send_and_recv(msg) do
       id = case reply do
         "Id: " <> rest ->
@@ -109,7 +86,7 @@ defmodule Paracusia.MpdClient.Queue do
   @doc"""
   Clears the queue.
   """
-  @spec clear() :: :ok | MpdClient.mpd_error
+  @spec clear() :: :ok | MpdTypes.mpd_error
   def clear() do
     MpdClient.send_and_ack("clear\n")
   end
@@ -118,7 +95,7 @@ defmodule Paracusia.MpdClient.Queue do
   @doc"""
   Deletes the song at position or multiple songs from the given range from the queue.
   """
-  @spec delete(position | range) :: :ok | MpdClient.mpd_error
+  @spec delete(position | range) :: :ok | MpdTypes.mpd_error
   def delete({start, until}) do
     MpdClient.send_and_ack("delete #{start}:#{until}\n")
   end
@@ -130,7 +107,7 @@ defmodule Paracusia.MpdClient.Queue do
   @doc"""
   Deletes the song with the given `id` from the queue.
   """
-  @spec delete_id(id) :: :ok | MpdClient.mpd_error
+  @spec delete_id(id) :: :ok | MpdTypes.mpd_error
   def delete_id(id) do
     MpdClient.send_and_ack("deleteid #{id}\n")
   end
@@ -141,7 +118,7 @@ defmodule Paracusia.MpdClient.Queue do
 
   `from` can be either a single position or a range.
   """
-  @spec move(position | range, position) :: :ok | MpdClient.mpd_error
+  @spec move(position | range, position) :: :ok | MpdTypes.mpd_error
   def move({from, until}, to) do
     MpdClient.send_and_ack("move #{from}:#{until} #{to}\n")
   end
@@ -165,7 +142,7 @@ defmodule Paracusia.MpdClient.Queue do
 
   `needle` is the corresponding value that the given tag should have.
   """
-  @spec find(tag, String.t) :: list | MpdClient.mpd_error
+  @spec find(MpdTypes.tag, String.t) :: list | MpdTypes.mpd_error
   def find(tag, needle) do
     msg = "playlistfind #{to_string(tag)} #{needle}\n"
     with {:ok, reply} <- MpdClient.send_and_recv(msg) do
@@ -189,7 +166,7 @@ defmodule Paracusia.MpdClient.Queue do
   @doc"""
   Returns a list of maps containing info about the songs currently in the queue.
   """
-  @spec songs_info() :: [map]
+  @spec songs_info() :: {:ok, [map]} | MpdTypes.mpd_error
   def songs_info() do
     with {:ok, reply} <- MpdClient.send_and_recv("playlistid\n") do
       {:ok, reply |> MessageParser.parse_items}
@@ -200,7 +177,7 @@ defmodule Paracusia.MpdClient.Queue do
   @doc"""
   Returns a map containing info about the song at position `songpos`.
   """
-  @spec song_info_from_pos(position) :: {:ok, map} | MpdClient.mpd_error
+  @spec song_info_from_pos(position) :: {:ok, map} | MpdTypes.mpd_error
   def song_info_from_pos(songpos) do
     msg = "playlistinfo #{songpos}\n"
     with {:ok, reply} <- MpdClient.send_and_recv(msg) do
@@ -216,7 +193,7 @@ defmodule Paracusia.MpdClient.Queue do
   All returned songs are contained in the playlist in the range from `start` up to (excluding)
   `until`.
   """
-  @spec songs_info_from_range(range) :: {:ok, [map]} | MpdClient.mpd_error
+  @spec songs_info_from_range(range) :: {:ok, [map]} | MpdTypes.mpd_error
   def songs_info_from_range({start, until}) do
     msg = "playlistinfo #{start}:#{until}\n"
     with {:ok, reply} <- MpdClient.send_and_recv(msg) do
@@ -228,7 +205,7 @@ defmodule Paracusia.MpdClient.Queue do
   @doc"""
   Searches case-insensitively for partial matches in the queue.
   """
-  @spec search(tag, String.t) :: {:ok, [map]} | MpdClient.mpd_error
+  @spec search(MpdTypes.tag, String.t) :: {:ok, [map]} | MpdTypes.mpd_error
   def search(tag, needle) do
     msg = "playlistsearch #{to_string(tag)} #{needle}\n"
     with {:ok, reply} <- MpdClient.send_and_recv(msg) do
@@ -268,7 +245,7 @@ defmodule Paracusia.MpdClient.Queue do
   To detect songs that were deleted at the end of the playlist, use playlistlength returned by
   status command.
   """
-  @spec changes(integer) :: {:ok, [map]} | MpdClient.mpd_error
+  @spec changes(integer) :: {:ok, [map]} | MpdTypes.mpd_error
   def changes(version) do
     msg = "plchanges #{version}\n"
     with {:ok, reply} <- MpdClient.send_and_recv(msg) do
@@ -286,7 +263,7 @@ defmodule Paracusia.MpdClient.Queue do
   To detect songs that were deleted at the end of the playlist, use playlistlength returned by
   status command.
   """
-  @spec changes_pos_id(integer) :: {:ok, [map]} | MpdClient.mpd_error
+  @spec changes_pos_id(integer) :: {:ok, [map]} | MpdTypes.mpd_error
   def changes_pos_id(version) do
     msg = "plchangesposid #{version}\n"
     with {:ok, reply} <- MpdClient.send_and_recv(msg) do
@@ -301,7 +278,7 @@ defmodule Paracusia.MpdClient.Queue do
   A higher priority means that it will be played first when "random" mode is enabled. A priority is
   an integer between 0 and 255. The default priority of new songs is 0.
   """
-  @spec set_priority(integer, range) :: :ok | MpdClient.mpd_error
+  @spec set_priority(integer, range) :: :ok | MpdTypes.mpd_error
   def set_priority(prio, {start, until}) do
     msg = "prio #{prio} #{start}:#{until}\n"
     MpdClient.send_and_ack(msg)
@@ -310,9 +287,9 @@ defmodule Paracusia.MpdClient.Queue do
   @doc"""
   Same as `set_priority/2`, except songs are addressed with their id.
   """
-  @spec set_priority_from_id(integer, id | [id]) :: :ok | MpdClient.mpd_error
+  @spec set_priority_from_id(integer, id | [id]) :: :ok | MpdTypes.mpd_error
   def set_priority_from_id(prio, ids) when is_list(ids) do
-    msg = 'prioid #{prio} #{ids |> Enum.join(" ")}\n'
+    msg = ~s(prioid #{prio} #{ids |> Enum.join(" ")}\n)
     MpdClient.send_and_ack(msg)
   end
   def set_priority_from_id(prio, id) when is_integer(id) do
@@ -327,7 +304,7 @@ defmodule Paracusia.MpdClient.Queue do
   `start` and `until` are offsets in seconds (fractional seconds allowed). A song that is currently
   playing cannot be manipulated this way.
   """
-  @spec range_id(id, integer, integer) :: :ok | MpdClient.mpd_error
+  @spec range_id(id, integer, integer) :: :ok | MpdTypes.mpd_error
   def range_id(id, start, until) do
     msg = "rangeid #{id} #{start}:#{until}\n"
     MpdClient.send_and_ack(msg)
@@ -337,7 +314,7 @@ defmodule Paracusia.MpdClient.Queue do
   @doc"""
   Removes the range that was previously set by calling `range_id/3`.
   """
-  @spec remove_range(id) :: :ok | MpdClient.mpd_error
+  @spec remove_range(id) :: :ok | MpdTypes.mpd_error
   def remove_range(id) do
     msg = "rangeid #{id} :\n"
     MpdClient.send_and_ack(msg)
@@ -347,7 +324,7 @@ defmodule Paracusia.MpdClient.Queue do
   @doc"""
   Shuffles the queue.
   """
-  @spec shuffle() :: :ok | MpdClient.mpd_error
+  @spec shuffle() :: :ok | MpdTypes.mpd_error
   def shuffle() do
     MpdClient.send_and_ack("shuffle\n")
   end
@@ -356,7 +333,7 @@ defmodule Paracusia.MpdClient.Queue do
   @doc"""
   Shuffles the queue in the given range.
   """
-  @spec shuffle(range) :: :ok | MpdClient.mpd_error
+  @spec shuffle(range) :: :ok | MpdTypes.mpd_error
   def shuffle({start, until}) do
     MpdClient.send_and_ack("shuffle #{start}:#{until}\n")
   end
@@ -365,7 +342,7 @@ defmodule Paracusia.MpdClient.Queue do
   @doc"""
   Swaps the positions of the songs at the given positions `pos1` and `pos2`.
   """
-  @spec swap(position, position) :: :ok | MpdClient.mpd_error
+  @spec swap(position, position) :: :ok | MpdTypes.mpd_error
   def swap(pos1, pos2) do
     MpdClient.send_and_ack("swap #{pos1}:#{pos2}\n")
   end
@@ -374,7 +351,7 @@ defmodule Paracusia.MpdClient.Queue do
   @doc"""
   Swaps the positions of the songs with ids `id1` and `id2`.
   """
-  @spec swapid(id, id) :: :ok | MpdClient.mpd_error
+  @spec swapid(id, id) :: :ok | MpdTypes.mpd_error
   def swapid(id1, id2) do
     MpdClient.send_and_ack("swapid #{id1}:#{id2}\n")
   end
@@ -387,7 +364,7 @@ defmodule Paracusia.MpdClient.Queue do
   overwritten by tags received from the server, and the data is gone when the song gets removed from
   the queue.
   """
-  @spec add_tag_id(id, tag, String.t) :: :ok | MpdClient.mpd_error
+  @spec add_tag_id(id, MpdTypes.tag, String.t) :: :ok | MpdTypes.mpd_error
   def add_tag_id(id, tag, value) do
     msg = "addtagid #{id} #{to_string(tag)} #{value}\n"
     MpdClient.send_and_ack(msg)
@@ -397,7 +374,7 @@ defmodule Paracusia.MpdClient.Queue do
   @doc"""
   Removes all tags from the song with the given id.
   """
-  @spec clear_all_tags(id) :: :ok | MpdClient.mpd_error
+  @spec clear_all_tags(id) :: :ok | MpdTypes.mpd_error
   def clear_all_tags(id) do
     MpdClient.send_and_ack("cleartagid #{id}\n")
   end
@@ -406,7 +383,7 @@ defmodule Paracusia.MpdClient.Queue do
   @doc"""
   Removes the given tag from the song with the given id.
   """
-  @spec clear_tag_id(id, tag) :: :ok | MpdClient.mpd_error
+  @spec clear_tag_id(id, MpdTypes.tag) :: :ok | MpdTypes.mpd_error
   def clear_tag_id(id, tag) do
     MpdClient.send_and_ack("cleartagid #{id} #{to_string(tag)}\n")
   end

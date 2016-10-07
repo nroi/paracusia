@@ -1,4 +1,5 @@
 defmodule Paracusia.MessageParser do
+  @moduledoc false
 
   def format_time(seconds) do
     justify = fn i ->
@@ -43,6 +44,8 @@ defmodule Paracusia.MessageParser do
 
   # Given a enumeration such as "Artist: Beatles\nArtist: Lady Gaga\n…", return the corresponding
   # list, e.g. ["Beatles", "Lady Gaga"].
+  # TODO we used this function in at least one case only because we did not know that the result
+  # could contain more data than just a simple key-value list. Check if we still need this function.
   def parse_newline_separated_enum(m) do
     m |> String.split("\n", trim: true)
       |> Enum.map(fn item -> case String.split(item, ": ", parts: 2) do
@@ -76,8 +79,8 @@ defmodule Paracusia.MessageParser do
   end
 
   @doc"""
-  Given a string composed newline-separated  strings starting with "outputid: …", return the
-  corresoponding list of maps.
+  Given a string composed newline-separated strings starting with "outputid: …", return the
+  corresponding list of maps.
   """
   def parse_outputs(m) do
     split_at_id = m

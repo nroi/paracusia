@@ -24,7 +24,7 @@ defmodule Paracusia.Query do
   def merge_tags(tags = [{tag, wanted}|rest], acc) do
     if Map.has_key?(%Paracusia.Query{}, tag) do
       prop = Map.get(%Paracusia.Query{}, tag)
-      merge_tags(rest, acc <> '#{prop} "#{wanted}" ')
+      merge_tags(rest, acc <> ~s(#{prop} "#{wanted}" ))
     else
       {tags, acc}
     end
@@ -35,15 +35,15 @@ defmodule Paracusia.Query do
     case merge_tags(x, acc) do
       {[], result} -> result
       {[{:any, wanted}|rest], partial_result} ->
-        merge_find(rest, partial_result <> 'any "#{wanted}" ')
+        merge_find(rest, partial_result <> ~s(any "#{wanted}" ))
       {[{:file, wanted}|rest], partial_result} ->
-        merge_find(rest, partial_result <> 'file "#{wanted}" ')
+        merge_find(rest, partial_result <> ~s(file "#{wanted}" ))
       {[{:base, wanted}|rest], partial_result} ->
-        merge_find(rest, partial_result <> 'base "#{wanted}" ')
+        merge_find(rest, partial_result <> ~s(base "#{wanted}" ))
       # TODO we should mention somewhere that MPD is using modified-since, but we need the user to
       # type modified_since (underscore) since we're using atoms.
       {[{:modified_since, wanted}|rest], partial_result} ->
-        merge_find(rest, partial_result <> 'modified-since "#{wanted}" ')
+        merge_find(rest, partial_result <> ~s(modified-since "#{wanted}" ))
     end
   end
 
@@ -79,7 +79,7 @@ defmodule Paracusia.Query do
       query_string =
         Paracusia.Query.merge_count(unquote(keyval), "")
         |> String.replace_suffix(" ", "")
-      MpdClient.count(query_string)
+      MpdClient.Database.count(query_string)
     end
   end
 
