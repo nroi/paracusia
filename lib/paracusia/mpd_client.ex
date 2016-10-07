@@ -1,8 +1,8 @@
 defmodule Paracusia.MpdClient do
   require Logger
+  alias Paracusia.PlayerState
   use GenServer
   alias Paracusia.MessageParser
-  alias Paracusia.PlayerState
   alias Paracusia.ConnectionState, as: ConnState
   import Paracusia.MessageParser, only: [string_to_boolean: 1, boolean_to_binary: 1]
 
@@ -17,7 +17,7 @@ defmodule Paracusia.MpdClient do
 
   # Connect to the MPD server.
   def start_link(opts) do
-    GenServer.start_link(__MODULE__, opts)
+    GenServer.start_link(__MODULE__, opts, name: __MODULE__)
   end
 
   @doc """
@@ -391,27 +391,10 @@ defmodule Paracusia.MpdClient do
     end
     :ok = :gen_tcp.send(sock_active, "idle\n")
     :ok = :inet.setopts(sock_active, [active: :once])
-    {:ok, genevent_pid} = GenEvent.start_link()
-    case Application.get_env(:paracusia, :event_handler) do
-      nil ->
-        :ok = GenEvent.add_handler(genevent_pid, Paracusia.DefaultEventHandler, nil)
-      event_handler ->
-        :ok = GenEvent.add_handler(genevent_pid, event_handler, nil)
-    end
     {:ok, _} = :timer.send_interval(6000, :send_ping)
-    {:ok, current_song} = current_song_from_socket(sock_passive)
-    {:ok, playlist} = playlist_from_socket(sock_passive)
-    {:ok, status} = status_from_socket(sock_passive)
-    {:ok, outputs} = outputs_from_socket(sock_passive)
-    mpd_state = %PlayerState{current_song: current_song,
-                             playlist: playlist,
-                             status: status,
-                             outputs: outputs}
-    _ = Logger.debug "initial mpd state is: #{inspect mpd_state}"
     conn_state = %ConnState{:sock_passive => sock_passive,
-                            :sock_active => sock_active,
-                            :genevent_pid => genevent_pid}
-    {:ok, {mpd_state, conn_state}}
+                            :sock_active => sock_active}
+    {:ok, conn_state}
   end
 
   def player_state do
@@ -502,93 +485,56 @@ defmodule Paracusia.MpdClient do
   ## See https://www.musicpd.org/doc/protocol/command_reference.html
   ## for an overview of all idle commands.
 
-  defp process_message(msg, genevent_pid) do
-    process_message(msg, genevent_pid, [])
+  defp process_message(msg) do
+    process_message(msg, [])
   end
 
-  defp process_message("changed: database\n" <> rest, genevent_pid, events) do
-    process_message(rest, genevent_pid, [:database_changed | events])
+  defp process_message("changed: database\n" <> rest, events) do
+    process_message(rest, [:database_changed | events])
   end
 
-  defp process_message("changed: update\n" <> rest, genevent_pid, events) do
-    process_message(rest, genevent_pid, [:update_changed | events])
+  defp process_message("changed: update\n" <> rest, events) do
+    process_message(rest, [:update_changed | events])
   end
 
-  defp process_message("changed: stored_playlist\n" <> rest, genevent_pid, events) do
-    process_message(rest, genevent_pid, [:stored_playlist_changed | events])
+  defp process_message("changed: stored_playlist\n" <> rest, events) do
+    process_message(rest, [:stored_playlist_changed | events])
   end
 
-  defp process_message("changed: playlist\n" <> rest, genevent_pid, events) do
-    process_message(rest, genevent_pid, [:playlist_changed | events])
+  defp process_message("changed: playlist\n" <> rest, events) do
+    process_message(rest, [:playlist_changed | events])
   end
 
-  defp process_message("changed: player\n" <> rest, genevent_pid, events) do
-    process_message(rest, genevent_pid, [:player_changed | events])
+  defp process_message("changed: player\n" <> rest, events) do
+    process_message(rest, [:player_changed | events])
   end
 
-  defp process_message("changed: mixer\n" <> rest, genevent_pid, events) do
-    process_message(rest, genevent_pid, [:mixer_changed | events])
+  defp process_message("changed: mixer\n" <> rest, events) do
+    process_message(rest, [:mixer_changed | events])
   end
 
-  defp process_message("changed: output\n" <> rest, genevent_pid, events) do
-    process_message(rest, genevent_pid, [:outputs_changed | events])
+  defp process_message("changed: output\n" <> rest, events) do
+    process_message(rest, [:outputs_changed | events])
   end
 
-  defp process_message("changed: options\n" <> rest, genevent_pid, events) do
-    process_message(rest, genevent_pid, [:options_changed | events])
+  defp process_message("changed: options\n" <> rest, events) do
+    process_message(rest, [:options_changed | events])
   end
 
-  defp process_message("changed: sticker\n" <> rest, genevent_pid, events) do
-    process_message(rest, genevent_pid, [:sticker_changed | events])
+  defp process_message("changed: sticker\n" <> rest, events) do
+    process_message(rest, [:sticker_changed | events])
   end
 
-  defp process_message("changed: subscription\n" <> rest, genevent_pid, events) do
-    process_message(rest, genevent_pid, [:subscription_changed | events])
+  defp process_message("changed: subscription\n" <> rest, events) do
+    process_message(rest, [:subscription_changed | events])
   end
 
-  defp process_message("changed: message\n" <> rest, genevent_pid, events) do
-    process_message(rest, genevent_pid, [:message_changed | events])
+  defp process_message("changed: message\n" <> rest, events) do
+    process_message(rest, [:message_changed | events])
   end
 
-  defp process_message("OK\n", _, events) do
+  defp process_message("OK\n", events) do
     events
-  end
-
-  defp new_ps_from_events(ps, events, socket) do
-    new_outputs = if Enum.member?(events, :outputs_changed) do
-      outputs_from_socket(socket)
-    else
-      ps.outputs
-    end
-    new_current_song = if Enum.member?(events, :player_changed) do
-      case current_song_from_socket(socket) do
-        {:ok, song} -> song
-      end
-    else
-      ps.current_song
-    end
-    new_playlist = if Enum.member?(events, :playlist_changed) do
-      {:ok, playlist} = playlist_from_socket(socket)
-      playlist
-    else
-      ps.playlist
-    end
-    status_changed = Enum.any?([:mixer_changed, :player_changed, :options_changed], fn subsystem ->
-      Enum.member?(events, subsystem)
-    end)
-    new_status = if status_changed do
-      case status_from_socket(socket) do
-        {:ok, status} -> status
-      end
-    else
-      ps.status
-    end
-    %PlayerState{
-      :current_song => new_current_song,
-      :playlist => new_playlist,
-      :status => new_status,
-      :outputs => new_outputs,
-    }
   end
 
   defp seek_to_seconds(socket, seconds) do
@@ -610,100 +556,91 @@ defmodule Paracusia.MpdClient do
 
 
   def handle_call({:lsinfo, uri}, _from,
-                  state = {%PlayerState{}, cs = %ConnState{}}) do
-    :ok = :gen_tcp.send(cs.sock_passive, "lsinfo \"#{uri}\"\n")
-    answer = with {:ok, m} <- recv_until_ok(cs.sock_passive) do
+                  state = %ConnState{}) do
+    :ok = :gen_tcp.send(state.sock_passive, "lsinfo \"#{uri}\"\n")
+    answer = with {:ok, m} <- recv_until_ok(state.sock_passive) do
       {:ok, MessageParser.parse_items(m)}
     end
     {:reply, answer, state}
   end
 
-  def handle_call(:update, _from,
-                  state = {%PlayerState{}, cs = %ConnState{}}) do
-    :ok = :gen_tcp.send(cs.sock_passive, "update\n")
-    answer = with {:ok, "updating_db: " <> rest} <- recv_until_ok(cs.sock_passive) do
+  def handle_call(:update, _from, state = %ConnState{}) do
+    :ok = :gen_tcp.send(state.sock_passive, "update\n")
+    answer = with {:ok, "updating_db: " <> rest} <- recv_until_ok(state.sock_passive) do
       job_id = rest |> String.replace_suffix("\n", "") |> String.to_integer
       {:ok, job_id}
     end
     {:reply, answer, state}
   end
 
-  def handle_call({:update, uri}, _from,
-                  state = {%PlayerState{}, cs = %ConnState{}}) do
-    :ok = :gen_tcp.send(cs.sock_passive, "update \"#{uri}\"\n")
-    answer = with {:ok, "updating_db: " <> rest} <- recv_until_ok(cs.sock_passive) do
+  def handle_call({:update, uri}, _from, state = %ConnState{}) do
+    :ok = :gen_tcp.send(state.sock_passive, "update \"#{uri}\"\n")
+    answer = with {:ok, "updating_db: " <> rest} <- recv_until_ok(state.sock_passive) do
       job_id = rest |> String.replace_suffix("\n", "") |> String.to_integer
       {:ok, job_id}
     end
     {:reply, answer, state}
   end
 
-  def handle_call({:find, query}, _from,
-                  state = {%PlayerState{}, cs = %ConnState{}}) do
-    :ok = :gen_tcp.send(cs.sock_passive, "find #{query}\n")
-    answer = with {:ok, m} <- recv_until_ok(cs.sock_passive) do
+  def handle_call({:find, query}, _from, state = %ConnState{}) do
+    :ok = :gen_tcp.send(state.sock_passive, "find #{query}\n")
+    answer = with {:ok, m} <- recv_until_ok(state.sock_passive) do
       {:ok, MessageParser.parse_newline_separated(m)}
     end
     {:reply, answer, state}
   end
 
-  def handle_call({:findadd, query}, _from,
-                  state = {%PlayerState{}, cs = %ConnState{}}) do
-    :ok = :gen_tcp.send(cs.sock_passive, "findadd #{query}\n")
-    answer = with {:ok, m} <- recv_until_ok(cs.sock_passive) do
+  def handle_call({:findadd, query}, _from, state = %ConnState{}) do
+    :ok = :gen_tcp.send(state.sock_passive, "findadd #{query}\n")
+    answer = with {:ok, m} <- recv_until_ok(state.sock_passive) do
       {:ok, MessageParser.parse_newline_separated(m)}
     end
     {:reply, answer, state}
   end
 
-  def handle_call({:list, type}, _from,
-                  state = {%PlayerState{}, cs = %ConnState{}}) do
-    :ok = :gen_tcp.send(cs.sock_passive, "list #{type}\n")
-    answer = with {:ok, m} <- recv_until_ok(cs.sock_passive) do
+  def handle_call({:list, type}, _from, state = %ConnState{}) do
+    :ok = :gen_tcp.send(state.sock_passive, "list #{type}\n")
+    answer = with {:ok, m} <- recv_until_ok(state.sock_passive) do
       {:ok, m |> MessageParser.parse_newline_separated_enum}
     end
     {:reply, answer, state}
   end
 
-  def handle_call({:listall, uri}, _from,
-                  state = {%PlayerState{}, cs = %ConnState{}}) do
-    :ok = :gen_tcp.send(cs.sock_passive, "listall #{uri}\n")
-    answer = with {:ok, m} <- recv_until_ok(cs.sock_passive) do
+  def handle_call({:listall, uri}, _from, state = %ConnState{}) do
+    :ok = :gen_tcp.send(state.sock_passive, "listall #{uri}\n")
+    answer = with {:ok, m} <- recv_until_ok(state.sock_passive) do
       {:ok, MessageParser.parse_uris(m)}
     end
     {:reply, answer, state}
   end
 
-  def handle_call({:count, query}, _from,
-                  state = {%PlayerState{}, cs = %ConnState{}}) do
-    :ok = :gen_tcp.send(cs.sock_passive, "count #{query}\n")
-    answer = with {:ok, m} <- recv_until_ok(cs.sock_passive) do
+  def handle_call({:count, query}, _from, state = %ConnState{}) do
+    :ok = :gen_tcp.send(state.sock_passive, "count #{query}\n")
+    answer = with {:ok, m} <- recv_until_ok(state.sock_passive) do
       {:ok, MessageParser.parse_newline_separated(m)}
     end
     {:reply, answer, state}
   end
 
-  def handle_call({:debug, data}, _from,
-                  state = {%PlayerState{}, cs = %ConnState{}}) do
-    :ok = :gen_tcp.send(cs.sock_passive, data)
-    {:ok, answer} = recv_until_ok(cs.sock_passive)
+  def handle_call({:debug, data}, _from, state = %ConnState{}) do
+    :ok = :gen_tcp.send(state.sock_passive, data)
+    {:ok, answer} = recv_until_ok(state.sock_passive)
     {:reply, answer, state}
   end
 
-  def handle_call(:playlistinfo, _from,
-                  state = {%PlayerState{}, cs = %ConnState{}}) do
-    answer = playlist_from_socket(cs.sock_passive)
+  def handle_call(:playlistinfo, _from, state = %ConnState{}) do
+    answer = playlist_from_socket(state.sock_passive)
     {:reply, answer, state}
   end
 
-  def handle_call(:status, _from, state = {%PlayerState{}, cs = %ConnState{}}) do
-    answer = status_from_socket(cs.sock_passive)
+  def handle_call(:status, _from, state = %ConnState{}) do
+    answer = status_from_socket(state.sock_passive)
     {:reply, answer, state}
   end
 
-  def handle_call(:stats, _from, state = {%PlayerState{}, cs = %ConnState{}}) do
-    :ok = :gen_tcp.send(cs.sock_passive, "stats\n")
-    answer = with {:ok, reply} <- recv_until_ok(cs.sock_passive) do
+  def handle_call(:stats, _from, state = %ConnState{}) do
+    :ok = :gen_tcp.send(state.sock_passive, "stats\n")
+    answer = with {:ok, reply} <- recv_until_ok(state.sock_passive) do
       string_map = reply |> MessageParser.parse_newline_separated
       answer = %PlayerState.Stats{
         artists: String.to_integer(string_map["artists"]),
@@ -718,10 +655,9 @@ defmodule Paracusia.MpdClient do
     {:reply, answer, state}
   end
 
-  def handle_call({:readcomments, uri}, _from,
-                  state = {%PlayerState{}, cs = %ConnState{}}) do
-    :ok = :gen_tcp.send(cs.sock_passive, "readcomments \"#{uri}\"\n")
-    answer = with {:ok, reply} <- recv_until_ok(cs.sock_passive) do
+  def handle_call({:readcomments, uri}, _from, state = %ConnState{}) do
+    :ok = :gen_tcp.send(state.sock_passive, 'readcomments "#{uri}"\n')
+    answer = with {:ok, reply} <- recv_until_ok(state.sock_passive) do
       lines = case reply |> String.trim_trailing("\n") |> String.split("\n") do
         [""] -> []  # map over empty sequence if server has replied with newline
         x    -> x
@@ -735,98 +671,85 @@ defmodule Paracusia.MpdClient do
     {:reply, answer, state}
   end
 
-  def handle_call(:currentsong, _from,
-                  state = {%PlayerState{}, cs = %ConnState{}}) do
-    {:reply, current_song_from_socket(cs.sock_passive), state}
+  def handle_call(:currentsong, _from, state = %ConnState{}) do
+    {:reply, current_song_from_socket(state.sock_passive), state}
   end
 
-  def handle_call(:playlist_state, _from, state = {ps = %PlayerState{}, _}) do
-    {:reply, ps, state}
-  end
-
-  def handle_call({:setvol, volume}, _from, state = {%PlayerState{}, cs = %ConnState{}}) do
-    :ok = :gen_tcp.send(cs.sock_passive, "setvol #{volume}\n")
-    reply = ok_from_socket(cs.sock_passive)
+  def handle_call({:setvol, volume}, _from, state = %ConnState{}) do
+    :ok = :gen_tcp.send(state.sock_passive, "setvol #{volume}\n")
+    reply = ok_from_socket(state.sock_passive)
     {:reply, reply, state}
   end
 
-  def handle_call(:outputs, _from, state = {%PlayerState{}, cs = %ConnState{}}) do
-    reply = outputs_from_socket(cs.sock_passive)
+  def handle_call(:outputs, _from, state = %ConnState{}) do
+    reply = outputs_from_socket(state.sock_passive)
     {:reply, reply, state}
   end
 
-  def handle_call({:send_and_ack, msg}, _from,
-                  state = {%PlayerState{}, cs = %ConnState{}}) do
-    :ok = :gen_tcp.send(cs.sock_passive, msg)
-    reply = ok_from_socket(cs.sock_passive)
+  def handle_call({:send_and_ack, msg}, _from, state = %ConnState{}) do
+    :ok = :gen_tcp.send(state.sock_passive, msg)
+    reply = ok_from_socket(state.sock_passive)
     {:reply, reply, state}
   end
 
-  def handle_call({:send_and_recv, msg}, _from,
-                  state = {%PlayerState{}, cs = %ConnState{}}) do
-    :ok = :gen_tcp.send(cs.sock_passive, msg)
-    reply = recv_until_ok(cs.sock_passive)
+  def handle_call({:send_and_recv, msg}, _from, state = %ConnState{}) do
+    :ok = :gen_tcp.send(state.sock_passive, msg)
+    reply = recv_until_ok(state.sock_passive)
     {:reply, reply, state}
   end
 
-  def handle_call({:seek_to_percent, percent}, _from,
-                  state = {ps = %PlayerState{}, cs = %ConnState{}}) do
-    duration = ps.current_song["Time"] |> String.to_integer
-    secs = duration * (percent/100)
-    answer = seek_to_seconds(cs.sock_passive, secs)
+  # TODO reimplement this in the appropriate module
+  # def handle_call({:seek_to_percent, percent}, _from,
+                  # state = {ps = %PlayerState{}, cs = %ConnState{}}) do
+    # duration = ps.current_song["Time"] |> String.to_integer
+    # secs = duration * (percent/100)
+    # answer = seek_to_seconds(cs.sock_passive, secs)
+    # {:reply, answer, state}
+  # end
+
+  def handle_call({:seek, seconds}, _from, state = %ConnState{}) do
+    answer = seek_to_seconds(state.sock_passive, seconds)
     {:reply, answer, state}
   end
 
-  def handle_call({:seek, seconds}, _from,
-                  state = {%PlayerState{}, cs = %ConnState{}}) do
-    answer = seek_to_seconds(cs.sock_passive, seconds)
-    {:reply, answer, state}
-  end
-
-  def handle_call(:kill, _from, state = {%PlayerState{}, cs = %ConnState{}}) do
-    :ok = :gen_tcp.send(cs.sock_passive, "kill\n")
+  def handle_call(:kill, _from, state = %ConnState{}) do
+    :ok = :gen_tcp.send(state.sock_passive, "kill\n")
     {:reply, :ok, state}
   end
 
-  def handle_call(:player_state, _from, state = {ps = %PlayerState{}, %ConnState{}}) do
-    {:reply, ps, state}
+  def handle_call(:ping, _from, state = %ConnState{}) do
+    {:reply, ping(state.sock_passive), state}
   end
 
-  def handle_call(:ping, _from, state = {%PlayerState{}, cs = %ConnState{}}) do
-    {:reply, ping(cs.sock_passive), state}
-  end
-
-  def handle_info(:send_ping, state = {%PlayerState{}, cs = %ConnState{}}) do
-    :ok = ping(cs.sock_passive)
+  def handle_info(:send_ping, state = %ConnState{}) do
+    :ok = ping(state.sock_passive)
     {:noreply, state}
   end
 
-  def handle_info({:tcp, _, msg}, {ps = %PlayerState{}, cs = %ConnState{}}) do
+  def handle_info({:tcp, _, msg}, state = %ConnState{}) do
     complete_msg =
       if String.ends_with?(msg, "OK\n") do
         msg
       else
-        case recv_until_ok(cs.sock_active, msg) do
+        case recv_until_ok(state.sock_active, msg) do
           {:ok, without_trailing_ok} -> without_trailing_ok <> "OK\n"
         end
       end
-    events = process_message(complete_msg, cs.genevent_pid)
-    new_ps = new_ps_from_events(ps, events, cs.sock_passive)
-    Enum.each(events, &(GenEvent.notify(cs.genevent_pid, {&1, new_ps})))
-    _ = Logger.debug "Received the following idle events: #{inspect events}"
+    events = process_message(complete_msg)
+    GenServer.cast(Paracusia.PlayerState, {:events, events})
     # We have received this message as a result of having sent idle. We need to resend idle
     # each time after we have obtained a new idle message.
-    :ok = :gen_tcp.send(cs.sock_active, "idle\n")
-    :ok = :inet.setopts(cs.sock_active, [active: :once])
-    {:noreply, {new_ps, cs}}
+    :ok = :gen_tcp.send(state.sock_active, "idle\n")
+    :ok = :inet.setopts(state.sock_active, [active: :once])
+    {:noreply, state}
   end
 
-  def terminate(:shutdown, {%PlayerState{}, cs = %ConnState{}}) do
+  def terminate(:shutdown, state = %ConnState{}) do
     _ = Logger.debug "Teardown connection to MPD."
-    :ok = :gen_tcp.send(cs.sock_active, "close\n")
-    :ok = :gen_tcp.send(cs.sock_passive, "close\n")
-    :ok = :gen_tcp.close(cs.sock_active)
-    :ok = :gen_tcp.close(cs.sock_passive)
+    :ok = :gen_tcp.send(state.sock_active, "close\n")
+    :ok = :gen_tcp.send(state.sock_passive, "close\n")
+    :ok = :gen_tcp.close(state.sock_active)
+    :ok = :gen_tcp.close(state.sock_passive)
     :ok
   end
 

@@ -7,12 +7,13 @@ defmodule Paracusia do
     import Supervisor.Spec, warn: false
 
     children = [
-      worker(Paracusia.MpdClient, [[retry_after: 100, max_attempts: 3]])
+      worker(Paracusia.MpdClient, [[retry_after: 100, max_attempts: 3]]),
+      worker(Paracusia.PlayerState, [])
     ]
 
     # See http://elixir-lang.org/docs/stable/elixir/Supervisor.html
     # for other strategies and supported options
-    opts = [strategy: :one_for_one, name: Paracusia.Supervisor]
+    opts = [strategy: :rest_for_one, name: Paracusia.Supervisor]
     Supervisor.start_link(children, opts)
   end
 
