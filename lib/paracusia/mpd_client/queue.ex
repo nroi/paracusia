@@ -114,6 +114,7 @@ defmodule Paracusia.MpdClient.Queue do
     GenServer.call(MpdClient, {:send_and_ack, "clear\n"})
   end
 
+
   @doc"""
   Deletes the song at position or multiple songs from the given range from the queue.
   """
@@ -124,7 +125,6 @@ defmodule Paracusia.MpdClient.Queue do
   def delete(position) do
     GenServer.call(MpdClient, {:send_and_ack, "delete #{position}\n"})
   end
-
 
 
   @doc"""

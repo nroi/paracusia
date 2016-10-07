@@ -96,29 +96,6 @@ defmodule Paracusia.MpdClient do
   def pause(false), do:
     GenServer.call(__MODULE__, {:send_and_ack, "pause 0\n"})
 
-  @doc"""
-  Remove the song at position `pos` from the playlist.
-  """
-  @spec delete(integer | String.t) :: :ok | mpd_error
-  def delete(pos) do
-    GenServer.call(__MODULE__, {:send_and_ack, "delete #{pos}\n"})
-  end
-
-  @doc"""
-  Deletes all songs from `start` up to `until`, excluding `until`. Indexing starts at zero.
-  """
-  @spec delete(integer, integer) :: :ok | mpd_error
-  def delete(start, until) do
-    GenServer.call(__MODULE__, {:send_and_ack, "delete #{start}:#{until}\n"})
-  end
-
-  @doc"""
-  Deletes the song with the given id from the playlist.
-  """
-  @spec deleteid(integer | String.t) :: :ok | mpd_error
-  def deleteid(song_id) do
-    GenServer.call(__MODULE__, {:send_and_ack, "deleteid #{song_id}\n"})
-  end
 
   @doc"""
   Sets repeat state to true or false.
@@ -707,13 +684,6 @@ defmodule Paracusia.MpdClient do
       {:ok, MessageParser.parse_newline_separated(m)}
     end
     {:reply, answer, state}
-  end
-
-  def handle_call({:add, uri}, _from,
-                  state = {%PlayerState{}, cs = %ConnState{}}) do
-    :ok = :gen_tcp.send(cs.sock_passive, "add \"#{uri}\"\n")
-    reply = ok_from_socket(cs.sock_passive)
-    {:reply, reply, state}
   end
 
   def handle_call({:debug, data}, _from,
