@@ -34,7 +34,7 @@ defmodule Paracusia.MpdClient.AudioOutputs do
   @doc"""
   Returns a map containing information about all audio outputs.
   """
-  @spec list() :: [%Paracusia.MpdClient.AudioOutputs{}] | {:error, {String.t, String.t}}
+  @spec list() :: {:ok, [%Paracusia.MpdClient.AudioOutputs{}]} | {:error, {String.t, String.t}}
   def list() do
     GenServer.call(Paracusia.MpdClient, :outputs)
   end
