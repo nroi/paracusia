@@ -15,11 +15,9 @@ defmodule Paracusia.MpdClient do
   # TODO consistency: Make sure that all public functions return {:ok, _} or :{error, _}
   ## Client API
 
-  @doc """
-  Connect to the MPD server.
-  """
+  # Connect to the MPD server.
   def start_link(opts) do
-    GenServer.start_link(__MODULE__, opts, name: __MODULE__)
+    GenServer.start_link(__MODULE__, opts)
   end
 
   @doc """
