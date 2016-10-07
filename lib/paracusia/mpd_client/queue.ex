@@ -65,7 +65,7 @@ defmodule Paracusia.MpdClient.Queue do
   """
   @spec add(String.t) :: :ok | MpdClient.mpd_error
   def add(uri) do
-    GenServer.call(MpdClient, {:send_and_ack, 'add "#{uri}"\n'})
+    MpdClient.send_and_ack('add "#{uri}"\n')
   end
 
 
@@ -78,7 +78,7 @@ defmodule Paracusia.MpdClient.Queue do
       nil -> 'addid "#{uri}"\n'
       pos -> 'addid "#{uri}" #{pos}\n'
     end
-    with {:ok, reply} <- GenServer.call(MpdClient, {:send_and_recv, msg}) do
+    with {:ok, reply} <- MpdClient.send_and_recv(msg) do
       id = case reply do
         "Id: " <> rest ->
           {id, "\n"} = Integer.parse(rest)
@@ -95,7 +95,7 @@ defmodule Paracusia.MpdClient.Queue do
   @spec add_id(String.t) :: {:ok, id} | MpdClient.mpd_error
   def add_id(uri) do
     msg = 'addid "#{uri}"\n'
-    with {:ok, reply} <- GenServer.call(MpdClient, {:send_and_recv, msg}) do
+    with {:ok, reply} <- MpdClient.send_and_recv(msg) do
       id = case reply do
         "Id: " <> rest ->
           {id, "\n"} = Integer.parse(rest)
@@ -111,7 +111,7 @@ defmodule Paracusia.MpdClient.Queue do
   """
   @spec clear() :: :ok | MpdClient.mpd_error
   def clear() do
-    GenServer.call(MpdClient, {:send_and_ack, "clear\n"})
+    MpdClient.send_and_ack("clear\n")
   end
 
 
@@ -120,10 +120,10 @@ defmodule Paracusia.MpdClient.Queue do
   """
   @spec delete(position | range) :: :ok | MpdClient.mpd_error
   def delete({start, until}) do
-    GenServer.call(MpdClient, {:send_and_ack, "delete #{start}:#{until}\n"})
+    MpdClient.send_and_ack("delete #{start}:#{until}\n")
   end
   def delete(position) do
-    GenServer.call(MpdClient, {:send_and_ack, "delete #{position}\n"})
+    MpdClient.send_and_ack("delete #{position}\n")
   end
 
 
@@ -132,7 +132,7 @@ defmodule Paracusia.MpdClient.Queue do
   """
   @spec delete_id(id) :: :ok | MpdClient.mpd_error
   def delete_id(id) do
-    GenServer.call(MpdClient, {:send_and_ack, "deleteid #{id}\n"})
+    MpdClient.send_and_ack("deleteid #{id}\n")
   end
 
 
@@ -143,10 +143,10 @@ defmodule Paracusia.MpdClient.Queue do
   """
   @spec move(position | range, position) :: :ok | MpdClient.mpd_error
   def move({from, until}, to) do
-    GenServer.call(MpdClient, {:send_and_ack, "move #{from}:#{until} #{to}\n"})
+    MpdClient.send_and_ack("move #{from}:#{until} #{to}\n")
   end
   def move(from, to) do
-    GenServer.call(MpdClient, {:send_and_ack, "move #{from} #{to}\n"})
+    MpdClient.send_and_ack("move #{from} #{to}\n")
   end
 
 
@@ -156,7 +156,7 @@ defmodule Paracusia.MpdClient.Queue do
   If `to` is negative, it is relative to the current song in the queue (if there is one).
   """
   def move_id(from, to) do
-    GenServer.call(MpdClient, {:send_and_ack, "moveid #{from} #{to}\n"})
+    MpdClient.send_and_ack("moveid #{from} #{to}\n")
   end
 
 
@@ -168,7 +168,7 @@ defmodule Paracusia.MpdClient.Queue do
   @spec find(tag, String.t) :: list | MpdClient.mpd_error
   def find(tag, needle) do
     msg = "playlistfind #{to_string(tag)} #{needle}\n"
-    with {:ok, reply} <- GenServer.call(MpdClient, {:send_and_recv, msg}) do
+    with {:ok, reply} <- MpdClient.send_and_recv(msg) do
       {:ok, reply |> MessageParser.parse_items}
     end
   end
@@ -179,7 +179,7 @@ defmodule Paracusia.MpdClient.Queue do
   """
   @spec song_info_from_id(id) :: map
   def song_info_from_id(id) do
-    with {:ok, reply} <- GenServer.call(MpdClient, {:send_and_recv, "playlistid #{id}\n"}) do
+    with {:ok, reply} <- MpdClient.send_and_recv("playlistid #{id}\n") do
       [item] = reply |> MessageParser.parse_items
       {:ok, item}
     end
@@ -191,7 +191,7 @@ defmodule Paracusia.MpdClient.Queue do
   """
   @spec songs_info() :: [map]
   def songs_info() do
-    with {:ok, reply} <- GenServer.call(MpdClient, {:send_and_recv, "playlistid\n"}) do
+    with {:ok, reply} <- MpdClient.send_and_recv("playlistid\n") do
       {:ok, reply |> MessageParser.parse_items}
     end
   end
@@ -203,7 +203,7 @@ defmodule Paracusia.MpdClient.Queue do
   @spec song_info_from_pos(position) :: {:ok, map} | MpdClient.mpd_error
   def song_info_from_pos(songpos) do
     msg = "playlistinfo #{songpos}\n"
-    with {:ok, reply} <- GenServer.call(MpdClient, {:send_and_recv, msg}) do
+    with {:ok, reply} <- MpdClient.send_and_recv(msg) do
       [item] = reply |> MessageParser.parse_items
       {:ok, item}
     end
@@ -219,7 +219,7 @@ defmodule Paracusia.MpdClient.Queue do
   @spec songs_info_from_range(range) :: {:ok, [map]} | MpdClient.mpd_error
   def songs_info_from_range({start, until}) do
     msg = "playlistinfo #{start}:#{until}\n"
-    with {:ok, reply} <- GenServer.call(MpdClient, {:send_and_recv, msg}) do
+    with {:ok, reply} <- MpdClient.send_and_recv(msg) do
       {:ok, reply |> MessageParser.parse_items}
     end
   end
@@ -231,7 +231,7 @@ defmodule Paracusia.MpdClient.Queue do
   @spec search(tag, String.t) :: {:ok, [map]} | MpdClient.mpd_error
   def search(tag, needle) do
     msg = "playlistsearch #{to_string(tag)} #{needle}\n"
-    with {:ok, reply} <- GenServer.call(MpdClient, {:send_and_recv, msg}) do
+    with {:ok, reply} <- MpdClient.send_and_recv(msg) do
       {:ok, reply |> MessageParser.parse_items}
     end
   end
@@ -271,7 +271,7 @@ defmodule Paracusia.MpdClient.Queue do
   @spec changes(integer) :: {:ok, [map]} | MpdClient.mpd_error
   def changes(version) do
     msg = "plchanges #{version}\n"
-    with {:ok, reply} <- GenServer.call(MpdClient, {:send_and_recv, msg}) do
+    with {:ok, reply} <- MpdClient.send_and_recv(msg) do
       {:ok, reply |> MessageParser.parse_items}
     end
   end
@@ -289,7 +289,7 @@ defmodule Paracusia.MpdClient.Queue do
   @spec changes_pos_id(integer) :: {:ok, [map]} | MpdClient.mpd_error
   def changes_pos_id(version) do
     msg = "plchangesposid #{version}\n"
-    with {:ok, reply} <- GenServer.call(MpdClient, {:send_and_recv, msg}) do
+    with {:ok, reply} <- MpdClient.send_and_recv(msg) do
       {:ok, reply |> parse_plchangesposid}
     end
   end
@@ -304,7 +304,7 @@ defmodule Paracusia.MpdClient.Queue do
   @spec set_priority(integer, range) :: :ok | MpdClient.mpd_error
   def set_priority(prio, {start, until}) do
     msg = "prio #{prio} #{start}:#{until}\n"
-    GenServer.call(MpdClient, {:send_and_ack, msg})
+    MpdClient.send_and_ack(msg)
   end
 
   @doc"""
@@ -313,11 +313,11 @@ defmodule Paracusia.MpdClient.Queue do
   @spec set_priority_from_id(integer, id | [id]) :: :ok | MpdClient.mpd_error
   def set_priority_from_id(prio, ids) when is_list(ids) do
     msg = 'prioid #{prio} #{ids |> Enum.join(" ")}\n'
-    GenServer.call(MpdClient, {:send_and_ack, msg})
+    MpdClient.send_and_ack(msg)
   end
   def set_priority_from_id(prio, id) when is_integer(id) do
     msg = "prioid #{prio} #{id}\n"
-    GenServer.call(MpdClient, {:send_and_ack, msg})
+    MpdClient.send_and_ack(msg)
   end
 
 
@@ -330,7 +330,7 @@ defmodule Paracusia.MpdClient.Queue do
   @spec range_id(id, integer, integer) :: :ok | MpdClient.mpd_error
   def range_id(id, start, until) do
     msg = "rangeid #{id} #{start}:#{until}\n"
-    GenServer.call(MpdClient, {:send_and_ack, msg})
+    MpdClient.send_and_ack(msg)
   end
 
 
@@ -340,7 +340,7 @@ defmodule Paracusia.MpdClient.Queue do
   @spec remove_range(id) :: :ok | MpdClient.mpd_error
   def remove_range(id) do
     msg = "rangeid #{id} :\n"
-    GenServer.call(MpdClient, {:send_and_ack, msg})
+    MpdClient.send_and_ack(msg)
   end
 
 
@@ -349,7 +349,7 @@ defmodule Paracusia.MpdClient.Queue do
   """
   @spec shuffle() :: :ok | MpdClient.mpd_error
   def shuffle() do
-    GenServer.call(MpdClient, {:send_and_ack, "shuffle\n"})
+    MpdClient.send_and_ack("shuffle\n")
   end
 
 
@@ -358,7 +358,7 @@ defmodule Paracusia.MpdClient.Queue do
   """
   @spec shuffle(range) :: :ok | MpdClient.mpd_error
   def shuffle({start, until}) do
-    GenServer.call(MpdClient, {:send_and_ack, "shuffle #{start}:#{until}\n"})
+    MpdClient.send_and_ack("shuffle #{start}:#{until}\n")
   end
 
 
@@ -367,7 +367,7 @@ defmodule Paracusia.MpdClient.Queue do
   """
   @spec swap(position, position) :: :ok | MpdClient.mpd_error
   def swap(pos1, pos2) do
-    GenServer.call(MpdClient, {:send_and_ack, "swap #{pos1}:#{pos2}\n"})
+    MpdClient.send_and_ack("swap #{pos1}:#{pos2}\n")
   end
 
 
@@ -376,7 +376,7 @@ defmodule Paracusia.MpdClient.Queue do
   """
   @spec swapid(id, id) :: :ok | MpdClient.mpd_error
   def swapid(id1, id2) do
-    GenServer.call(MpdClient, {:send_and_ack, "swapid #{id1}:#{id2}\n"})
+    MpdClient.send_and_ack("swapid #{id1}:#{id2}\n")
   end
 
 
@@ -390,7 +390,7 @@ defmodule Paracusia.MpdClient.Queue do
   @spec add_tag_id(id, tag, String.t) :: :ok | MpdClient.mpd_error
   def add_tag_id(id, tag, value) do
     msg = "addtagid #{id} #{to_string(tag)} #{value}\n"
-    GenServer.call(MpdClient, {:send_and_ack, msg})
+    MpdClient.send_and_ack(msg)
   end
 
 
@@ -399,7 +399,7 @@ defmodule Paracusia.MpdClient.Queue do
   """
   @spec clear_all_tags(id) :: :ok | MpdClient.mpd_error
   def clear_all_tags(id) do
-    GenServer.call(MpdClient, {:send_and_ack, "cleartagid #{id}\n"})
+    MpdClient.send_and_ack("cleartagid #{id}\n")
   end
 
 
@@ -408,7 +408,7 @@ defmodule Paracusia.MpdClient.Queue do
   """
   @spec clear_tag_id(id, tag) :: :ok | MpdClient.mpd_error
   def clear_tag_id(id, tag) do
-    GenServer.call(MpdClient, {:send_and_ack, "cleartagid #{id} #{to_string(tag)}\n"})
+    MpdClient.send_and_ack("cleartagid #{id} #{to_string(tag)}\n")
   end
 
 end
