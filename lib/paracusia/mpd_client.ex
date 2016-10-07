@@ -410,8 +410,7 @@ defmodule Paracusia.MpdClient do
     _ = Logger.debug "initial mpd state is: #{inspect mpd_state}"
     conn_state = %ConnState{:sock_passive => sock_passive,
                             :sock_active => sock_active,
-                            :genevent_pid => genevent_pid,
-                            :status => :new}
+                            :genevent_pid => genevent_pid}
     {:ok, {mpd_state, conn_state}}
   end
 
@@ -802,8 +801,7 @@ defmodule Paracusia.MpdClient do
     {:noreply, state}
   end
 
-  def handle_info({:tcp, _, msg},
-                  {ps = %PlayerState{}, cs = %ConnState{:status => :new}}) do
+  def handle_info({:tcp, _, msg}, {ps = %PlayerState{}, cs = %ConnState{}}) do
     complete_msg =
       if String.ends_with?(msg, "OK\n") do
         msg
