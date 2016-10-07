@@ -1,6 +1,12 @@
 defmodule Paracusia.MpdClient.AudioOutputs do
   defstruct outputenabled: nil, outputid: nil, outputname: nil
 
+  @moduledoc"""
+  Functions related to the music database.
+
+  See also: https://musicpd.org/doc/protocol/output_commands.html
+  """
+
   @doc"""
   Turns an output off.
   """
