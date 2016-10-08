@@ -1,6 +1,7 @@
 defmodule Paracusia.MpdClient.AudioOutputs do
   defstruct outputenabled: nil, outputid: nil, outputname: nil
   alias Paracusia.MessageParser
+  alias Paracusia.MpdClient
 
   @moduledoc"""
   Functions related to the music database.
@@ -13,7 +14,7 @@ defmodule Paracusia.MpdClient.AudioOutputs do
   """
   @spec disable(integer) :: :ok | {:error, {String.t, String.t}}
   def disable(id) do
-    GenServer.call(Paracusia.MpdClient, {:send_and_ack, "disableoutput #{id}\n"})
+    MpdClient.send_and_ack("disableoutput #{id}\n")
   end
 
   @doc"""
@@ -21,7 +22,7 @@ defmodule Paracusia.MpdClient.AudioOutputs do
   """
   @spec enable(integer) :: :ok | {:error, {String.t, String.t}}
   def enable(id) do
-    GenServer.call(Paracusia.MpdClient, {:send_and_ack, "enableoutput #{id}\n"})
+    MpdClient.send_and_ack("enableoutput #{id}\n")
   end
 
   @doc"""
@@ -29,7 +30,7 @@ defmodule Paracusia.MpdClient.AudioOutputs do
   """
   @spec toggle(integer) :: :ok | {:error, {String.t, String.t}}
   def toggle(id) do
-    GenServer.call(Paracusia.MpdClient, {:send_and_ack, "toggleoutput #{id}\n"})
+    MpdClient.send_and_ack("toggleoutput #{id}\n")
   end
 
   @doc"""
