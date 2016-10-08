@@ -2,11 +2,9 @@ defmodule Paracusia.MpdClient do
   use GenServer
   @moduledoc false
   require Logger
-  alias Paracusia.PlayerState
   alias Paracusia.MpdTypes
-  alias Paracusia.MessageParser
   alias Paracusia.ConnectionState, as: ConnState
-  import Paracusia.MessageParser, only: [string_to_boolean: 1, boolean_to_binary: 1]
+  import Paracusia.MessageParser, only: [boolean_to_binary: 1]
 
 
   # TODO consistency: Make sure that all public functions return {:ok, _} or :{error, _}
@@ -184,21 +182,6 @@ defmodule Paracusia.MpdClient do
     GenServer.call(__MODULE__, :status)
   end
 
-  @doc"""
-  Returns statistics.
-  """
-  @spec stats() :: {:ok, %Paracusia.PlayerState.Stats{}} | MpdTypes.mpd_error
-  def stats do
-    GenServer.call(__MODULE__, :stats)
-  end
-
-  @doc"""
-  Returns a map that contains, at the minimum, the following keys: file, Pos and Id.
-  """
-  def currentsong do
-    GenServer.call(__MODULE__, :currentsong)
-  end
-
   @spec seek_to_percent(integer) :: :ok | MpdTypes.mpd_error
   def seek_to_percent(percent) do
     GenServer.call(__MODULE__, {:seek_to_percent, percent})
@@ -336,58 +319,6 @@ defmodule Paracusia.MpdClient do
     end
   end
 
-  defp status_from_socket(socket) do
-    :ok = :gen_tcp.send(socket, "status\n")
-    with {:ok, m} <- recv_until_ok(socket) do
-      status = MessageParser.parse_newline_separated(m)
-      nil_or_else = fn(x, f) ->
-        case x do
-          nil -> nil
-          x -> f.(x)
-        end
-      end
-      timestamp = case :erlang.timestamp do
-        {megasecs, secs, microsecs} ->
-          megasecs * 1000000000000 + secs * 1000000 + microsecs
-      end
-      {:ok, %PlayerState.Status{
-        :volume => String.to_integer(status["volume"]),
-        :repeat => string_to_boolean(status["repeat"]),
-        :random => string_to_boolean(status["random"]),
-        :single => string_to_boolean(status["single"]),
-        :consume => string_to_boolean(status["consume"]),
-        :playlist => String.to_integer(status["playlist"]),
-        :playlistlength => String.to_integer(status["playlistlength"]),
-        :state => case status["state"] do
-                    "play" -> :play
-                    "stop" -> :stop
-                    "pause" -> :pause
-                  end,
-        :song => status["song"] |> nil_or_else.(&String.to_integer(&1)),
-        :songid => status["songid"] |> nil_or_else.(&String.to_integer(&1)),
-        :nextsong => status["nextsong"] |> nil_or_else.(&String.to_integer(&1)),
-        :time => status["time"],
-        :elapsed => status["elapsed"] |> nil_or_else.(&String.to_float(&1)),
-        :duration => status["duration"],
-        :bitrate => status["bitrate"] |> nil_or_else.(&String.to_integer(&1)),
-        :xfade => status["xfade"] |> nil_or_else.(&String.to_integer(&1)),
-        :mixrampdb => status["mixrampdb"] |> nil_or_else.(&String.to_float(&1)),
-        :mixrampdelay => status["mixrampdelay"] |> nil_or_else.(&String.to_integer(&1)),
-        :audio => status["audio"]
-                |> nil_or_else.(&Regex.run(~r/(.*):(.*):(.*)/, &1, [capture: :all_but_first])),
-        :updating_db => status["updating_db"] |> nil_or_else.(&String.to_integer(&1)),
-        :error => status["error"],
-        :timestamp => timestamp
-      }}
-    end
-  end
-
-  defp current_song_from_socket(socket) do
-    :ok = :gen_tcp.send(socket, "currentsong\n")
-    with {:ok, answer} <- recv_until_ok(socket) do
-      {:ok, MessageParser.current_song(answer)}
-    end
-  end
 
   ## See https://www.musicpd.org/doc/protocol/command_reference.html
   ## for an overview of all idle commands.
@@ -459,32 +390,6 @@ defmodule Paracusia.MpdClient do
     :ok = :gen_tcp.send(state.sock_passive, data)
     {:ok, answer} = recv_until_ok(state.sock_passive)
     {:reply, answer, state}
-  end
-
-  def handle_call(:status, _from, state = %ConnState{}) do
-    answer = status_from_socket(state.sock_passive)
-    {:reply, answer, state}
-  end
-
-  def handle_call(:stats, _from, state = %ConnState{}) do
-    :ok = :gen_tcp.send(state.sock_passive, "stats\n")
-    answer = with {:ok, reply} <- recv_until_ok(state.sock_passive) do
-      string_map = reply |> MessageParser.parse_newline_separated
-      answer = %PlayerState.Stats{
-        artists: String.to_integer(string_map["artists"]),
-        albums: String.to_integer(string_map["albums"]),
-        songs: String.to_integer(string_map["songs"]),
-        uptime: String.to_integer(string_map["uptime"]),
-        db_playtime: String.to_integer(string_map["db_playtime"]),
-        db_update: String.to_integer(string_map["db_update"]),
-        playtime: String.to_integer(string_map["playtime"])
-      }
-    end
-    {:reply, answer, state}
-  end
-
-  def handle_call(:currentsong, _from, state = %ConnState{}) do
-    {:reply, current_song_from_socket(state.sock_passive), state}
   end
 
   def handle_call({:setvol, volume}, _from, state = %ConnState{}) do

@@ -13,6 +13,8 @@ defmodule Paracusia.MpdClient.Queue do
   current playlist.
   Furthermore, we use the term `id` when referring to the unique identifier of a song in the entire
   database, and the term `position` when referring to a zero-based index inside the queue.
+  According to the authors of MPD, "Using song ids [instead of positions] is a safer method when
+  multiple clients are interacting with MPD."
   """
 
 
