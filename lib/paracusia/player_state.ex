@@ -13,6 +13,14 @@ defmodule Paracusia.PlayerState do
     GenServer.start_link(__MODULE__, nil, name: __MODULE__)
   end
 
+
+
+  # returns the current song without sending a message over the socket.
+  def current_song do
+    GenServer.call(__MODULE__, :current_song)
+  end
+
+
   def init(nil) do
     {:ok, current_song} = MpdClient.Status.current_song
     {:ok, playlist} = MpdClient.Queue.songs_info
@@ -77,6 +85,11 @@ defmodule Paracusia.PlayerState do
     new_ps = new_ps_from_events(ps, events)
     Enum.each(events, &(GenEvent.notify(handler, {&1, new_ps})))
     {:noreply, {new_ps, handler}}
+  end
+
+
+  def handle_call(:current_song, _form, state = {%PlayerState{:current_song => song}, handler}) do
+    {:reply, song, state}
   end
 
 

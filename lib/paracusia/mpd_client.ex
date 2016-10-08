@@ -4,7 +4,6 @@ defmodule Paracusia.MpdClient do
   require Logger
   alias Paracusia.MpdTypes
   alias Paracusia.ConnectionState, as: ConnState
-  import Paracusia.MessageParser, only: [boolean_to_binary: 1]
 
 
   # TODO consistency: Make sure that all public functions return {:ok, _} or :{error, _}
@@ -23,156 +22,6 @@ defmodule Paracusia.MpdClient do
     GenServer.call(__MODULE__, {:send_and_ack, msg})
   end
 
-  @doc"""
-  Begins playing the playlist at song number songpos.
-  """
-  @spec play(integer | String.t) :: :ok | MpdTypes.mpd_error
-  def play(songpos) do
-    GenServer.call(__MODULE__, {:send_and_ack, "play #{songpos}\n"})
-  end
-
-  @doc"""
-  Continues playing the current song.
-  """
-  @spec play() :: :ok | MpdTypes.mpd_error
-  def play do
-    GenServer.call(__MODULE__, {:send_and_ack, "play\n"})
-  end
-
-  @doc"""
-  Begins playing the playlist at song songid.
-  """
-  @spec playid(String.t) :: :ok | MpdTypes.mpd_error
-  def playid(songid) do
-    GenServer.call(__MODULE__, {:send_and_ack, "playid #{songid}\n"})
-  end
-
-  @doc"""
-  Continues playing the current song.
-  """
-  # TODO what is the difference to play/0?
-  @spec playid() :: :ok | MpdTypes.mpd_error
-  def playid() do
-    GenServer.call(__MODULE__, {:send_and_ack, "playid\n"})
-  end
-
-  @doc"""
-  Plays next song in the playlist.
-  """
-  @spec next() :: :ok | MpdTypes.mpd_error
-  def next do
-    GenServer.call(__MODULE__, {:send_and_ack, "next\n"})
-  end
-
-  @doc"""
-  Plays previous song in the playlist.
-  """
-  @spec previous() :: :ok | MpdTypes.mpd_error
-  def previous do
-    GenServer.call(__MODULE__, {:send_and_ack, "previous\n"})
-  end
-
-  @doc"""
-  Stops playing.
-  """
-  @spec stop() :: :ok | MpdTypes.mpd_error
-  def stop do
-    GenServer.call(__MODULE__, {:send_and_ack, "stop\n"})
-  end
-
-  @doc"""
-  Toggles pause/resumes playing.
-  """
-  @spec pause(true | false) :: :ok | MpdTypes.mpd_error
-  def pause(true), do:
-    GenServer.call(__MODULE__, {:send_and_ack, "pause 1\n"})
-  def pause(false), do:
-    GenServer.call(__MODULE__, {:send_and_ack, "pause 0\n"})
-
-
-  @doc"""
-  Sets repeat state to true or false.
-  """
-  @spec repeat(boolean) :: :ok | MpdTypes.mpd_error
-  def repeat(state) do
-    msg = "repeat #{boolean_to_binary(state)}\n"
-    GenServer.call(__MODULE__, {:send_and_ack, msg})
-  end
-
-  @doc"""
-  Sets random state to true or false.
-  """
-  @spec random(boolean) :: :ok | MpdTypes.mpd_error
-  def random(state) do
-    msg = "random #{boolean_to_binary(state)}\n"
-    GenServer.call(__MODULE__, {:send_and_ack, msg})
-  end
-
-  @doc"""
-  Sets single state to true or false.
-  """
-  @spec single(boolean) :: :ok | MpdTypes.mpd_error
-  def single(state) do
-    msg = "single #{boolean_to_binary(state)}\n"
-    GenServer.call(__MODULE__, {:send_and_ack, msg})
-  end
-
-  @doc"""
-  Sets consume state to true or false.
-  """
-  @spec consume(boolean) :: :ok | MpdTypes.mpd_error
-  def consume(state) do
-    msg = "consume #{boolean_to_binary(state)}\n"
-    GenServer.call(__MODULE__, {:send_and_ack, msg})
-  end
-
-  @doc"""
-  Sets crossfading between songs.
-  """
-  @spec crossfade(integer) :: :ok | MpdTypes.mpd_error
-  def crossfade(seconds) do
-    GenServer.call(__MODULE__, {:send_and_ack, "crossfade #{seconds}\n"})
-  end
-
-  @doc"""
-  Sets the threshold at which songs will be overlapped. Like crossfading but doesn't fade the track
-  volume, just overlaps. The songs need to have MixRamp tags added by an external tool. 0dB is the
-  normalized maximum volume so use negative values. In the absence of mixramp tags, crossfading will
-  be used.
-  """
-  @spec mixrampdb(integer) :: :ok | MpdTypes.mpd_error
-  def mixrampdb(decibels) do
-    GenServer.call(__MODULE__, {:send_and_ack, "mixrampdb #{decibels}\n"})
-  end
-
-  @doc"""
-  Sets the replay gain mode. Changing the mode during playback may take several seconds, because the
-  new settings does not affect the buffered data.
-  """
-  @spec replay_gain_mode(:off | :track | :album | :auto) :: :ok | MpdTypes.mpd_error
-  def replay_gain_mode(:off), do:
-    GenServer.call(__MODULE__, {:send_and_ack, "replay_gain_mode off\n"})
-  def replay_gain_mode(:track), do:
-    GenServer.call(__MODULE__, {:send_and_ack, "replay_gain_mode track\n"})
-  def replay_gain_mode(:album), do:
-    GenServer.call(__MODULE__, {:send_and_ack, "replay_gain_mode album\n"})
-  def replay_gain_mode(:auto), do:
-    GenServer.call(__MODULE__, {:send_and_ack, "replay_gain_mode auto\n"})
-
-  @doc"""
-  Prints replay gain options. Currently, only the variable replay_gain_mode is returned.
-  """
-  @spec replay_gain_status() :: {:ok, String.t} | MpdTypes.mpd_error
-  def replay_gain_status, do:
-    GenServer.call(__MODULE__, {:send_and_recv, "replay_gain_status\n"})
-
-  @doc"""
-  Changes volume by amount `change`.
-  Note: volume is deprecated, use setvol instead.
-  """
-  @spec volume(integer) :: :ok | MpdTypes.mpd_error
-  def volume(change), do:
-    GenServer.call(__MODULE__, {:send_and_ack, "volume #{change}\n"})
 
   @doc"""
   Returns the current status of the player.
@@ -180,16 +29,6 @@ defmodule Paracusia.MpdClient do
   @spec status() :: {:ok, %Paracusia.PlayerState.Status{}} | MpdTypes.mpd_error
   def status do
     GenServer.call(__MODULE__, :status)
-  end
-
-  @spec seek_to_percent(integer) :: :ok | MpdTypes.mpd_error
-  def seek_to_percent(percent) do
-    GenServer.call(__MODULE__, {:seek_to_percent, percent})
-  end
-
-  @spec seek(integer) :: :ok | MpdTypes.mpd_error
-  def seek(seconds) do
-    GenServer.call(__MODULE__, {:seek, seconds})
   end
 
   def playlist_state do
@@ -375,27 +214,15 @@ defmodule Paracusia.MpdClient do
     events
   end
 
-  defp seek_to_seconds(socket, seconds) do
-    :ok = :gen_tcp.send(socket, "seekcur #{seconds}\n")
-    ok_from_socket(socket)
-  end
-
   defp ping(socket) do
     :ok = :gen_tcp.send(socket, "ping\n")
     ok_from_socket(socket)
   end
 
-
   def handle_call({:debug, data}, _from, state = %ConnState{}) do
     :ok = :gen_tcp.send(state.sock_passive, data)
     {:ok, answer} = recv_until_ok(state.sock_passive)
     {:reply, answer, state}
-  end
-
-  def handle_call({:setvol, volume}, _from, state = %ConnState{}) do
-    :ok = :gen_tcp.send(state.sock_passive, "setvol #{volume}\n")
-    reply = ok_from_socket(state.sock_passive)
-    {:reply, reply, state}
   end
 
   def handle_call({:send_and_ack, msg}, _from, state = %ConnState{}) do
@@ -408,20 +235,6 @@ defmodule Paracusia.MpdClient do
     :ok = :gen_tcp.send(state.sock_passive, msg)
     reply = recv_until_ok(state.sock_passive)
     {:reply, reply, state}
-  end
-
-  # TODO reimplement this in the appropriate module
-  # def handle_call({:seek_to_percent, percent}, _from,
-                  # state = {ps = %PlayerState{}, cs = %ConnState{}}) do
-    # duration = ps.current_song["Time"] |> String.to_integer
-    # secs = duration * (percent/100)
-    # answer = seek_to_seconds(cs.sock_passive, secs)
-    # {:reply, answer, state}
-  # end
-
-  def handle_call({:seek, seconds}, _from, state = %ConnState{}) do
-    answer = seek_to_seconds(state.sock_passive, seconds)
-    {:reply, answer, state}
   end
 
   def handle_call(:kill, _from, state = %ConnState{}) do

@@ -31,4 +31,23 @@ defmodule Paracusia.MpdTypes do
                :musicbrainz_trackid |
                :musicbrainz_releasetrackid
 
+  @typedoc"""
+  positions are used to identify the position of a song in the queue. The first song in the queue
+  has index 0.
+  """
+  @type position :: integer
+
+  @typedoc"""
+  ids are used by MPD to uniquely identify each song in the database. ids remain unchanged when a
+  song changes its position in the queue.
+  """
+  @type id :: integer
+
+  @typedoc"""
+  Ranges are used to restrict an operation on a subset of the queue. A range is right-open and
+  indexing starts with zero, e.g., {0, 3} is used to specify the songs at the 1st, 2nd and 3rd
+  position.
+  """
+  @type range :: {position, position}
+
 end
