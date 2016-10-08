@@ -201,25 +201,6 @@ defmodule Paracusia.MpdClient do
   end
 
   @doc"""
-  Updates the music database. `uri` is a particular directory or song/file to update.
-  Returns the job id of the update job.
-  """
-  @spec update(String.t) :: {:ok, integer} | MpdTypes.mpd_error
-  def update(uri) do
-    GenServer.call(__MODULE__, {:update, uri})
-  end
-
-  @doc"""
-  Updates the entire music database.
-  Unlike Paracusia.Mpdclientupdate/1, the update is not restricted to a given uri.
-  Returns the job id of the update job.
-  """
-  @spec update() :: {:ok, integer} | MpdTypes.mpd_error
-  def update() do
-    GenServer.call(__MODULE__, :update)
-  end
-
-  @doc"""
   Returns a map that contains, at the minimum, the following keys: file, Pos and Id.
   """
   def currentsong do
@@ -363,14 +344,6 @@ defmodule Paracusia.MpdClient do
     end
   end
 
-  @spec playlist_from_socket(port) :: {:ok, [map]} | {:error, String.t}
-  defp playlist_from_socket(socket) do
-    :ok = :gen_tcp.send(socket, "playlistinfo\n")
-    with {:ok, reply} <- recv_until_ok(socket) do
-      {:ok, Paracusia.MessageParser.songs(reply)}
-    end
-  end
-
   defp status_from_socket(socket) do
     :ok = :gen_tcp.send(socket, "status\n")
     with {:ok, m} <- recv_until_ok(socket) do
@@ -497,33 +470,9 @@ defmodule Paracusia.MpdClient do
   end
 
 
-  def handle_call(:update, _from, state = %ConnState{}) do
-    :ok = :gen_tcp.send(state.sock_passive, "update\n")
-    answer = with {:ok, "updating_db: " <> rest} <- recv_until_ok(state.sock_passive) do
-      job_id = rest |> String.replace_suffix("\n", "") |> String.to_integer
-      {:ok, job_id}
-    end
-    {:reply, answer, state}
-  end
-
-  def handle_call({:update, uri}, _from, state = %ConnState{}) do
-    :ok = :gen_tcp.send(state.sock_passive, "update \"#{uri}\"\n")
-    answer = with {:ok, "updating_db: " <> rest} <- recv_until_ok(state.sock_passive) do
-      job_id = rest |> String.replace_suffix("\n", "") |> String.to_integer
-      {:ok, job_id}
-    end
-    {:reply, answer, state}
-  end
-
-
   def handle_call({:debug, data}, _from, state = %ConnState{}) do
     :ok = :gen_tcp.send(state.sock_passive, data)
     {:ok, answer} = recv_until_ok(state.sock_passive)
-    {:reply, answer, state}
-  end
-
-  def handle_call(:playlistinfo, _from, state = %ConnState{}) do
-    answer = playlist_from_socket(state.sock_passive)
     {:reply, answer, state}
   end
 
@@ -545,22 +494,6 @@ defmodule Paracusia.MpdClient do
         db_update: String.to_integer(string_map["db_update"]),
         playtime: String.to_integer(string_map["playtime"])
       }
-    end
-    {:reply, answer, state}
-  end
-
-  def handle_call({:readcomments, uri}, _from, state = %ConnState{}) do
-    :ok = :gen_tcp.send(state.sock_passive, ~s(readcomments "#{uri}"\n))
-    answer = with {:ok, reply} <- recv_until_ok(state.sock_passive) do
-      lines = case reply |> String.trim_trailing("\n") |> String.split("\n") do
-        [""] -> []  # map over empty sequence if server has replied with newline
-        x    -> x
-      end
-      lines |> Enum.reduce(%{}, fn (line, acc) ->
-        case String.split(line, ": ", parts: 2) do
-          [key, val] -> Map.put(acc, key, val)
-        end
-      end)
     end
     {:reply, answer, state}
   end
