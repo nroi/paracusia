@@ -230,8 +230,8 @@ defmodule Paracusia.MpdClient.Database do
   "smb://").
   The meaning of the returned key-value pairs depends on the codec, and not all decoder plugins support it.
   """
-  @spec readcomments(String.t) :: {:ok, map} | MpdTypes.mpd_error
-  def readcomments(uri) do
+  @spec read_comments(String.t) :: {:ok, map} | MpdTypes.mpd_error
+  def read_comments(uri) do
     with {:ok, reply} <- MpdClient.send_and_recv(~s(readcomments "#{uri}"\n)) do
       lines = case reply |> String.trim_trailing("\n") |> String.split("\n") do
         [""] -> []  # map over empty sequence if server has replied with newline
@@ -265,8 +265,8 @@ defmodule Paracusia.MpdClient.Database do
   @doc"""
   Case-insensitive version of `findadd/1`.
   """
-  @spec searchadd([{find_tag, String.t}]) :: :ok | MpdTypes.mpd_error
-  def searchadd(filters) do
+  @spec search_add([{find_tag, String.t}]) :: :ok | MpdTypes.mpd_error
+  def search_add(filters) do
     filter_string = filters |> Enum.reduce("", fn ({tag, value}, acc) ->
       acc <> ~s(#{find_tag_to_string(tag)} "#{value}" )
     end)
@@ -283,8 +283,8 @@ defmodule Paracusia.MpdClient.Database do
       Paracusia.MpdClient.Database.searchaddpl("Mutter by Rammstein", albumartist: "Rammstein", album: "Mutter")
       :ok
   """
-  @spec searchaddpl(String.t, [{find_tag, String.t}]) :: :ok | MpdTypes.mpd_error
-  def searchaddpl(playlist, filters) do
+  @spec search_add_playlist(String.t, [{find_tag, String.t}]) :: :ok | MpdTypes.mpd_error
+  def search_add_playlist(playlist, filters) do
     filter_string = filters |> Enum.reduce("", fn ({tag, value}, acc) ->
       acc <> ~s(#{find_tag_to_string(tag)} "#{value}" )
     end)
