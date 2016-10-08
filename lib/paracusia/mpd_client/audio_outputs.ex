@@ -1,5 +1,6 @@
 defmodule Paracusia.MpdClient.AudioOutputs do
   defstruct outputenabled: nil, outputid: nil, outputname: nil
+  alias Paracusia.MessageParser
 
   @moduledoc"""
   Functions related to the music database.
@@ -36,7 +37,9 @@ defmodule Paracusia.MpdClient.AudioOutputs do
   """
   @spec list() :: {:ok, [%Paracusia.MpdClient.AudioOutputs{}]} | {:error, {String.t, String.t}}
   def list() do
-    GenServer.call(Paracusia.MpdClient, :outputs)
+    with {:ok, reply} <- Paracusia.MpdClient.send_and_recv("outputs\n") do
+      {:ok, reply |> MessageParser.parse_outputs}
+    end
   end
 
 end

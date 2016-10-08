@@ -25,14 +25,6 @@ defmodule Paracusia.MpdClient do
     GenServer.call(__MODULE__, {:send_and_ack, msg})
   end
 
-  @doc """
-  Returns the current playlist.
-  """
-  @spec playlistinfo() :: {:ok, map} | MpdTypes.mpd_error
-  def playlistinfo do
-    GenServer.call(__MODULE__, :playlistinfo)
-  end
-
   @doc"""
   Begins playing the playlist at song number songpos.
   """
@@ -457,13 +449,6 @@ defmodule Paracusia.MpdClient do
     ok_from_socket(socket)
   end
 
-  defp outputs_from_socket(socket) do
-    :ok = :gen_tcp.send(socket, "outputs\n")
-    with {:ok, m} <- recv_until_ok(socket) do
-      {:ok, MessageParser.parse_outputs(m)}
-    end
-  end
-
   defp ping(socket) do
     :ok = :gen_tcp.send(socket, "ping\n")
     ok_from_socket(socket)
@@ -505,11 +490,6 @@ defmodule Paracusia.MpdClient do
   def handle_call({:setvol, volume}, _from, state = %ConnState{}) do
     :ok = :gen_tcp.send(state.sock_passive, "setvol #{volume}\n")
     reply = ok_from_socket(state.sock_passive)
-    {:reply, reply, state}
-  end
-
-  def handle_call(:outputs, _from, state = %ConnState{}) do
-    reply = outputs_from_socket(state.sock_passive)
     {:reply, reply, state}
   end
 
