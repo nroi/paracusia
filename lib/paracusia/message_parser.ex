@@ -125,6 +125,7 @@ defmodule Paracusia.MessageParser do
     string_map |> Enum.map(&outputs_from_map(&1))
   end
 
+
   @doc"""
   Given a string such as "file: …\nartist: …\n…directory: …\nartist: …\n…", where a new entry
   starts with either "file" or "directory", return the corresponding list of maps.
@@ -133,7 +134,6 @@ defmodule Paracusia.MessageParser do
     # Note that we just assume that each new item starts with "file: …" or "directory: …"
     # This seems to be the case, but it's not officially documented anywhere.
     split_at_id = m
-      |> String.trim_trailing("\n")
       |> String.split("\n", trim: true)
       |> Enum.reduce([], fn (item, acc) ->
         case item do
