@@ -1,5 +1,6 @@
 defmodule Paracusia.MessageParser do
   @moduledoc false
+  alias Paracusia.MpdTypes
 
   def format_time(seconds) do
     justify = fn i ->
@@ -104,6 +105,7 @@ defmodule Paracusia.MessageParser do
       iex> Paracusia.MessageParser.to_list_map(foo: 1, foo: 2, foo: 3, bar: 23)
       %{foo: [1,2,3], bar: [23]}
   """
+  @spec to_list_map([]) :: {:ok, %{any => [any]}} | MpdTypes.mpd_error
   def to_list_map(list) do
     reversed = Enum.reduce(list, %{}, fn ({key, value}, acc) ->
       {_, new_map} = Map.get_and_update(acc, key, fn current_value ->
