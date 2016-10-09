@@ -115,19 +115,7 @@ defmodule Paracusia.MessageParser do
   corresponding list of maps.
   """
   def parse_outputs(m) do
-    split_at_id = m
-    # |> String.trim_trailing("\n")
-      |> String.split("\n", trim: true)
-      |> Enum.reduce([], fn (item, acc) ->
-        case item do
-          "outputid: " <> _rest ->
-            [[item] | acc]
-          _ ->
-            [x | xs ] = acc
-            [[item | x] | xs]
-        end
-      end)
-    string_map = split_at_id |> Enum.map(fn list ->
+    string_map = split_first_delim(m) |> Enum.map(fn list ->
       list |> Enum.map(fn item ->
         case item |> String.split(": ", parts: 2) do
           [key,  value] -> {key, value}
