@@ -83,7 +83,30 @@ defmodule Paracusia.PlayerState do
   def handle_cast({:events, events}, {ps = %PlayerState{}, handler}) do
     _ = Logger.debug "Received the following idle events: #{inspect events}"
     new_ps = new_ps_from_events(ps, events)
-    Enum.each(events, &(GenEvent.notify(handler, {&1, new_ps})))
+    Enum.each(events, fn e ->
+      case e do
+        :update_changed ->
+          GenEvent.notify(handler, e)
+        :stored_playlist_changed ->
+          GenEvent.notify(handler, e)
+        :playlist_changed ->
+          GenEvent.notify(handler, e)
+        :player_changed ->
+          GenEvent.notify(handler, {e, new_ps})
+        :mixer_changed ->
+          GenEvent.notify(handler, {e, new_ps})
+        :outputs_changed ->
+          GenEvent.notify(handler, {e, new_ps})
+        :options_changed ->
+          GenEvent.notify(handler, {e, new_ps})
+        :sticker_changed ->
+          GenEvent.notify(handler, e)
+        :subscription_changed ->
+          GenEvent.notify(handler, {e, MpdClient.Channels.all()})
+        :message_changed ->
+          GenEvent.notify(handler, {e, MpdClient.Channels.messages()})
+      end
+    end)
     {:noreply, {new_ps, handler}}
   end
 
