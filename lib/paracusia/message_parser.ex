@@ -78,13 +78,45 @@ defmodule Paracusia.MessageParser do
     }
   end
 
+
+  @doc"""
+  Splits the string into a list of lists using the attribute in the first line as delimiter.
+
+  ## Examples
+
+      iex> Paracusia.MessageParser.split_first_delim(
+      ...> "plugin: mad\\nsuffix: mp3\\nsuffix: mp2\\nmime_type: audio/mpeg\\n" <>
+      ...> "plugin: vorbis\\nsuffix: ogg\\n")
+      [ ["plugin: mad", "suffix: mp3", "suffix: mp2", "mime_type: audio/mpeg"],
+        ["plugin: vorbis", "suffix: ogg"]
+      ]
+  """
+  def split_first_delim(s) do
+    delim = case s |> String.split(": ", parts: 2) do
+      [d, _] -> d
+    end
+    s
+    |> String.split("\n", trim: true)
+    |> Enum.reduce([], fn(line, acc) ->
+         if String.starts_with?(line, delim) do
+           [[line] | acc]
+         else
+           [x|xs] = acc
+           [[line|x] | xs]
+         end
+       end)
+    |> Enum.map(&Enum.reverse(&1))
+    |> Enum.reverse
+  end
+
+
   @doc"""
   Given a string composed newline-separated strings starting with "outputid: …", return the
   corresponding list of maps.
   """
   def parse_outputs(m) do
     split_at_id = m
-      |> String.trim_trailing("\n")
+    # |> String.trim_trailing("\n")
       |> String.split("\n", trim: true)
       |> Enum.reduce([], fn (item, acc) ->
         case item do
