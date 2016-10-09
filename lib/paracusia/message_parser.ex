@@ -80,6 +80,29 @@ defmodule Paracusia.MessageParser do
 
 
   @doc"""
+  Given a list of tuples, create a the corresponding map with lists as values.
+
+  ## Examples
+      iex> Paracusia.MessageParser.to_list_map(foo: 1, foo: 2, foo: 3, bar: 23)
+      %{foo: [1,2,3], bar: [23]}
+  """
+  def to_list_map(list) do
+    reversed = Enum.reduce(list, %{}, fn ({key, value}, acc) ->
+      {_, new_map} = Map.get_and_update(acc, key, fn current_value ->
+        case current_value do
+          nil    -> {current_value, [value]}
+          values -> {current_value, [value | values]}
+        end
+      end)
+      new_map
+    end)
+    Map.keys(reversed) |> Enum.reduce(%{}, fn (key, acc) ->
+      Map.put(acc, key, Enum.reverse(reversed[key]))
+    end)
+  end
+
+
+  @doc"""
   Splits the string into a list of lists using the attribute in the first line as delimiter.
 
   ## Examples
