@@ -162,57 +162,32 @@ defmodule Paracusia.MpdClient do
   ## See https://www.musicpd.org/doc/protocol/command_reference.html
   ## for an overview of all idle commands.
 
-  defp process_message(msg) do
+  defp process_message(msg), do:
     process_message(msg, [])
-  end
-
-  defp process_message("changed: database\n" <> rest, events) do
+  defp process_message("changed: database\n" <> rest, events), do:
     process_message(rest, [:database_changed | events])
-  end
-
-  defp process_message("changed: update\n" <> rest, events) do
+  defp process_message("changed: update\n" <> rest, events), do:
     process_message(rest, [:update_changed | events])
-  end
-
-  defp process_message("changed: stored_playlist\n" <> rest, events) do
+  defp process_message("changed: stored_playlist\n" <> rest, events), do:
     process_message(rest, [:stored_playlist_changed | events])
-  end
-
-  defp process_message("changed: playlist\n" <> rest, events) do
+  defp process_message("changed: playlist\n" <> rest, events), do:
     process_message(rest, [:playlist_changed | events])
-  end
-
-  defp process_message("changed: player\n" <> rest, events) do
+  defp process_message("changed: player\n" <> rest, events), do:
     process_message(rest, [:player_changed | events])
-  end
-
-  defp process_message("changed: mixer\n" <> rest, events) do
+  defp process_message("changed: mixer\n" <> rest, events), do:
     process_message(rest, [:mixer_changed | events])
-  end
-
-  defp process_message("changed: output\n" <> rest, events) do
+  defp process_message("changed: output\n" <> rest, events), do:
     process_message(rest, [:outputs_changed | events])
-  end
-
-  defp process_message("changed: options\n" <> rest, events) do
+  defp process_message("changed: options\n" <> rest, events), do:
     process_message(rest, [:options_changed | events])
-  end
-
-  defp process_message("changed: sticker\n" <> rest, events) do
+  defp process_message("changed: sticker\n" <> rest, events), do:
     process_message(rest, [:sticker_changed | events])
-  end
-
-  defp process_message("changed: subscription\n" <> rest, events) do
+  defp process_message("changed: subscription\n" <> rest, events), do:
     process_message(rest, [:subscription_changed | events])
-  end
-
-  defp process_message("changed: message\n" <> rest, events) do
+  defp process_message("changed: message\n" <> rest, events), do:
     process_message(rest, [:message_changed | events])
-  end
-
-  defp process_message("OK\n", events) do
+  defp process_message("OK\n", events), do:
     events
-  end
 
   defp ping(socket) do
     :ok = :gen_tcp.send(socket, "ping\n")
