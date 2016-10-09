@@ -29,6 +29,24 @@ defmodule Paracusia.MessageParser do
     item
   end
 
+
+  # See the docstring in Paracusia.MpdClient.Reflection
+  def parse_decoder_response(m) do
+    m
+    |> split_first_delim
+    |> Enum.map(fn ["plugin: " <> plugin | props] ->
+      proplist = props |> Enum.map(fn property ->
+        case property do
+          "suffix: " <> suffix    -> {:suffixes, suffix}
+          "mime_type: " <> suffix -> {:mime_types, suffix}
+        end
+      end)
+      {plugin, proplist |> to_list_map}
+    end)
+    |> Map.new
+  end
+
+
   @doc"""
   Given a string like "directory: …\nfile: …,", return the corresponding list of tuples.
   """
