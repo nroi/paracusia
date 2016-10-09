@@ -1,5 +1,6 @@
 defmodule Paracusia.MessageParserTest do
   use ExUnit.Case
+  alias Paracusia.MessageParser
   doctest Paracusia.MessageParser
 
   test "parse_decoder_response" do
@@ -50,5 +51,19 @@ mime_type: audio/x-ogg)
                         "audio/x-ogg"]}}
     assert Paracusia.MessageParser.parse_decoder_response(mpd_response) == expect
   end
+
+  test "split_first_delim/1 should return a non-empty list for non-empty strings" do
+    s = "language: Elixir\nawesome: true\nwidely used: not yet\n" <>
+        "language: JavaScript\nawesome: false\nwidely used: yes\n"
+    result = MessageParser.split_first_delim(s)
+    expect = [["language: Elixir", "awesome: true", "widely used: not yet"],
+              ["language: JavaScript", "awesome: false", "widely used: yes"]]
+    assert result == expect
+  end
+
+  test "split_first_delim/1 should return a empty list for the empty string" do
+    assert MessageParser.split_first_delim("") == []
+  end
+
 
 end

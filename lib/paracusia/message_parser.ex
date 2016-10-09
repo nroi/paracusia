@@ -132,6 +132,8 @@ defmodule Paracusia.MessageParser do
         ["plugin: vorbis", "suffix: ogg"]
       ]
   """
+  @spec split_first_delim(String.t) :: [[String.t]]
+  def split_first_delim(""), do: []
   def split_first_delim(s) do
     delim = case s |> String.split(": ", parts: 2) do
       [d, _] -> d
