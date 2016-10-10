@@ -4,9 +4,19 @@ defmodule Paracusia.PlayerState do
   require Logger
   use GenServer
   defstruct current_song: nil,
+  # TODO stay consistent with the existing terminology: Use 'queue' for the current playlist.
             playlist: [],
             status: %Paracusia.PlayerState.Status{},
             outputs: []
+
+
+  @moduledoc"""
+  Provides access to the current state of MPD, without having to send messages over the socket.
+
+  All functions in this module have a pendant in a submodule of `Paracusia.MpdClient` (but not vice
+  versa). Using these functions instead of the ones in `Paracusia.MpdClient` has the advantage that
+  that latency is lower and no superfluous TCP messages are sent.
+  """
 
 
   def start_link() do
@@ -14,10 +24,44 @@ defmodule Paracusia.PlayerState do
   end
 
 
-
-  # returns the current song without sending a message over the socket.
-  def current_song do
+  @doc"""
+  Similar to `Paracusia.MpdClient.status.current_song/0`, but returns `nil` if no song is available.
+  """
+  @spec current_song() :: %{String.t => String.t} | nil
+  def current_song() do
     GenServer.call(__MODULE__, :current_song)
+  end
+
+
+  @doc"""
+  Similar to `Paracusia.MpdClient.AudioOutputs.all/0`, but always returns the outputs (instead of
+  :error).
+  """
+  def audio_outputs do
+    GenServer.call(__MODULE__, :audio_outputs)
+  end
+
+
+  @doc"""
+  Similar to `Paracusia.MpdClient.Queue.songs_info/0`, but always returns the queue (instead of
+  :error).
+  """
+  @spec queue() :: %{String.t => String.t}
+  def queue do
+    GenServer.call(__MODULE__, :queue)
+  end
+
+
+  @doc"""
+  Similar to `Paracusia.MpdClient.Status.status/0`, but always returns the status (instead of
+  :error).
+
+  Note that calling `Paracusia.MpdClient.Status.status/0` will insert the current timestamp into the
+  result while this function will return the timestamp when the status was last updated.
+  """
+  @spec status() :: %Paracusia.PlayerState.Status{}
+  def status do
+    GenServer.call(__MODULE__, :status)
   end
 
 
@@ -25,7 +69,7 @@ defmodule Paracusia.PlayerState do
     {:ok, current_song} = MpdClient.Status.current_song
     {:ok, playlist} = MpdClient.Queue.songs_info
     {:ok, status} = MpdClient.Status.status
-    {:ok, outputs} = MpdClient.AudioOutputs.list
+    {:ok, outputs} = MpdClient.AudioOutputs.all
     player_state = %PlayerState{current_song: current_song,
                                 playlist: playlist,
                                 status: status,
@@ -43,7 +87,7 @@ defmodule Paracusia.PlayerState do
 
   defp new_ps_from_events(ps, events) do
     new_outputs = if Enum.member?(events, :outputs_changed) do
-      {:ok, outputs} = MpdClient.AudioOutputs.list
+      {:ok, outputs} = MpdClient.AudioOutputs.all
       outputs
     else
       ps.outputs
@@ -90,7 +134,7 @@ defmodule Paracusia.PlayerState do
         :stored_playlist_changed ->
           GenEvent.notify(handler, e)
         :playlist_changed ->
-          GenEvent.notify(handler, e)
+          GenEvent.notify(handler, {e, new_ps})
         :player_changed ->
           GenEvent.notify(handler, {e, new_ps})
         :mixer_changed ->
@@ -112,9 +156,20 @@ defmodule Paracusia.PlayerState do
   end
 
 
-  def handle_call(:current_song, _form, state = {%PlayerState{:current_song => song}, handler}) do
+  def handle_call(:current_song, _form, state = {%PlayerState{:current_song => song}, _}) do
     {:reply, song, state}
   end
 
+  def handle_call(:audio_outputs, _form, state = {%PlayerState{:outputs => outputs}, _}) do
+    {:reply, outputs, state}
+  end
+
+  def handle_call(:queue, _form, state = {%PlayerState{:playlist => queue}, _}) do
+    {:reply, queue, state}
+  end
+
+  def handle_call(:status, _form, state = {%PlayerState{:status => status}, _}) do
+    {:reply, status, state}
+  end
 
 end

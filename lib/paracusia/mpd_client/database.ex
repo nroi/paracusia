@@ -192,7 +192,7 @@ defmodule Paracusia.MpdClient.Database do
 
   @doc"""
   Returns the contents of the directory `uri`, including files are not recognized by MPD.
-  
+
   `uri` can be a path relative to the music directory or an URI understood by one of the storage
   plugins.
   """
@@ -321,7 +321,7 @@ defmodule Paracusia.MpdClient.Database do
 
 
   @doc"""
-  Same as `update/0`, but also rescans unmodified files. 
+  Same as `update/0`, but also rescans unmodified files.
   """
   @spec rescan() :: {:ok, pos_integer()} | MpdTypes.mpd_error
   def rescan() do

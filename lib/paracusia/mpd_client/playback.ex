@@ -39,8 +39,8 @@ defmodule Paracusia.MpdClient.Playback do
   @doc"""
   Begins playing the queue at the given position.
   """
-  @spec play(MpdTypes.position) :: :ok | MpdTypes.mpd_error
-  def play(position) do
+  @spec play_pos(MpdTypes.position) :: :ok | MpdTypes.mpd_error
+  def play_pos(position) do
     MpdClient.send_and_ack("play #{position}\n")
   end
 
@@ -48,8 +48,8 @@ defmodule Paracusia.MpdClient.Playback do
   @doc"""
   Begins playing the queue at song `songid`.
   """
-  @spec playid(MpdTypes.id) :: :ok | MpdTypes.mpd_error
-  def playid(songid) do
+  @spec play_id(MpdTypes.id) :: :ok | MpdTypes.mpd_error
+  def play_id(songid) do
     MpdClient.send_and_ack("playid #{songid}\n")
   end
 
@@ -58,8 +58,8 @@ defmodule Paracusia.MpdClient.Playback do
   Continues playing the current song.
   """
   # TODO what is the difference to play/0?
-  @spec playid() :: :ok | MpdTypes.mpd_error
-  def playid() do
+  @spec play_id() :: :ok | MpdTypes.mpd_error
+  def play_id() do
     MpdClient.send_and_ack("playid\n")
   end
 
@@ -177,9 +177,7 @@ defmodule Paracusia.MpdClient.Playback do
 
 
   @doc"""
-  Sets volume to `vol`.
-
-  Values between 0 and 100 are allowed for `vol`.
+  Sets volume to `vol` (value between 0 and 100).
   """
   @spec set_volume(integer) :: :ok | MpdTypes.mpd_error
   def set_volume(vol) do

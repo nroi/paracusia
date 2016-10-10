@@ -6,10 +6,10 @@ defmodule Paracusia.DefaultEventHandler do
   @moduledoc"""
   Default event handler for all events received with MPD's "idle" command.
 
-  For some events (player, mixer, outputs, options, message), the callback is called with the
-  information required to do whatever needs to be done as a result of that event. For instance, when
-  the next song is played, the "player" event is emitted and the corresponding clause is called with
-  the `%PlayerState`, which contains the new song as the value for the key `:current_song`. For
+  For some events (player, playlist, mixer, outputs, options, message), the callback is called with
+  the information required to do whatever needs to be done as a result of that event. For instance,
+  when the next song is played, the "player" event is emitted and the corresponding clause is called
+  with the `%PlayerState`, which contains the new song as the value for the key `:current_song`. For
   other events, the callback is called only with the event itself, without any additional data
   structures describing the changed state.
 
@@ -31,8 +31,8 @@ defmodule Paracusia.DefaultEventHandler do
     {:ok, state}
   end
 
-  def handle_event(:playlist_changed, state = nil) do
-    _ = Logger.info "playlist changed."
+  def handle_event({:playlist_changed, %PlayerState{}}, state = nil) do
+    _ = Logger.info "queue changed."
     {:ok, state}
   end
 

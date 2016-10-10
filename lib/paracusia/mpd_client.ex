@@ -206,7 +206,7 @@ defmodule Paracusia.MpdClient do
           {:ok, without_trailing_ok} -> without_trailing_ok <> "OK\n"
         end
       end
-    Logger.debug "idle message: #{complete_msg}"
+    _ = Logger.debug "idle message: #{complete_msg}"
     events = process_idle_message(complete_msg)
     GenServer.cast(Paracusia.PlayerState, {:events, events})
     # We have received this message as a result of having sent idle. We need to resend idle

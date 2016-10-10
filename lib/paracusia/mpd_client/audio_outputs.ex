@@ -36,8 +36,8 @@ defmodule Paracusia.MpdClient.AudioOutputs do
   @doc"""
   Returns a map containing information about all audio outputs.
   """
-  @spec list() :: {:ok, [%Paracusia.MpdClient.AudioOutputs{}]} | {:error, {String.t, String.t}}
-  def list() do
+  @spec all() :: {:ok, [%Paracusia.MpdClient.AudioOutputs{}]} | {:error, {String.t, String.t}}
+  def all() do
     with {:ok, reply} <- Paracusia.MpdClient.send_and_recv("outputs\n") do
       {:ok, reply |> MessageParser.parse_outputs}
     end
