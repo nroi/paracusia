@@ -21,6 +21,6 @@ defmodule Paracusia.PlayerState.Status do
             audio: nil,            # sampleRate:bits:channels
             updating_db: nil,      # job id
             error: nil,            # error message, if there is an error
-            timestamp: nil         # indicates when the information was retrieved
-                                   #    (not part of the MPD protocol)
+            timestamp: nil         # indicates when the information was retrieved (not part
+                                   #   of the MPD protocol)
 end
