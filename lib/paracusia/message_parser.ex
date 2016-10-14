@@ -160,7 +160,7 @@ defmodule Paracusia.MessageParser do
           [key,  value] -> {key, value}
         end
       end) |> Map.new
-    end) |> Enum.reverse
+    end)
     string_map |> Enum.map(&outputs_from_map(&1))
   end
 
