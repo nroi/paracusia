@@ -40,7 +40,7 @@ defmodule Paracusia.MessageParser do
 
 
   @doc"""
-  Given a string like "directory: …\nfile: …,", return the corresponding list of tuples.
+  Given a string like "directory: …\nfile: …,", returns the corresponding list of tuples.
 
   ## Example
 
@@ -57,16 +57,18 @@ defmodule Paracusia.MessageParser do
   end
 
 
-  # Given a enumeration such as "Artist: Beatles\nArtist: Lady Gaga\n…", return the corresponding
-  # list, e.g. ["Beatles", "Lady Gaga"].
-  # TODO we used this function in at least one case only because we did not know that the result
-  # could contain more data than just a simple key-value list. Check if we still need this function.
+  @doc"""
+  Given a string of key-value pairs, return the list of values.
+
+  ## Example
+
+      iex> Paracusia.MessageParser.parse_newline_separated_enum(
+      ...> "Artist: Beatles\\nArtist: Lady Gaga\\n")
+      ["Beatles", "Lady Gaga"]
+  """
   def parse_newline_separated_enum(m) do
-    m |> String.split("\n", trim: true)
-      |> Enum.map(fn item -> case String.split(item, ": ", parts: 2) do
-                               [_, value] -> value
-                             end
-                  end)
+    m |> parse_uris
+      |> Enum.map(fn {_, value} -> value end)
   end
 
 
