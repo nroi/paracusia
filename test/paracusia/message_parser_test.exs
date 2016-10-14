@@ -65,5 +65,12 @@ mime_type: audio/x-ogg)
     assert MessageParser.split_first_delim("") == []
   end
 
+  test "parse_items" do
+    s = ~s(file: fname\nkey1: value1\nkey2: value2\nplaylist: pname\nk1: v1\n)
+    expected = [%{"file" => "fname", "key1" => "value1", "key2" => "value2"},
+                %{"playlist" => "pname", "k1" => "v1"}]
+    assert MessageParser.parse_items(s) == expected
+  end
+
 
 end
