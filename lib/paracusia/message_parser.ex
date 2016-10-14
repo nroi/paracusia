@@ -2,25 +2,16 @@ defmodule Paracusia.MessageParser do
   @moduledoc false
   alias Paracusia.MpdTypes
 
-  def format_time(seconds) do
-    justify = fn i ->
-      i |> Integer.to_string |> String.rjust(2, ?0)
-    end
-    {secs_total, ""} = Integer.parse(seconds)
-    hours = div(secs_total, 3600)
-    mins = div(secs_total - hours * 3600, 60)
-    secs = rem(secs_total, 60)
-    if hours == 0 do
-      "#{justify.(mins)}:#{justify.(secs)}"
-    else
-      "#{justify.(hours)}:#{justify.(mins)}:#{justify.(secs)}"
-    end
-  end
+
+  def find_tag_to_string(:modified_since), do: "modified-since"
+  def find_tag_to_string(atom), do: to_string(atom)
+
 
   @spec songs(String.t) :: [map]
   def songs(m) do
     parse_items(m)
   end
+
 
   def current_song("") do
     nil
@@ -73,6 +64,7 @@ defmodule Paracusia.MessageParser do
                   end)
   end
 
+
   # Given a newline separated string (such as "volume: -1\nrepeat: 0\n), return the
   # corresponding map.
   def parse_newline_separated(m) do
@@ -84,10 +76,12 @@ defmodule Paracusia.MessageParser do
       |> Map.new
   end
 
+
   def boolean_to_binary(false), do: 0
   def boolean_to_binary(true), do: 1
   def string_to_boolean("0"), do: false
   def string_to_boolean("1"), do: true
+
 
   defp outputs_from_map(%{"outputenabled" => enabled, "outputid" => id, "outputname" => name}) do
     %Paracusia.MpdClient.AudioOutputs{
