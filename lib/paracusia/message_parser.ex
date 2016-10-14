@@ -41,6 +41,11 @@ defmodule Paracusia.MessageParser do
 
   @doc"""
   Given a string like "directory: …\nfile: …,", return the corresponding list of tuples.
+
+  ## Example
+
+      iex> Paracusia.MessageParser.parse_uris("foo: bar\\nbaz: fam\\n")
+      [{"foo", "bar"}, {"baz", "fam"}]
   """
   def parse_uris(m) do
     m |> String.split("\n", trim: true)
