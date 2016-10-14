@@ -49,15 +49,16 @@ defmodule Paracusia.MpdClient.Status do
         :single => string_to_boolean(status["single"]),
         :consume => string_to_boolean(status["consume"]),
         :playlist => String.to_integer(status["playlist"]),
-        :playlistlength => String.to_integer(status["playlistlength"]),
+        :playlist_length => String.to_integer(status["playlistlength"]),
         :state => case status["state"] do
                     "play" -> :play
                     "stop" -> :stop
                     "pause" -> :pause
                   end,
-        :song => status["song"] |> nil_or_else(&String.to_integer(&1)),
-        :songid => status["songid"] |> nil_or_else(&String.to_integer(&1)),
-        :nextsong => status["nextsong"] |> nil_or_else(&String.to_integer(&1)),
+        :song_pos => status["song"] |> nil_or_else(&String.to_integer(&1)),
+        :song_id => status["songid"] |> nil_or_else(&String.to_integer(&1)),
+        :next_song_pos => status["nextsong"] |> nil_or_else(&String.to_integer(&1)),
+        :next_song_id => status["nextsongid"] |> nil_or_else(&String.to_integer(&1)),
         :time => status["time"],
         :elapsed => status["elapsed"] |> nil_or_else(&String.to_float(&1)),
         :duration => status["duration"],

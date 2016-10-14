@@ -5,12 +5,12 @@ defmodule Paracusia.PlayerState.Status do
             single: nil,           # true or false
             consume: nil,          # true or false
             playlist: nil,         # the playlist version number
-            playlistlength: nil,   # integer, the length of the playlist
+            playlist_length: nil,  # integer, the length of the playlist
             state: nil,            # :play, :stop, or :pause
-            song: nil,             # playlist song number of the current song stopped on or playing
-            songid: nil,           # playlist songid of the current song stopped on or playing
-            nextsong: nil,         # playlist song number of the next song to be played
-            nextsongid: nil,       # playlist songid of the next song to be played
+            song_pos: nil,         # playlist song number of the current song stopped on or playing
+            song_id: nil,          # playlist songid of the current song stopped on or playing
+            next_song_pos: nil,    # playlist song number of the next song to be played
+            next_song_id: nil,     # playlist songid of the next song to be played
             time: nil,             # total time elapsed (of current playing/paused song)
             elapsed: nil,          # like time, but with higher resolution.
             duration: nil,         # Duration of the current song in seconds
