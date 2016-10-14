@@ -4,7 +4,7 @@ defmodule Paracusia.MpdClient.AudioOutputs do
   alias Paracusia.MpdClient
 
   @moduledoc"""
-  Functions related to the music database.
+  Functions related to audio output devices available to MPD.
 
   See also: https://musicpd.org/doc/protocol/output_commands.html
   """

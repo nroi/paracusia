@@ -4,6 +4,8 @@ defmodule Paracusia.MpdClient.Reflection do
   alias Paracusia.MessageParser
 
   @moduledoc"""
+  Provides information about MPD's configuration, available permissions etc.
+
   See also: https://musicpd.org/doc/protocol/reflection_commands.html
   """
 

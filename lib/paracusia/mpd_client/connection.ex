@@ -19,7 +19,7 @@ defmodule Paracusia.MpdClient.Connection do
   end
 
   @doc"""
-  Send 'ping' to MPD and wait for acknowledgement
+  Sends 'ping' to MPD and waits for acknowledgement.
   """
   @spec ping() :: :ok
   def ping() do

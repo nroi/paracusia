@@ -1,4 +1,5 @@
 defmodule Paracusia.PlayerState.Stats do
+
   defstruct artists: nil,      # number of artists
             albums: nil,       # number of albums
             songs: nil,        # number of songs

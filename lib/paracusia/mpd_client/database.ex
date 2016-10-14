@@ -4,6 +4,12 @@ defmodule Paracusia.MpdClient.Database do
   alias Paracusia.MessageParser
   require Logger
 
+  @moduledoc"""
+  Functions related to the music database.
+
+  See also: https://musicpd.org/doc/protocol/database.html
+  """
+
 
   @type find_tag :: MpdTypes.tag | :any | :file | :base | :modified_since
 

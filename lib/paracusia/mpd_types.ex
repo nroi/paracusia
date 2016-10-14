@@ -1,5 +1,9 @@
 defmodule Paracusia.MpdTypes do
 
+  @moduledoc"""
+  Types for all information retrieved from MPD.
+  """
+
   @typedoc"""
   See https://musicpd.org/doc/protocol/response_syntax.html#failure_response_syntax for more
   details.
