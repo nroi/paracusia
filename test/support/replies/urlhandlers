@@ -1,0 +1,17 @@
+handler: http://
+handler: https://
+handler: mms://
+handler: mmsh://
+handler: mmst://
+handler: mmsu://
+handler: gopher://
+handler: rtp://
+handler: rtsp://
+handler: rtmp://
+handler: rtmpt://
+handler: rtmps://
+handler: smb://
+handler: nfs://
+handler: cdda://
+handler: alsa://
+OK

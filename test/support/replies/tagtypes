@@ -1,0 +1,20 @@
+tagtype: Artist
+tagtype: ArtistSort
+tagtype: Album
+tagtype: AlbumSort
+tagtype: AlbumArtist
+tagtype: AlbumArtistSort
+tagtype: Title
+tagtype: Track
+tagtype: Name
+tagtype: Genre
+tagtype: Date
+tagtype: Composer
+tagtype: Performer
+tagtype: Disc
+tagtype: MUSICBRAINZ_ARTISTID
+tagtype: MUSICBRAINZ_ALBUMID
+tagtype: MUSICBRAINZ_ALBUMARTISTID
+tagtype: MUSICBRAINZ_TRACKID
+tagtype: MUSICBRAINZ_RELEASETRACKID
+OK
