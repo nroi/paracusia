@@ -1,4 +1,5 @@
 defmodule Paracusia.PlayerState.Status do
+  alias Paracusia.PlayerState.Status
   defstruct volume: nil,           # 0-100 during play/pause, -1 if playback is stopped
             repeat: nil,           # true or false
             random: nil,           # true or false
@@ -23,4 +24,28 @@ defmodule Paracusia.PlayerState.Status do
             error: nil,            # error message, if there is an error
             timestamp: nil         # indicates when the information was retrieved (not part
                                    #   of the MPD protocol)
+  @type t :: %Status{volume: integer,
+                     repeat: boolean,
+                     random: boolean,
+                     single: boolean,
+                     consume: boolean,
+                     playlist: integer,
+                     playlist_length: integer,
+                     state: :play | :stop | :pause,
+                     song_pos: integer | nil,
+                     song_id: integer | nil,
+                     next_song_pos: integer | nil,
+                     next_song_id: integer | nil,
+                     time: String.t,
+                     elapsed: String.t,
+                     # TODO duration seems to be always nil
+                     duration: nil,
+                     bitrate: integer | nil,
+                     xfade: number | nil,
+                     mixrampdb: number | nil,
+                     mixrampdelay: number | nil,
+                     audio: nil | [String.t],
+                     updating_db: integer | nil,
+                     error: String.t | nil,
+                     timestamp: integer}
 end
