@@ -3,6 +3,7 @@ defmodule Paracusia.Mixfile do
 
   def project do
     [
+     elixirc_paths: elixirc_paths(Mix.env),
      app: :paracusia,
      version: "0.1.0",
      elixir: "~> 1.3",
@@ -10,9 +11,12 @@ defmodule Paracusia.Mixfile do
      start_permanent: Mix.env == :prod,
      deps: deps(),
      package: package(),
-     description: "MPD client library"
+     description: "MPD client library",
     ]
   end
+
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_), do: ["lib"]
 
   def application do
     [applications: [:logger],
