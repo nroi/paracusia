@@ -44,8 +44,6 @@ defmodule Paracusia.MpdClient do
   defp recv_until_ok(sock, prev_answer \\ "") do
     with {:ok, complete_msg} <- recv_until_newline(sock, prev_answer) do
       if complete_msg |> String.ends_with?("OK\n") do
-        File.write!("/tmp/content", complete_msg)
-        File.write!("/tmp/stripped", complete_msg |> String.replace_suffix("OK\n", ""))
         {:ok, complete_msg |> String.replace_suffix("OK\n", "")}
       else
         case Regex.run(~r/ACK \[(.*)\] {(.*)} (.*)/, complete_msg, capture: :all_but_first) do
