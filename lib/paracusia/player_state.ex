@@ -168,19 +168,19 @@ defmodule Paracusia.PlayerState do
   end
 
 
-  def handle_call(:current_song, _form, state = {%PlayerState{:current_song => song}, _}) do
+  def handle_call(:current_song, _from, state = {%PlayerState{:current_song => song}, _}) do
     {:reply, song, state}
   end
 
-  def handle_call(:audio_outputs, _form, state = {%PlayerState{:outputs => outputs}, _}) do
+  def handle_call(:audio_outputs, _from, state = {%PlayerState{:outputs => outputs}, _}) do
     {:reply, outputs, state}
   end
 
-  def handle_call(:queue, _form, state = {%PlayerState{:playlist => queue}, _}) do
+  def handle_call(:queue, _from, state = {%PlayerState{:playlist => queue}, _}) do
     {:reply, queue, state}
   end
 
-  def handle_call(:status, _form, state = {%PlayerState{:status => status}, _}) do
+  def handle_call(:status, _from, state = {%PlayerState{:status => status}, _}) do
     {:reply, status, state}
   end
 
