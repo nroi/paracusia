@@ -61,7 +61,6 @@ defmodule Paracusia.MpdClient.Status do
         :next_song_id => status["nextsongid"] |> nil_or_else(&String.to_integer(&1)),
         :time => status["time"],
         :elapsed => status["elapsed"] |> nil_or_else(&String.to_float(&1)),
-        :duration => status["duration"],
         :bitrate => status["bitrate"] |> nil_or_else(&String.to_integer(&1)),
         :xfade => status["xfade"] |> nil_or_else(&String.to_integer(&1)),
         :mixrampdb => status["mixrampdb"] |> nil_or_else(&String.to_float(&1)),

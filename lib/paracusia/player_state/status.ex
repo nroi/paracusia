@@ -14,7 +14,6 @@ defmodule Paracusia.PlayerState.Status do
             next_song_id: nil,     # playlist songid of the next song to be played
             time: nil,             # total time elapsed (of current playing/paused song)
             elapsed: nil,          # like time, but with higher resolution.
-            duration: nil,         # Duration of the current song in seconds
             bitrate: nil,          # instantaneous bitrate in kbps
             xfade: nil,            # crossfade in seconds
             mixrampdb: nil,        # mixramp threshold in dB
@@ -38,8 +37,6 @@ defmodule Paracusia.PlayerState.Status do
                      next_song_id: integer | nil,
                      time: String.t,
                      elapsed: String.t,
-                     # TODO duration seems to be always nil
-                     duration: nil,
                      bitrate: integer | nil,
                      xfade: number | nil,
                      mixrampdb: number | nil,
