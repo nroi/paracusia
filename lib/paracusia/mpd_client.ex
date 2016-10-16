@@ -146,32 +146,31 @@ defmodule Paracusia.MpdClient do
   end
 
 
-  # TODO misleading name, nothing is "processed"
-  defp process_idle_message(msg), do:
-    process_idle_message(msg, [])
-  defp process_idle_message("changed: database\n" <> rest, events), do:
-    process_idle_message(rest, [:database_changed | events])
-  defp process_idle_message("changed: update\n" <> rest, events), do:
-    process_idle_message(rest, [:update_changed | events])
-  defp process_idle_message("changed: stored_playlist\n" <> rest, events), do:
-    process_idle_message(rest, [:stored_playlist_changed | events])
-  defp process_idle_message("changed: playlist\n" <> rest, events), do:
-    process_idle_message(rest, [:playlist_changed | events])
-  defp process_idle_message("changed: player\n" <> rest, events), do:
-    process_idle_message(rest, [:player_changed | events])
-  defp process_idle_message("changed: mixer\n" <> rest, events), do:
-    process_idle_message(rest, [:mixer_changed | events])
-  defp process_idle_message("changed: output\n" <> rest, events), do:
-    process_idle_message(rest, [:outputs_changed | events])
-  defp process_idle_message("changed: options\n" <> rest, events), do:
-    process_idle_message(rest, [:options_changed | events])
-  defp process_idle_message("changed: sticker\n" <> rest, events), do:
-    process_idle_message(rest, [:sticker_changed | events])
-  defp process_idle_message("changed: subscription\n" <> rest, events), do:
-    process_idle_message(rest, [:subscription_changed | events])
-  defp process_idle_message("changed: message\n" <> rest, events), do:
-    process_idle_message(rest, [:message_changed | events])
-  defp process_idle_message("", events), do:
+  defp events_from_idle_msg(msg), do:
+    events_from_idle_msg(msg, [])
+  defp events_from_idle_msg("changed: database\n" <> rest, events), do:
+    events_from_idle_msg(rest, [:database_changed | events])
+  defp events_from_idle_msg("changed: update\n" <> rest, events), do:
+    events_from_idle_msg(rest, [:update_changed | events])
+  defp events_from_idle_msg("changed: stored_playlist\n" <> rest, events), do:
+    events_from_idle_msg(rest, [:stored_playlist_changed | events])
+  defp events_from_idle_msg("changed: playlist\n" <> rest, events), do:
+    events_from_idle_msg(rest, [:playlist_changed | events])
+  defp events_from_idle_msg("changed: player\n" <> rest, events), do:
+    events_from_idle_msg(rest, [:player_changed | events])
+  defp events_from_idle_msg("changed: mixer\n" <> rest, events), do:
+    events_from_idle_msg(rest, [:mixer_changed | events])
+  defp events_from_idle_msg("changed: output\n" <> rest, events), do:
+    events_from_idle_msg(rest, [:outputs_changed | events])
+  defp events_from_idle_msg("changed: options\n" <> rest, events), do:
+    events_from_idle_msg(rest, [:options_changed | events])
+  defp events_from_idle_msg("changed: sticker\n" <> rest, events), do:
+    events_from_idle_msg(rest, [:sticker_changed | events])
+  defp events_from_idle_msg("changed: subscription\n" <> rest, events), do:
+    events_from_idle_msg(rest, [:subscription_changed | events])
+  defp events_from_idle_msg("changed: message\n" <> rest, events), do:
+    events_from_idle_msg(rest, [:message_changed | events])
+  defp events_from_idle_msg("", events), do:
     events
 
   # Before sending the actual message, we need to:
@@ -183,7 +182,7 @@ defmodule Paracusia.MpdClient do
     :ok = :gen_tcp.send(sock, "noidle\n")
     # check if MPD still has 'idle' events in the queue. In most cases, events will be [].
     events = case recv_until_ok(sock) do
-      {:ok, msg} -> process_idle_message(msg)
+      {:ok, msg} -> events_from_idle_msg(msg)
     end
     :ok = GenServer.cast(Paracusia.PlayerState, {:events, events})
   end
@@ -225,7 +224,7 @@ defmodule Paracusia.MpdClient do
           {:ok, without_trailing_ok} -> without_trailing_ok
         end
       end
-    events = process_idle_message(complete_msg)
+    events = events_from_idle_msg(complete_msg)
     # We have received this message as a result of having sent idle. We need to resend idle
     # each time after we have obtained a new idle message.
     :ok = :gen_tcp.send(sock, "idle\n")
