@@ -11,11 +11,6 @@ defmodule Paracusia.MpdClient.Database do
   """
 
 
-  @type find_tag :: MpdTypes.tag | :any | :file | :base | :modified_since
-
-  defp find_tag_to_string(:modified_since), do: "modified-since"
-  defp find_tag_to_string(atom), do: to_string(atom)
-
   # Parses a string such as:
   #   Album: Baby Darling Doll Face Honey
   #   songs: 12
@@ -52,7 +47,7 @@ defmodule Paracusia.MpdClient.Database do
   @doc"""
   Returns the total playtime and number of songs that match the given filters.
 
-  ## Examples
+  ## Example
 
       Paracusia.MpdClient.Database.count(albumartist: "Rammstein", album: "Mutter")
       {:ok, %{"playtime" => 3048, "songs" => 11}}
@@ -100,21 +95,21 @@ defmodule Paracusia.MpdClient.Database do
 
       # Return all songs by "Rammstein" in the album "Mutter":
       Paracusia.MpdClient.Database.find(albumartist: "Rammstein", album: "Mutter")
-      {:ok, 
+      {:ok,
         [%{"Album" => "Mutter", "AlbumArtist" => "Rammstein",
             "Date" => "2001", "Time" => "280", "Title" => "Mein Herz brennt",
             "file" => "flac/rammstein_-_mutter/rammstein_mein_herz_brennt.flac", …},
           %{"Album" => "Mutter", "AlbumArtist" => "Rammstein",
-            "Date" => "2001", "Time" => "217", "Title" => "Links 2-3-4", 
+            "Date" => "2001", "Time" => "217", "Title" => "Links 2-3-4",
             "file" => "flac/rammstein_-_mutter_(2001)/02._rammstein_links_2_3_4.flac", …},
           …
           ]
       }
   """
-  @spec find([{find_tag, String.t}]) :: {:ok, [map]} | MpdTypes.mpd_error
+  @spec find([{MpdTypes.find_tag, String.t}]) :: {:ok, [map]} | MpdTypes.mpd_error
   def find(filters) do
     filter_string = filters |> Enum.reduce("", fn ({tag, value}, acc) ->
-      acc <> ~s(#{find_tag_to_string(tag)} "#{value}" )
+      acc <> ~s(#{MessageParser.find_tag_to_string(tag)} "#{value}" )
     end)
     msg = "find #{filter_string}\n"
     with {:ok, reply} <- MpdClient.send_and_recv(msg) do
@@ -132,10 +127,10 @@ defmodule Paracusia.MpdClient.Database do
       Paracusia.MpdClient.Database.findadd(albumartist: "Rammstein", album: "Mutter")
       :ok
   """
-  @spec findadd([{find_tag, String.t}]) :: :ok | MpdTypes.mpd_error
+  @spec findadd([{MpdTypes.find_tag, String.t}]) :: :ok | MpdTypes.mpd_error
   def findadd(filters) do
     filter_string = filters |> Enum.reduce("", fn ({tag, value}, acc) ->
-      acc <> ~s(#{find_tag_to_string(tag)} "#{value}" )
+      acc <> ~s(#{MessageParser.find_tag_to_string(tag)} "#{value}" )
     end)
     MpdClient.send_and_ack("findadd #{filter_string}\n")
   end
@@ -255,7 +250,7 @@ defmodule Paracusia.MpdClient.Database do
   @doc"""
   Case-insensitive version of `find/1`.
   """
-  @spec search([{find_tag, String.t}]) :: {:ok, [map]} | MpdTypes.mpd_error
+  @spec search([{MpdTypes.find_tag, String.t}]) :: {:ok, [map]} | MpdTypes.mpd_error
   def search(filters) do
     filter_string = filters |> Enum.reduce("", fn ({tag, value}, acc) ->
       acc <> ~s(#{to_string(tag)} "#{value}" )
@@ -270,10 +265,10 @@ defmodule Paracusia.MpdClient.Database do
   @doc"""
   Case-insensitive version of `findadd/1`.
   """
-  @spec search_add([{find_tag, String.t}]) :: :ok | MpdTypes.mpd_error
+  @spec search_add([{MpdTypes.find_tag, String.t}]) :: :ok | MpdTypes.mpd_error
   def search_add(filters) do
     filter_string = filters |> Enum.reduce("", fn ({tag, value}, acc) ->
-      acc <> ~s(#{find_tag_to_string(tag)} "#{value}" )
+      acc <> ~s(#{MessageParser.find_tag_to_string(tag)} "#{value}" )
     end)
     MpdClient.send_and_ack("searchadd #{filter_string}\n")
   end
@@ -288,10 +283,10 @@ defmodule Paracusia.MpdClient.Database do
       Paracusia.MpdClient.Database.searchaddpl("Mutter by Rammstein", albumartist: "Rammstein", album: "Mutter")
       :ok
   """
-  @spec search_add_playlist(String.t, [{find_tag, String.t}]) :: :ok | MpdTypes.mpd_error
+  @spec search_add_playlist(String.t, [{MpdTypes.find_tag, String.t}]) :: :ok | MpdTypes.mpd_error
   def search_add_playlist(playlist, filters) do
     filter_string = filters |> Enum.reduce("", fn ({tag, value}, acc) ->
-      acc <> ~s(#{find_tag_to_string(tag)} "#{value}" )
+      acc <> ~s(#{MessageParser.find_tag_to_string(tag)} "#{value}" )
     end)
     MpdClient.send_and_ack(~s(searchaddpl "#{playlist}" #{filter_string}\n))
   end

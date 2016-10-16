@@ -30,28 +30,45 @@ defmodule Paracusia.MpdClient do
 
   @spec recv_until_newline(port, String.t) :: String.t
   defp recv_until_newline(sock, prev_answer \\ "") do
-    answer = case :gen_tcp.recv(sock, 0) do
-      {:ok, m} -> prev_answer <> m
-    end
-    if answer |> String.ends_with?("\n") do
-      answer
-    else
-      recv_until_newline(sock, answer)
+    with {:ok, m} <- :gen_tcp.recv(sock, 0) do
+      complete_answer = prev_answer <> m
+      if complete_answer |> String.ends_with?("\n") do
+        {:ok, complete_answer}
+      else
+        recv_until_newline(sock, complete_answer)
+      end
     end
   end
 
   @spec recv_until_ok(port, String.t) :: {:ok, String.t} | MpdTypes.mpd_error
   defp recv_until_ok(sock, prev_answer \\ "") do
-    complete_msg = recv_until_newline(sock, prev_answer)
-    if complete_msg |> String.ends_with?("OK\n") do
-      {:ok, complete_msg |> String.trim_trailing("OK\n")}
-    else
-      case Regex.run(~r/ACK \[(.*)\] {(.*)} (.*)/, complete_msg, capture: :all_but_first) do
-        [errorcode, command, message] ->
-          {:error, {errorcode, "error #{errorcode} while executing command #{command}: #{message}"}}
-        nil ->
-          recv_until_ok(sock, complete_msg)
+    with {:ok, complete_msg} <- recv_until_newline(sock, prev_answer) do
+      if complete_msg |> String.ends_with?("OK\n") do
+        File.write!("/tmp/content", complete_msg)
+        File.write!("/tmp/stripped", complete_msg |> String.replace_suffix("OK\n", ""))
+        {:ok, complete_msg |> String.replace_suffix("OK\n", "")}
+      else
+        case Regex.run(~r/ACK \[(.*)\] {(.*)} (.*)/, complete_msg, capture: :all_but_first) do
+          [errorcode, command, message] ->
+            {:error, {errorcode, "error #{errorcode} while executing command #{command}: #{message}"}}
+          nil ->
+            recv_until_ok(sock, complete_msg)
+        end
       end
+    end
+  end
+
+  defp unrecv_from_mailbox(sock) do
+    # since we constantly switch between active and passive, it could happen that a message arrives
+    # in the mailbox shortly before the socket is switched to passive. To avoid waiting for a messge
+    # that will never arrive, we put it back onto the socket.
+    receive do
+      {:tcp, _, msg = "changed: " <> _} ->
+        :inet_tcp.unrecv(sock, msg)
+        _ = Logger.debug "The following message has been put back the socket: >#{msg}<"
+        unrecv_from_mailbox(sock)
+    after 0 ->
+        :ok
     end
   end
 
@@ -78,7 +95,7 @@ defmodule Paracusia.MpdClient do
     # restart than Paracusia. For that reason, we retry connection establishment.
     sock = connect_retry(hostname, port,
                                  attempt: 1, retry_after: retry_after, max_attempts: max_attempts)
-    "OK MPD" <> _ = recv_until_newline(sock)
+    {:ok, "OK MPD" <> _} = recv_until_newline(sock)
     if password do
       :ok = :gen_tcp.send(sock, "password #{password}\n")
       :ok = ok_from_socket(sock)
@@ -109,7 +126,7 @@ defmodule Paracusia.MpdClient do
 
 
   defp read_until_next_newline(socket, prev_msg) do
-    case :gen_tcp.recv(socket, 1) do
+    case :gen_tcp.recv(socket, 0) do
       {:ok, "\n"} -> prev_msg <> "\n"
       {:ok, msg}  -> read_until_next_newline(socket, prev_msg <> msg)
     end
@@ -129,6 +146,7 @@ defmodule Paracusia.MpdClient do
   end
 
 
+  # TODO misleading name, nothing is "processed"
   defp process_idle_message(msg), do:
     process_idle_message(msg, [])
   defp process_idle_message("changed: database\n" <> rest, events), do:
@@ -153,42 +171,41 @@ defmodule Paracusia.MpdClient do
     process_idle_message(rest, [:subscription_changed | events])
   defp process_idle_message("changed: message\n" <> rest, events), do:
     process_idle_message(rest, [:message_changed | events])
-  defp process_idle_message("OK\n", events), do:
+  defp process_idle_message("", events), do:
     events
+
+  # Before sending the actual message, we need to:
+  #   - send noidle to the socket
+  #   - check if there are still 'idle' events left on the socket
+  #   - if so, notify the event handlers
+  defp prepare_before_send(sock) do
+    unrecv_from_mailbox(sock)
+    :ok = :gen_tcp.send(sock, "noidle\n")
+    # check if MPD still has 'idle' events in the queue. In most cases, events will be [].
+    events = case recv_until_ok(sock) do
+      {:ok, msg} -> process_idle_message(msg)
+    end
+    :ok = GenServer.cast(Paracusia.PlayerState, {:events, events})
+  end
 
   def handle_call({:send_and_ack, msg}, _from, sock) do
     :ok = :inet.setopts(sock, active: false)
-    :ok = :gen_tcp.send(sock, "noidle\n")
-    # check if MPD still has 'idle' events in the queue
-    case recv_until_ok(sock) do
-      {:ok, ""} ->
-        :ok
-      {:ok, idle_message} ->
-        events = process_idle_message(idle_message <> "OK\n")
-        GenServer.cast(Paracusia.PlayerState, {:events, events})
-    end
+    :ok = prepare_before_send(sock)
     :ok = :gen_tcp.send(sock, msg)
-    :ok = ok_from_socket(sock)
-    :ok = :inet.setopts(sock, active: :once)
+    {:ok, ""} = recv_until_ok(sock)
     :ok = :gen_tcp.send(sock, "idle\n")
+    :ok = :inet.setopts(sock, active: :once)
     {:reply, :ok, sock}
   end
 
+
   def handle_call({:send_and_recv, msg}, _from, sock) do
     :ok = :inet.setopts(sock, active: false)
-    :ok = :gen_tcp.send(sock, "noidle\n")
-    # check if MPD still has 'idle' events in the queue
-    case recv_until_ok(sock) do
-      {:ok, ""} ->
-        :ok
-      {:ok, idle_message} ->
-        events = process_idle_message(idle_message <> "OK\n")
-        GenServer.cast(Paracusia.PlayerState, {:events, events})
-    end
+    :ok = prepare_before_send(sock)
     :ok = :gen_tcp.send(sock, msg)
     reply = recv_until_ok(sock)
-    :ok = :inet.setopts(sock, active: :once)
     :ok = :gen_tcp.send(sock, "idle\n")
+    :ok = :inet.setopts(sock, active: :once)
     {:reply, reply, sock}
   end
 
@@ -198,21 +215,22 @@ defmodule Paracusia.MpdClient do
   end
 
   def handle_info({:tcp, _, msg}, sock) do
+    :ok = :inet.setopts(sock, active: false)
+    unrecv_from_mailbox(sock)
     complete_msg =
       if String.ends_with?(msg, "OK\n") do
-        msg
+        msg |> String.replace_suffix("OK\n", "")
       else
         case recv_until_ok(sock, msg) do
-          {:ok, without_trailing_ok} -> without_trailing_ok <> "OK\n"
+          {:ok, without_trailing_ok} -> without_trailing_ok
         end
       end
-    _ = Logger.debug "idle message: #{complete_msg}"
     events = process_idle_message(complete_msg)
-    GenServer.cast(Paracusia.PlayerState, {:events, events})
     # We have received this message as a result of having sent idle. We need to resend idle
     # each time after we have obtained a new idle message.
     :ok = :gen_tcp.send(sock, "idle\n")
     :ok = :inet.setopts(sock, active: :once)
+    :ok = GenServer.cast(Paracusia.PlayerState, {:events, events})
     {:noreply, sock}
   end
 

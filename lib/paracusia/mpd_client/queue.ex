@@ -9,8 +9,8 @@ defmodule Paracusia.MpdClient.Queue do
   See also: https://musicpd.org/doc/protocol/queue.html
 
   Note that, unlike the official specification, we use the term "queue" rather than "playlist" in
-  order to distinguish between MPD playlists saved in the playlists directory in m3u format, and the
-  current playlist.
+  order to distinguish MPD playlists saved in the playlists directory in m3u format from the current
+  playlist.
   Furthermore, we use the term `id` when referring to the unique identifier of a song in the entire
   database, and the term `position` when referring to a zero-based index inside the queue.
   According to the authors of MPD, "Using song ids [instead of positions] is a safer method when
@@ -74,14 +74,20 @@ defmodule Paracusia.MpdClient.Queue do
 
 
   @doc"""
-  Deletes the song at position or multiple songs from the given range from the queue.
+  Deletes the song at `position` from the queue.
   """
-  @spec delete(MpdTypes.position | MpdTypes.range) :: :ok | MpdTypes.mpd_error
-  def delete({start, until}) do
-    MpdClient.send_and_ack("delete #{start}:#{until}\n")
-  end
-  def delete(position) do
+  @spec delete_pos(MpdTypes.position) :: :ok | MpdTypes.mpd_error
+  def delete_pos(position) do
     MpdClient.send_and_ack("delete #{position}\n")
+  end
+
+
+  @doc"""
+  Deletes multiple songs from the given range from the queue.
+  """
+  @spec delete_range(MpdTypes.range) :: :ok | MpdTypes.mpd_error
+  def delete_range({start, until}) do
+    MpdClient.send_and_ack("delete #{start}:#{until}\n")
   end
 
 
@@ -119,13 +125,14 @@ defmodule Paracusia.MpdClient.Queue do
 
 
   @doc"""
-  Returns all songs from the queue that match the given criteria.
-
-  `needle` is the corresponding value that the given tag should have.
+  Same as `Paracusia.MpdClient.Database.find/1`, except that it searches for songs from the queue.
   """
-  @spec find(MpdTypes.tag, String.t) :: list | MpdTypes.mpd_error
-  def find(tag, needle) do
-    msg = "playlistfind #{to_string(tag)} #{needle}\n"
+  @spec find([{MpdTypes.find_tag, String.t}]) :: {:ok, [map]} | MpdTypes.mpd_error
+  def find(filters) do
+    filter_string = filters |> Enum.reduce("", fn ({tag, value}, acc) ->
+      acc <> ~s(#{MessageParser.find_tag_to_string(tag)} "#{value}" )
+    end)
+    msg = "find #{filter_string}\n"
     with {:ok, reply} <- MpdClient.send_and_recv(msg) do
       {:ok, reply |> MessageParser.parse_items}
     end
@@ -185,10 +192,15 @@ defmodule Paracusia.MpdClient.Queue do
 
   @doc"""
   Searches case-insensitively for partial matches in the queue.
+
+  See `Paracusia.MpdClient.Database.find/1`, for a usage example.
   """
-  @spec search(MpdTypes.tag, String.t) :: {:ok, [map]} | MpdTypes.mpd_error
-  def search(tag, needle) do
-    msg = "playlistsearch #{to_string(tag)} #{needle}\n"
+  @spec search([{MpdTypes.find_tag, String.t}]) :: {:ok, [map]} | MpdTypes.mpd_error
+  def search(filters) do
+    filter_string = filters |> Enum.reduce("", fn ({tag, value}, acc) ->
+      acc <> ~s(#{MessageParser.find_tag_to_string(tag)} "#{value}" )
+    end)
+    msg = "playlistsearch #{filter_string}\n"
     with {:ok, reply} <- MpdClient.send_and_recv(msg) do
       {:ok, reply |> MessageParser.parse_items}
     end

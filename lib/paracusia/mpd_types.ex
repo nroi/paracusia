@@ -35,6 +35,9 @@ defmodule Paracusia.MpdTypes do
                :musicbrainz_trackid |
                :musicbrainz_releasetrackid
 
+  @type find_tag :: tag | :any | :file | :base | :modified_since
+
+
   @typedoc"""
   positions are used to identify the position of a song in the queue. The first song in the queue
   has index 0.
@@ -49,7 +52,7 @@ defmodule Paracusia.MpdTypes do
 
   @typedoc"""
   Ranges are used to restrict an operation on a subset of the queue. A range is right-open and
-  indexing starts with zero, e.g., {0, 3} is used to specify the songs at the 1st, 2nd and 3rd
+  indexing starts with zero, e.g., `{0, 3}` is used to specify the songs at the 1st, 2nd and 3rd
   position.
   """
   @type range :: {position, position}
