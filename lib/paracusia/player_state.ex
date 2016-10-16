@@ -3,6 +3,11 @@ defmodule Paracusia.PlayerState do
   alias Paracusia.PlayerState
   require Logger
   use GenServer
+
+  @type t :: %PlayerState{current_song: nil | map,
+                          playlist: list,
+                          status: %Paracusia.PlayerState.Status{},
+                          outputs: list}
   defstruct current_song: nil,
   # TODO stay consistent with the existing terminology: Use 'queue' for the current playlist.
             playlist: [],
