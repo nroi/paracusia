@@ -112,7 +112,7 @@ defmodule Paracusia.MpdClient do
       _ = Logger.error reason
       raise reason
     end
-    case :gen_tcp.connect(hostname, port, [:binary, active: false]) do
+    case :gen_tcp.connect(hostname, port, [:binary, active: false, nodelay: true]) do
       {:ok, sock} -> sock
       {:error, :econnrefused} ->
         :timer.sleep(retry_after)
