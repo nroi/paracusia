@@ -160,7 +160,7 @@ defmodule Paracusia.PlayerState do
         :subscription_changed ->
           GenEvent.notify(handler, {e, MpdClient.Channels.all()})
         :message_changed ->
-          {:ok, messages} = MpdClient.Channels.messages()
+          {:ok, messages} = MpdClient.Channels.__messages__()
           GenEvent.notify(handler, {e, messages})
       end
     end)

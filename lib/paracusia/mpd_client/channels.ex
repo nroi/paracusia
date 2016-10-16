@@ -42,16 +42,11 @@ defmodule Paracusia.MpdClient.Channels do
   end
 
 
-  @doc"""
-  Returns a list of messages for each subscribed channel where new messages have arrived.
-
-  ## Example response
-      %{"ratings" => ["3", "4", "5"], "comments" => ["nice song", "depressing"]}
-  """
-  @spec messages() :: {:ok, %{String.t => [String.t]}} | MpdTypes.mpd_error
-  def messages() do
-    # TODO perhaps we shouldn't expose this function in the API and instead supply the new messages
-    # in the GenEvent handler.
+  # Returns a list of messages for each subscribed channel where new messages have arrived.
+  #  Example response
+  #    %{"ratings" => ["3", "4", "5"], "comments" => ["nice song", "depressing"]}
+  @spec __messages__() :: {:ok, %{String.t => [String.t]}} | MpdTypes.mpd_error
+  def __messages__() do
     with {:ok, reply} <- MpdClient.send_and_recv("readmessages\n") do
       result = reply
       |> MessageParser.split_first_delim
