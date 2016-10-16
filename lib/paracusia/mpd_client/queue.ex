@@ -229,13 +229,11 @@ defmodule Paracusia.MpdClient.Queue do
   end
 
 
-  # TODO once the API is complete, we need to update the sentence "To detect songs that were
-  # detected…" and refer to the correct module/function.
   @doc"""
   Returns a list of maps containing all songs from the queue that changed since `version`.
 
-  To detect songs that were deleted at the end of the playlist, use playlistlength returned by
-  status command.
+  To detect songs that were deleted at the end of the queue, use the playlist_length key inside
+  the map returned by `Paracusia.MpdClient.Status.status/0`.
   """
   @spec changes(integer) :: {:ok, [map]} | MpdTypes.mpd_error
   def changes(version) do
@@ -246,14 +244,12 @@ defmodule Paracusia.MpdClient.Queue do
   end
 
 
-  # TODO once the API is complete, we need to update the sentence "To detect songs that were
-  # detected…" and refer to the correct module/function.
   @doc"""
   Similar to `changes/1` but the songs contain only the position and the id instead of the complete
   metadata. This is more bandwith efficient.
 
-  To detect songs that were deleted at the end of the playlist, use playlistlength returned by
-  status command.
+  To detect songs that were deleted at the end of the queue, use the playlist_length key inside
+  the map returned by `Paracusia.MpdClient.Status.status/0`.
   """
   @spec changes_pos_id(integer) :: {:ok, [map]} | MpdTypes.mpd_error
   def changes_pos_id(version) do

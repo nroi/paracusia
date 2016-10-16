@@ -278,7 +278,7 @@ defmodule Paracusia.MpdClient.Database do
   Performs a case-insensitive search with the given filters and adds matching songs to the given
   playlist.
 
-  ## Examples
+  ## Example
 
       Paracusia.MpdClient.Database.searchaddpl("Mutter by Rammstein", albumartist: "Rammstein", album: "Mutter")
       :ok
@@ -292,12 +292,12 @@ defmodule Paracusia.MpdClient.Database do
   end
 
 
-  # TODO update the part "… can be read in the status response" once the API is complete.
   @doc"""
   Updates the entire music database and returns the job id.
 
   Find new files, remove deleted files and update modified files. The returned id is used to
-  identify the update job. The current job id can be read in the status response.
+  identify the update job. The current job id can be read from
+  `Paracusia.MpdClient.Status.status/0` (updating_db).
   """
   @spec update() :: {:ok, pos_integer()} | MpdTypes.mpd_error
   def update() do
