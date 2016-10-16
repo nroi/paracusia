@@ -135,6 +135,7 @@ defmodule Paracusia.PlayerState do
 
 
   # called by MpdClient process when MPD has sent new changes.
+  def handle_cast({:events, []}, state), do: {:noreply, state}
   def handle_cast({:events, events}, {ps = %PlayerState{}, handler}) do
     _ = Logger.debug "Received the following idle events: #{inspect events}"
     new_ps = new_ps_from_events(ps, events)
