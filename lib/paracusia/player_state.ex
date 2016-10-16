@@ -97,8 +97,14 @@ defmodule Paracusia.PlayerState do
     else
       ps.outputs
     end
-    new_current_song = if Enum.member?(events, :player_changed) do
-      # TODO what happens if there is no current song?
+    current_song_obsolete = Enum.any?(events, fn event ->
+      case event do
+        :player_changed -> true
+        :playlist_changed -> true # in case the previously playing song was deleted from queue
+        _ -> false
+      end
+    end)
+    new_current_song = if current_song_obsolete do
       {:ok, current_song} = MpdClient.Status.current_song
       current_song
     else
