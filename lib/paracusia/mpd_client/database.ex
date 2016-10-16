@@ -28,7 +28,6 @@ defmodule Paracusia.MpdClient.Database do
   defp parse_query_result(m) do
     [delimiter, _] = m |> String.split(": ", parts: 2)
     m
-    |> String.trim_trailing("\n")
     |> String.split("\n", trim: true)
     |> Enum.reduce([], fn (item, acc) ->
       if item |> String.starts_with?(delimiter) do
@@ -239,7 +238,7 @@ defmodule Paracusia.MpdClient.Database do
   @spec read_comments(String.t) :: {:ok, map} | MpdTypes.mpd_error
   def read_comments(uri) do
     with {:ok, reply} <- MpdClient.send_and_recv(~s(readcomments "#{uri}"\n)) do
-      lines = case reply |> String.trim_trailing("\n") |> String.split("\n") do
+      lines = case reply |> String.split("\n", trim: true) do
         [""] -> []  # map over empty sequence if server has replied with newline
         x    -> x
       end

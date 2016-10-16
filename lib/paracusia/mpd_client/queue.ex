@@ -197,7 +197,6 @@ defmodule Paracusia.MpdClient.Queue do
 
   defp parse_plchangesposid(msg) do
     split_at_cpos = msg
-      |> String.trim_trailing("\n")
       |> String.split("\n", trim: true)
       |> Enum.reduce([], fn (item, acc) ->
         case item do
