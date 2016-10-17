@@ -80,13 +80,11 @@ defmodule Paracusia.PlayerState do
                                 status: status,
                                 outputs: outputs}
     {:ok, genevent_pid} = GenEvent.start_link()
-    case Application.get_env(:paracusia, :event_handler) do
-      nil ->
-        :ok = GenEvent.add_handler(genevent_pid, Paracusia.DefaultEventHandler, nil)
-      event_handler ->
-        :ok = GenEvent.add_handler(genevent_pid, event_handler, nil)
-    end
-    _ = Logger.debug "[playerstate] initial player state is: #{inspect player_state}"
+    handler = Application.get_env(:paracusia, :event_handler, Paracusia.DefaultEventHandler)
+    init_state = Application.get_env(:paracusia, :initial_state)
+    :ok = GenEvent.add_handler(genevent_pid, handler, init_state)
+    Process.register(genevent_pid, handler)
+    _ = Logger.debug "Initial player state is: #{inspect player_state}"
     {:ok, {player_state, genevent_pid}}
   end
 
