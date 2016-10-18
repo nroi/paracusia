@@ -167,10 +167,8 @@ defmodule Paracusia.MpdClient.Database do
 
   Usage of this command is discouraged by the author of MPD.
   """
-  @spec listall(String.t) :: {:ok, [{String.t, String.t}]} | MpdTypes.mpd_error
-  def listall(uri) do
-    # TODO we should reconsider if it makes much sense to put URIs inside quotes. Perhaps it also
-    # works without quotes, when the argument is a proper URI (e.g. using %20F instead of spaces).
+  @spec list_all(String.t) :: {:ok, [{String.t, String.t}]} | MpdTypes.mpd_error
+  def list_all(uri) do
     with {:ok, reply} <- MpdClient.send_and_recv(~s(listall "#{uri}"\n)) do
       {:ok, reply |> MessageParser.parse_uris}
     end
@@ -178,12 +176,12 @@ defmodule Paracusia.MpdClient.Database do
 
 
   @doc"""
-  Same as listall, except it also returns metadata info.
+  Same as `list_all/1`, except it also returns metadata info.
 
-  Usage of this command ist discouraged by the author of MPD.
+  Usage of this command is discouraged by the author of MPD.
   """
-  @spec listallinfo(String.t) :: {:ok, [map]} | MpdTypes.mpd_error
-  def listallinfo(uri \\ "") do
+  @spec list_all_info(String.t) :: {:ok, [map]} | MpdTypes.mpd_error
+  def list_all_info(uri \\ "") do
     with {:ok, reply} <- MpdClient.send_and_recv(~s(listallinfo "#{uri}"\n)) do
       {:ok, reply |> MessageParser.parse_items}
     end
@@ -196,8 +194,8 @@ defmodule Paracusia.MpdClient.Database do
   `uri` can be a path relative to the music directory or an URI understood by one of the storage
   plugins.
   """
-  @spec listfiles(String.t) :: {:ok, [map]} | MpdTypes.mpd_error
-  def listfiles(uri \\ "") do
+  @spec list_files(String.t) :: {:ok, [map]} | MpdTypes.mpd_error
+  def list_files(uri \\ "") do
     with {:ok, reply} <- MpdClient.send_and_recv(~s(listfiles "#{uri}"\n)) do
       {:ok, reply |> MessageParser.parse_items}
     end
@@ -208,7 +206,7 @@ defmodule Paracusia.MpdClient.Database do
   Returns the contents of the directory `uri`.
 
   When listing the root directory, this currently returns the list of stored playlists. This
-  behavior is deprecated; use "listplaylists" instead.
+  behavior is deprecated; use `Paracusia.MpdClient.Playlists.list_all/0` instead.
   This command may be used to list metadata of remote files (e.g. `uri` beginning with "http://" or
   "smb://").
   Clients that are connected via UNIX domain socket may use this command to read the tags of an
