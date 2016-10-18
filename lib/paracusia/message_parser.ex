@@ -7,12 +7,6 @@ defmodule Paracusia.MessageParser do
   def find_tag_to_string(atom), do: to_string(atom)
 
 
-  @spec songs(String.t) :: [map]
-  def songs(m) do
-    parse_items(m)
-  end
-
-
   def current_song("") do
     nil
   end

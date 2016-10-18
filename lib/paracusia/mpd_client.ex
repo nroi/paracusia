@@ -19,15 +19,6 @@ defmodule Paracusia.MpdClient do
   end
 
 
-  @doc"""
-  Sets the volume. Volume must be between 0 and 100.
-  """
-  @spec setvol(integer) :: :ok | MpdTypes.mpd_error
-  def setvol(volume) do
-    GenServer.call(__MODULE__, {:setvol, volume})
-  end
-
-
   @spec recv_until_newline(port, String.t) :: String.t
   defp recv_until_newline(sock, prev_answer \\ "") do
     {:ok, m} = :gen_tcp.recv(sock, 0)
