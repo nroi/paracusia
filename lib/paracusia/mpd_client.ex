@@ -30,28 +30,26 @@ defmodule Paracusia.MpdClient do
 
   @spec recv_until_newline(port, String.t) :: String.t
   defp recv_until_newline(sock, prev_answer \\ "") do
-    with {:ok, m} <- :gen_tcp.recv(sock, 0) do
-      complete_answer = prev_answer <> m
-      if complete_answer |> String.ends_with?("\n") do
-        {:ok, complete_answer}
-      else
-        recv_until_newline(sock, complete_answer)
-      end
+    {:ok, m} = :gen_tcp.recv(sock, 0)
+    complete_answer = prev_answer <> m
+    if complete_answer |> String.ends_with?("\n") do
+      complete_answer
+    else
+      recv_until_newline(sock, complete_answer)
     end
   end
 
   @spec recv_until_ok(port, String.t) :: {:ok, String.t} | MpdTypes.mpd_error
   defp recv_until_ok(sock, prev_answer \\ "") do
-    with {:ok, complete_msg} <- recv_until_newline(sock, prev_answer) do
-      if complete_msg |> String.ends_with?("OK\n") do
-        {:ok, complete_msg |> String.replace_suffix("OK\n", "")}
-      else
-        case Regex.run(~r/ACK \[(.*)\] {(.*)} (.*)/, complete_msg, capture: :all_but_first) do
-          [errorcode, command, message] ->
-            {:error, {errorcode, "error #{errorcode} while executing command #{command}: #{message}"}}
-          nil ->
-            recv_until_ok(sock, complete_msg)
-        end
+    complete_msg = recv_until_newline(sock, prev_answer)
+    if complete_msg |> String.ends_with?("OK\n") do
+      {:ok, complete_msg |> String.replace_suffix("OK\n", "")}
+    else
+      case Regex.run(~r/ACK \[(.*)\] {(.*)} (.*)/, complete_msg, capture: :all_but_first) do
+        [errorcode, command, message] ->
+          {:error, {errorcode, "error #{errorcode} while executing command #{command}: #{message}"}}
+        nil ->
+          recv_until_ok(sock, complete_msg)
       end
     end
   end
@@ -62,7 +60,7 @@ defmodule Paracusia.MpdClient do
     # that will never arrive, we put it back onto the socket.
     receive do
       {:tcp, _, msg = "changed: " <> _} ->
-        :inet_tcp.unrecv(sock, msg)
+        :ok = :inet_tcp.unrecv(sock, msg)
         _ = Logger.debug "The following message has been put back the socket: >#{msg}<"
         unrecv_from_mailbox(sock)
     after 0 ->
@@ -93,7 +91,7 @@ defmodule Paracusia.MpdClient do
     # restart than Paracusia. For that reason, we retry connection establishment.
     sock = connect_retry(hostname, port,
                                  attempt: 1, retry_after: retry_after, max_attempts: max_attempts)
-    {:ok, "OK MPD" <> _} = recv_until_newline(sock)
+    "OK MPD" <> _ = recv_until_newline(sock)
     if password do
       :ok = :gen_tcp.send(sock, "password #{password}\n")
       :ok = ok_from_socket(sock)
