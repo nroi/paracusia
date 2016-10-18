@@ -52,7 +52,7 @@ defmodule Paracusia.MpdClient.Database do
       Paracusia.MpdClient.Database.count(albumartist: "Rammstein", album: "Mutter")
       {:ok, %{"playtime" => 3048, "songs" => 11}}
   """
-  @spec count([{MpdTypes.tag}]) :: {:ok, map} | MpdTypes.mpd_error
+  @spec count([{MpdTypes.tag, String.t}]) :: {:ok, map} | MpdTypes.mpd_error
   def count(filters) do
     filter_string = filters |> Enum.reduce("", fn ({tag, value}, acc) ->
       acc <> ~s(#{to_string(tag)} "#{value}" )
@@ -76,7 +76,7 @@ defmodule Paracusia.MpdClient.Database do
         [%{"Album" => "Mutter", "playtime" => 3048, "songs" => 11},
          %{"Album" => "Reise, Reise", "playtime" => 3385, "songs" => 14}]}
   """
-  @spec count_grouped(MpdTypes.tag, [{MpdTypes.tag}]) :: {:ok, [map]} | MpdTypes.mpd_error
+  @spec count_grouped(MpdTypes.tag, [{MpdTypes.tag, String.t}]) :: {:ok, [map]} | MpdTypes.mpd_error
   def count_grouped(group, filters \\ []) do
     filter_string = filters |> Enum.reduce("", fn ({tag, value}, acc) ->
       acc <> ~s(#{to_string(tag)} "#{value}" )
