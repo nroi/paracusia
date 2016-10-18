@@ -139,6 +139,8 @@ defmodule Paracusia.PlayerState do
     new_ps = new_ps_from_events(ps, events)
     Enum.each(events, fn e ->
       case e do
+        :database_changed ->
+          GenEvent.notify(handler, e)
         :update_changed ->
           GenEvent.notify(handler, e)
         :stored_playlist_changed ->
