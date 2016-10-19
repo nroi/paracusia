@@ -78,8 +78,4 @@ defmodule Paracusia.MpdClient.ReflectionTest do
   end
 
 
-  def teardown() do
-    :ok = Application.stop(:paracusia)
-  end
-
 end
