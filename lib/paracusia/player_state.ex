@@ -131,42 +131,35 @@ defmodule Paracusia.PlayerState do
     }
   end
 
-
-  # called by MpdClient process when MPD has sent new changes.
-  def handle_cast({:events, []}, state), do: {:noreply, state}
-  def handle_cast({:events, events}, {ps = %PlayerState{}, handler}) do
-    _ = Logger.debug "Received the following idle events: #{inspect events}"
-    new_ps = new_ps_from_events(ps, events)
-    Enum.each(events, fn e ->
-      case e do
-        :database_changed ->
-          GenEvent.notify(handler, e)
-        :update_changed ->
-          GenEvent.notify(handler, e)
-        :stored_playlist_changed ->
-          GenEvent.notify(handler, e)
-        :playlist_changed ->
-          GenEvent.notify(handler, {e, new_ps})
-        :player_changed ->
-          GenEvent.notify(handler, {e, new_ps})
-        :mixer_changed ->
-          GenEvent.notify(handler, {e, new_ps})
-        :outputs_changed ->
-          GenEvent.notify(handler, {e, new_ps})
-        :options_changed ->
-          GenEvent.notify(handler, {e, new_ps})
-        :sticker_changed ->
-          GenEvent.notify(handler, e)
-        :subscription_changed ->
-          GenEvent.notify(handler, {e, MpdClient.Channels.all()})
-        :message_changed ->
-          {:ok, messages} = MpdClient.Channels.__messages__()
-          GenEvent.notify(handler, {e, messages})
-      end
-    end)
+  def handle_cast({:event, e}, {ps = %PlayerState{}, handler}) do
+    new_ps = new_ps_from_events(ps, [e])
+    case e do
+      :database_changed ->
+        GenEvent.notify(handler, e)
+      :update_changed ->
+        GenEvent.notify(handler, e)
+      :stored_playlist_changed ->
+        GenEvent.notify(handler, e)
+      :playlist_changed ->
+        GenEvent.notify(handler, {e, new_ps})
+      :player_changed ->
+        GenEvent.notify(handler, {e, new_ps})
+      :mixer_changed ->
+        GenEvent.notify(handler, {e, new_ps})
+      :outputs_changed ->
+        GenEvent.notify(handler, {e, new_ps})
+      :options_changed ->
+        GenEvent.notify(handler, {e, new_ps})
+      :sticker_changed ->
+        GenEvent.notify(handler, e)
+      :subscription_changed ->
+        GenEvent.notify(handler, {e, MpdClient.Channels.all()})
+      :message_changed ->
+        {:ok, messages} = MpdClient.Channels.__messages__()
+        GenEvent.notify(handler, {e, messages})
+    end
     {:noreply, {new_ps, handler}}
   end
-
 
   def handle_call(:current_song, _from, state = {%PlayerState{:current_song => song}, _}) do
     {:reply, song, state}
