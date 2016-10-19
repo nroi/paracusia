@@ -16,7 +16,7 @@ defmodule Paracusia.MpdClient.Playlists do
   @spec list(String.t) :: {:ok, list} | MpdTypes.mpd_error
   def list(playlist) do
     msg = "listplaylist #{playlist}\n"
-    with {:ok, reply} <- GenServer.call(MpdClient, {:send_and_recv, msg}) do
+    with {:ok, reply} <- MpdClient.send_and_recv(msg) do
       result = reply
       |> String.split("\n", trim: true)
       |> Enum.map(fn "file: " <> rest -> rest end)
@@ -31,7 +31,7 @@ defmodule Paracusia.MpdClient.Playlists do
   @spec listinfo(String.t) :: {:ok, map} | MpdTypes.mpd_error
   def listinfo(playlist) do
     msg = "listplaylistinfo #{playlist}\n"
-    with {:ok, reply} <- GenServer.call(MpdClient, {:send_and_recv, msg}) do
+    with {:ok, reply} <- MpdClient.send_and_recv(msg) do
       {:ok, reply |> MessageParser.parse_items}
     end
   end
@@ -42,7 +42,7 @@ defmodule Paracusia.MpdClient.Playlists do
   """
   @spec list_all() :: {:ok, [map]} | MpdTypes.mpd_error
   def list_all() do
-    with {:ok, reply} <- GenServer.call(MpdClient, {:send_and_recv, "listplaylists\n"}) do
+    with {:ok, reply} <- MpdClient.send_and_recv("listplaylists\n") do
       {:ok, reply |> MessageParser.parse_items}
     end
   end
@@ -53,7 +53,7 @@ defmodule Paracusia.MpdClient.Playlists do
   """
   @spec load(String.t) :: :ok | MpdTypes.mpd_error
   def load(playlist) do
-    GenServer.call(MpdClient, {:send_and_ack, "load #{playlist}\n"})
+    MpdClient.send_and_ack("load #{playlist}\n")
   end
 
 
@@ -65,7 +65,7 @@ defmodule Paracusia.MpdClient.Playlists do
   """
   @spec load(String.t, integer, integer) :: :ok | MpdTypes.mpd_error
   def load(playlist, start, until) do
-    GenServer.call(MpdClient, {:send_and_ack, "load #{playlist} #{start}:#{until}\n"})
+    MpdClient.send_and_ack("load #{playlist} #{start}:#{until}\n")
   end
 
 
@@ -77,7 +77,7 @@ defmodule Paracusia.MpdClient.Playlists do
   @spec add(String.t, String.t) :: :ok | MpdTypes.mpd_error
   def add(playlist, uri) do
     msg = "playlistadd #{playlist} #{uri}\n"
-    GenServer.call(MpdClient, {:send_and_ack, msg})
+    MpdClient.send_and_ack(msg)
   end
 
 
@@ -87,7 +87,7 @@ defmodule Paracusia.MpdClient.Playlists do
   @spec clear(String.t) :: :ok | MpdTypes.mpd_error
   def clear(playlist) do
     msg = "playlistclear #{playlist}\n"
-    GenServer.call(MpdClient, {:send_and_ack, msg})
+    MpdClient.send_and_ack(msg)
   end
 
 
@@ -99,7 +99,7 @@ defmodule Paracusia.MpdClient.Playlists do
   @spec delete(String.t, integer) :: :ok | MpdTypes.mpd_error
   def delete(playlist, pos) do
     msg = "playlistdelete #{playlist} #{pos}\n"
-    GenServer.call(MpdClient, {:send_and_ack, msg})
+    MpdClient.send_and_ack(msg)
   end
 
   @doc"""
@@ -108,7 +108,7 @@ defmodule Paracusia.MpdClient.Playlists do
   @spec move(String.t, integer, integer) :: :ok | MpdTypes.mpd_error
   def move(playlist, from, to) do
     msg = "playlistmove #{playlist} #{from} #{to}\n"
-    GenServer.call(MpdClient, {:send_and_ack, msg})
+    MpdClient.send_and_ack(msg)
   end
 
 
@@ -118,7 +118,7 @@ defmodule Paracusia.MpdClient.Playlists do
   @spec rename(String.t, String.t) :: :ok | MpdTypes.mpd_error
   def rename(playlist, new_name) do
     msg = "rename #{playlist} #{new_name}\n"
-    GenServer.call(MpdClient, {:send_and_ack, msg})
+    MpdClient.send_and_ack(msg)
   end
 
 
@@ -127,7 +127,7 @@ defmodule Paracusia.MpdClient.Playlists do
   """
   @spec rm(String.t) :: :ok | MpdTypes.mpd_error
   def rm(playlist) do
-    GenServer.call(MpdClient, {:send_and_ack, "rm #{playlist}\n"})
+    MpdClient.send_and_ack("rm #{playlist}\n")
   end
 
 
@@ -136,7 +136,7 @@ defmodule Paracusia.MpdClient.Playlists do
   """
   @spec save(String.t) :: :ok | MpdTypes.mpd_error
   def save(name) do
-    GenServer.call(MpdClient, {:send_and_ack, "save #{name}\n"})
+    MpdClient.send_and_ack("save #{name}\n")
   end
 
 end
