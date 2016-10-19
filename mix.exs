@@ -12,6 +12,7 @@ defmodule Paracusia.Mixfile do
      deps: deps(),
      package: package(),
      description: "MPD client library",
+     test_coverage: [tool: ExCoveralls],
     ]
   end
 
@@ -26,7 +27,8 @@ defmodule Paracusia.Mixfile do
   defp deps do
     [
       {:ex_doc, "~> 0.14", only: :dev},
-      {:distillery, "~> 0.10.0"}
+      {:distillery, "~> 0.10.0"},
+      {:excoveralls, "~> 0.5", only: :test}
     ]
   end
 
