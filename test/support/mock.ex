@@ -73,6 +73,99 @@ defmodule Paracusia.Mock do
     {:noreply, state}
   end
 
+  def handle_info({:tcp, _, "searchadd " <> _}, state = {sock, :post_init}) do
+    :gen_tcp.send(sock, "OK\n")
+    {:noreply, state}
+  end
+
+  def handle_info({:tcp, _, "searchaddpl " <> _}, state = {sock, :post_init}) do
+    :gen_tcp.send(sock, "OK\n")
+    {:noreply, state}
+  end
+
+  def handle_info({:tcp, _, "update" <> _}, state = {sock, :post_init}) do
+    :gen_tcp.send(sock, "updating_db: 1\nOK\n")
+    {:noreply, state}
+  end
+
+  def handle_info({:tcp, _, "rescan" <> _}, state = {sock, :post_init}) do
+    :gen_tcp.send(sock, "updating_db: 1\nOK\n")
+    {:noreply, state}
+  end
+
+  def handle_info({:tcp, _, "count albumartist \"Rammstein\" album \"Mutter\" \n"},
+                  state = {sock, :post_init}) do
+    :gen_tcp.send(sock, "songs: 11\nplaytime: 3048\nOK\n")
+    {:noreply, state}
+  end
+
+  def handle_info({:tcp, _, "count albumartist \"Rammstein\" group album\n"},
+                  state = {sock, :post_init}) do
+    reply = File.read!("test/support/replies/count_grouped")
+    :ok = :gen_tcp.send(sock, reply)
+    {:noreply, state}
+  end
+
+  def handle_info({:tcp, _, "find albumartist \"Rammstein\" album \"Mutter\" \n"},
+                  state = {sock, :post_init}) do
+    reply = File.read!("test/support/replies/find")
+    :ok = :gen_tcp.send(sock, reply)
+    {:noreply, state}
+  end
+
+  def handle_info({:tcp, _, "search albumartist \"Rammstein\" album \"Mutter\" \n"},
+                  state = {sock, :post_init}) do
+    reply = File.read!("test/support/replies/find")
+    :ok = :gen_tcp.send(sock, reply)
+    {:noreply, state}
+  end
+
+  def handle_info({:tcp, _, "findadd " <> _}, state = {sock, :post_init}) do
+    :ok = :gen_tcp.send(sock, "OK\n")
+    {:noreply, state}
+  end
+
+  def handle_info({:tcp, _, "searchadd " <> _}, state = {sock, :post_init}) do
+    :ok = :gen_tcp.send(sock, "OK\n")
+    {:noreply, state}
+  end
+
+  def handle_info({:tcp, _, "list album albumartist \"Rammstein\" date \"2001\" \n"},
+                  state = {sock, :post_init}) do
+    :ok = :gen_tcp.send(sock, "Album: Mutter\nOK\n")
+    {:noreply, state}
+  end
+
+  def handle_info({:tcp, _, "listall \"flac/rammstein_-_mutter_\(2001\)\"\n"},
+                  state = {sock, :post_init}) do
+    reply = File.read!("test/support/replies/listall")
+    :ok = :gen_tcp.send(sock, reply)
+    {:noreply, state}
+  end
+
+  def handle_info({:tcp, _, "listfiles \"flac/rammstein_-_mutter_\(2001\)\"\n"},
+                  state = {sock, :post_init}) do
+    reply = File.read!("test/support/replies/listfiles")
+    :ok = :gen_tcp.send(sock, reply)
+    {:noreply, state}
+  end
+
+  def handle_info({:tcp, _, "lsinfo \"flac/rammstein_-_mutter_\(2001\)\"\n"},
+                  state = {sock, :post_init}) do
+    reply = File.read!("test/support/replies/lsinfo")
+    :ok = :gen_tcp.send(sock, reply)
+    {:noreply, state}
+  end
+
+  def handle_info({:tcp, _, "readcomments \"flac/rammstein_-_mutter_\(2001\)/" <>
+                            "03._rammstein__sonne.flac\"\n"},
+                  state = {sock, :post_init}) do
+    reply = File.read!("test/support/replies/readcomments")
+    :ok = :gen_tcp.send(sock, reply)
+    {:noreply, state}
+  end
+
+
   def handle_info({:tcp, _, "close\n"}, {sock, :post_init}) do
     :ok = :gen_tcp.close(sock)
     {:stop, :normal, nil}

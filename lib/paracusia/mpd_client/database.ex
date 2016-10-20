@@ -81,7 +81,7 @@ defmodule Paracusia.MpdClient.Database do
     filter_string = filters |> Enum.reduce("", fn ({tag, value}, acc) ->
       acc <> ~s(#{to_string(tag)} "#{value}" )
     end)
-    msg = "count #{filter_string} group #{to_string(group)}\n"
+    msg = "count #{filter_string}group #{to_string(group)}\n"
     with {:ok, reply} <- MpdClient.send_and_recv(msg) do
       {:ok, reply |> parse_query_result}
     end
@@ -121,14 +121,14 @@ defmodule Paracusia.MpdClient.Database do
   @doc"""
   Adds all songs that match the given filters to the queue.
 
-  ## Examples
+  ## Example
 
       # Add album "Mutter" by "Rammstein":
-      Paracusia.MpdClient.Database.findadd(albumartist: "Rammstein", album: "Mutter")
+      Paracusia.MpdClient.Database.find_add(albumartist: "Rammstein", album: "Mutter")
       :ok
   """
-  @spec findadd([{MpdTypes.find_tag, String.t}]) :: :ok | MpdTypes.mpd_error
-  def findadd(filters) do
+  @spec find_add([{MpdTypes.find_tag, String.t}]) :: :ok | MpdTypes.mpd_error
+  def find_add(filters) do
     filter_string = filters |> Enum.reduce("", fn ({tag, value}, acc) ->
       acc <> ~s(#{MessageParser.find_tag_to_string(tag)} "#{value}" )
     end)
@@ -261,7 +261,7 @@ defmodule Paracusia.MpdClient.Database do
 
 
   @doc"""
-  Case-insensitive version of `findadd/1`.
+  Case-insensitive version of `find_add/1`.
   """
   @spec search_add([{MpdTypes.find_tag, String.t}]) :: :ok | MpdTypes.mpd_error
   def search_add(filters) do

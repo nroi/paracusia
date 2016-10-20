@@ -15,7 +15,7 @@ defmodule Paracusia.MpdClient.StatusTest do
   end
 
   test "current_song should return a map describing the current song" do
-    {:ok, result} = Paracusia.MpdClient.Status.current_song
+    {:ok, result} = Status.current_song
     expected = %{"file" => "flac/rammstein_-_mutter_(2001)/11._rammstein__nebel.flac",
                  "Last-Modified" => "2016-10-08T09:52:35Z",
                  "Genre" => "Industrial",
@@ -40,7 +40,7 @@ defmodule Paracusia.MpdClient.StatusTest do
   end
 
   test "stats should return a map containing statistics" do
-    {:ok, result} = Paracusia.MpdClient.Status.stats
+    {:ok, result} = Status.stats
     expected = %Paracusia.PlayerState.Stats{uptime: 316988,
                                             playtime: 34195,
                                             artists: 11,
