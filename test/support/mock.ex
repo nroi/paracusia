@@ -10,6 +10,53 @@ defmodule Paracusia.Mock do
     {:ok, nil}
   end
 
+  defp answer_from_msg("noidle\n"), do: "OK\n"
+  defp answer_from_msg("notcommands\n"), do: "OK\n"
+  defp answer_from_msg("disableoutput " <> rest), do: "OK\n"
+  defp answer_from_msg("enableoutput " <> rest), do: "OK\n"
+  defp answer_from_msg("toggleoutput " <> rest), do: "OK\n"
+  defp answer_from_msg("searchadd " <> _), do: "OK\n"
+  defp answer_from_msg("searchaddpl " <> _), do: "OK\n"
+  defp answer_from_msg("update" <> _), do: "updating_db: 1\nOK\n"
+  defp answer_from_msg("rescan" <> _), do: "updating_db: 1\nOK\n"
+  defp answer_from_msg("count albumartist \"Rammstein\" album \"Mutter\" \n"), do:
+    "songs: 11\nplaytime: 3048\nOK\n"
+  defp answer_from_msg("count albumartist \"Rammstein\" group album\n"), do:
+    File.read!("test/support/replies/count_grouped")
+  defp answer_from_msg("find albumartist \"Rammstein\" album \"Mutter\" \n"), do:
+    File.read!("test/support/replies/find")
+  defp answer_from_msg("search albumartist \"Rammstein\" album \"Mutter\" \n"), do:
+    File.read!("test/support/replies/find")
+  defp answer_from_msg("findadd " <> _), do: "OK\n"
+  defp answer_from_msg("list album albumartist \"Rammstein\" date \"2001\" \n"), do:
+    "Album: Mutter\nOK\n"
+  defp answer_from_msg("listall \"flac/rammstein_-_mutter_\(2001\)\"\n"), do:
+    File.read!("test/support/replies/listall")
+  defp answer_from_msg("listfiles \"flac/rammstein_-_mutter_\(2001\)\"\n"), do:
+    File.read!("test/support/replies/listfiles")
+  defp answer_from_msg("lsinfo \"flac/rammstein_-_mutter_\(2001\)\"\n"), do:
+    File.read!("test/support/replies/lsinfo")
+  defp answer_from_msg("readcomments \"flac/rammstein_-_mutter_\(2001\)/03._rammstein__sonne.flac\"\n"), do:
+    File.read!("test/support/replies/readcomments")
+  defp answer_from_msg("play" <> _), do: "OK\n"
+  defp answer_from_msg("pause " <> _), do: "OK\n"
+  defp answer_from_msg("stop\n"), do: "OK\n"
+  defp answer_from_msg("next\n"), do: "OK\n"
+  defp answer_from_msg("previous\n"), do: "OK\n"
+  defp answer_from_msg("seek" <> _), do: "OK\n"
+  defp answer_from_msg("consume" <> _), do: "OK\n"
+  defp answer_from_msg("crossfade" <> _), do: "OK\n"
+  defp answer_from_msg("mixrampdb" <> _), do: "OK\n"
+  defp answer_from_msg("random" <> _), do: "OK\n"
+  defp answer_from_msg("repeat" <> _), do: "OK\n"
+  defp answer_from_msg("setvol" <> _), do: "OK\n"
+  defp answer_from_msg("single" <> _), do: "OK\n"
+  defp answer_from_msg("replay_gain_mode" <> _), do: "OK\n"
+  defp answer_from_msg(unmatched) do
+    basename = unmatched |> String.replace_suffix("\n", "")
+    File.read!("test/support/replies/#{basename}")
+  end
+
   def handle_info(:init, nil) do
     port = Application.get_env(:paracusia, :test_port)
     {:ok, lsock} = :gen_tcp.listen(port,
@@ -19,12 +66,13 @@ defmodule Paracusia.Mock do
     {:noreply, {sock, :init, ""}}
   end
 
+  def handle_info({:tcp, _, "idle\n"}, state = {_, :post_init}), do: {:noreply, state}
 
-  def handle_info({:tcp, _, "commands\n"}, state = {sock, :post_init}) do
-    reply = File.read!("test/support/replies/commands")
-    :ok = :gen_tcp.send(sock, reply)
-    {:noreply, state}
+  def handle_info({:tcp, _, "close\n"}, {sock, :post_init}) do
+    :ok = :gen_tcp.close(sock)
+    {:stop, :normal, nil}
   end
+
 
   def handle_info({:tcp, _, msg}, {sock, :init, prev_msg}) do
     case parse_initial(msg, prev_msg) do
@@ -36,152 +84,15 @@ defmodule Paracusia.Mock do
     end
   end
 
-  # just ignore idle and noidle commands -- we do not attempt to emulate MPD, we just want to check
-  # if replies sent by MPD are parsed correctly by Paracusia.
-  def handle_info({:tcp, _, "idle\n"}, state = {_sock, :post_init}) do
-    {:noreply, state}
-  end
-  def handle_info({:tcp, _, "noidle\n"}, state = {sock, :post_init}) do
-    :gen_tcp.send(sock, "OK\n")
-    {:noreply, state}
-  end
-  def handle_info({:tcp, _, "idle\nnoidle\n"}, state = {sock, :post_init}) do
-    :gen_tcp.send(sock, "OK\n")
-    {:noreply, state}
-  end
-
-  def handle_info({:tcp, _, "notcommands\n"}, state = {sock, :post_init}) do
-    :gen_tcp.send(sock, "OK\n")
-    {:noreply, state}
-  end
-
-  def handle_info({:tcp, _, "disableoutput " <> rest}, state = {sock, :post_init}) do
-    {_id, "\n"} = Integer.parse(rest)
-    :gen_tcp.send(sock, "OK\n")
-    {:noreply, state}
-  end
-
-  def handle_info({:tcp, _, "enableoutput " <> rest}, state = {sock, :post_init}) do
-    {_id, "\n"} = Integer.parse(rest)
-    :gen_tcp.send(sock, "OK\n")
-    {:noreply, state}
-  end
-
-  def handle_info({:tcp, _, "toggleoutput " <> rest}, state = {sock, :post_init}) do
-    {_id, "\n"} = Integer.parse(rest)
-    :gen_tcp.send(sock, "OK\n")
-    {:noreply, state}
-  end
-
-  def handle_info({:tcp, _, "searchadd " <> _}, state = {sock, :post_init}) do
-    :gen_tcp.send(sock, "OK\n")
-    {:noreply, state}
-  end
-
-  def handle_info({:tcp, _, "searchaddpl " <> _}, state = {sock, :post_init}) do
-    :gen_tcp.send(sock, "OK\n")
-    {:noreply, state}
-  end
-
-  def handle_info({:tcp, _, "update" <> _}, state = {sock, :post_init}) do
-    :gen_tcp.send(sock, "updating_db: 1\nOK\n")
-    {:noreply, state}
-  end
-
-  def handle_info({:tcp, _, "rescan" <> _}, state = {sock, :post_init}) do
-    :gen_tcp.send(sock, "updating_db: 1\nOK\n")
-    {:noreply, state}
-  end
-
-  def handle_info({:tcp, _, "count albumartist \"Rammstein\" album \"Mutter\" \n"},
-                  state = {sock, :post_init}) do
-    :gen_tcp.send(sock, "songs: 11\nplaytime: 3048\nOK\n")
-    {:noreply, state}
-  end
-
-  def handle_info({:tcp, _, "count albumartist \"Rammstein\" group album\n"},
-                  state = {sock, :post_init}) do
-    reply = File.read!("test/support/replies/count_grouped")
-    :ok = :gen_tcp.send(sock, reply)
-    {:noreply, state}
-  end
-
-  def handle_info({:tcp, _, "find albumartist \"Rammstein\" album \"Mutter\" \n"},
-                  state = {sock, :post_init}) do
-    reply = File.read!("test/support/replies/find")
-    :ok = :gen_tcp.send(sock, reply)
-    {:noreply, state}
-  end
-
-  def handle_info({:tcp, _, "search albumartist \"Rammstein\" album \"Mutter\" \n"},
-                  state = {sock, :post_init}) do
-    reply = File.read!("test/support/replies/find")
-    :ok = :gen_tcp.send(sock, reply)
-    {:noreply, state}
-  end
-
-  def handle_info({:tcp, _, "findadd " <> _}, state = {sock, :post_init}) do
-    :ok = :gen_tcp.send(sock, "OK\n")
-    {:noreply, state}
-  end
-
-  def handle_info({:tcp, _, "searchadd " <> _}, state = {sock, :post_init}) do
-    :ok = :gen_tcp.send(sock, "OK\n")
-    {:noreply, state}
-  end
-
-  def handle_info({:tcp, _, "list album albumartist \"Rammstein\" date \"2001\" \n"},
-                  state = {sock, :post_init}) do
-    :ok = :gen_tcp.send(sock, "Album: Mutter\nOK\n")
-    {:noreply, state}
-  end
-
-  def handle_info({:tcp, _, "listall \"flac/rammstein_-_mutter_\(2001\)\"\n"},
-                  state = {sock, :post_init}) do
-    reply = File.read!("test/support/replies/listall")
-    :ok = :gen_tcp.send(sock, reply)
-    {:noreply, state}
-  end
-
-  def handle_info({:tcp, _, "listfiles \"flac/rammstein_-_mutter_\(2001\)\"\n"},
-                  state = {sock, :post_init}) do
-    reply = File.read!("test/support/replies/listfiles")
-    :ok = :gen_tcp.send(sock, reply)
-    {:noreply, state}
-  end
-
-  def handle_info({:tcp, _, "lsinfo \"flac/rammstein_-_mutter_\(2001\)\"\n"},
-                  state = {sock, :post_init}) do
-    reply = File.read!("test/support/replies/lsinfo")
-    :ok = :gen_tcp.send(sock, reply)
-    {:noreply, state}
-  end
-
-  def handle_info({:tcp, _, "readcomments \"flac/rammstein_-_mutter_\(2001\)/" <>
-                            "03._rammstein__sonne.flac\"\n"},
-                  state = {sock, :post_init}) do
-    reply = File.read!("test/support/replies/readcomments")
-    :ok = :gen_tcp.send(sock, reply)
-    {:noreply, state}
-  end
-
-
-  def handle_info({:tcp, _, "close\n"}, {sock, :post_init}) do
-    :ok = :gen_tcp.close(sock)
-    {:stop, :normal, nil}
-  end
-
-
   def handle_info({:tcp, _, msg}, state = {sock, :post_init}) do
-    basename = msg |> String.replace_suffix("\n", "")
-    reply = File.read!("test/support/replies/#{basename}")
-    :ok = :gen_tcp.send(sock, reply)
+    answer = answer_from_msg(msg)
+    :ok = :gen_tcp.send(sock, answer)
     {:noreply, state}
   end
 
   defp parse_initial(msg, prev_msg) do
     # Paracusia initially sends "idle\n" followed by "noidle\n. We just ignore these messages and
-    # wait for the actuall command to arrive.
+    # wait for the actual command to arrive.
     if prev_msg <> msg == "idle\nnoidle\n" do
       :ok
     else
