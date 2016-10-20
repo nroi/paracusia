@@ -55,10 +55,29 @@ defmodule Paracusia.Mock do
     {:noreply, state}
   end
 
+  def handle_info({:tcp, _, "disableoutput " <> rest}, state = {sock, :post_init}) do
+    {_id, "\n"} = Integer.parse(rest)
+    :gen_tcp.send(sock, "OK\n")
+    {:noreply, state}
+  end
+
+  def handle_info({:tcp, _, "enableoutput " <> rest}, state = {sock, :post_init}) do
+    {_id, "\n"} = Integer.parse(rest)
+    :gen_tcp.send(sock, "OK\n")
+    {:noreply, state}
+  end
+
+  def handle_info({:tcp, _, "toggleoutput " <> rest}, state = {sock, :post_init}) do
+    {_id, "\n"} = Integer.parse(rest)
+    :gen_tcp.send(sock, "OK\n")
+    {:noreply, state}
+  end
+
   def handle_info({:tcp, _, "close\n"}, {sock, :post_init}) do
     :ok = :gen_tcp.close(sock)
     {:stop, :normal, nil}
   end
+
 
   def handle_info({:tcp, _, msg}, state = {sock, :post_init}) do
     basename = msg |> String.replace_suffix("\n", "")
