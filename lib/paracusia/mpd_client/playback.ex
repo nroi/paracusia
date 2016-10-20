@@ -10,12 +10,13 @@ defmodule Paracusia.MpdClient.Playback do
   https://musicpd.org/doc/protocol/playback_option_commands.html
   """
 
+
   @doc"""
-  Plays next song in the playlist.
+  Continues playing the current song.
   """
-  @spec next() :: :ok | MpdTypes.mpd_error
-  def next do
-    MpdClient.send_and_ack("next\n")
+  @spec play() :: :ok | MpdTypes.mpd_error
+  def play() do
+    MpdClient.send_and_ack("play\n")
   end
 
 
@@ -28,11 +29,20 @@ defmodule Paracusia.MpdClient.Playback do
 
 
   @doc"""
-  Continues playing the current song.
+  Plays next song in the playlist.
   """
-  @spec play() :: :ok | MpdTypes.mpd_error
-  def play() do
-    MpdClient.send_and_ack("play\n")
+  @spec next() :: :ok | MpdTypes.mpd_error
+  def next do
+    MpdClient.send_and_ack("next\n")
+  end
+
+
+  @doc"""
+  Plays previous song in the playlist.
+  """
+  @spec previous() :: :ok | MpdTypes.mpd_error
+  def previous do
+    MpdClient.send_and_ack("previous\n")
   end
 
 
@@ -65,19 +75,10 @@ defmodule Paracusia.MpdClient.Playback do
 
 
   @doc"""
-  Plays previous song in the playlist.
-  """
-  @spec previous() :: :ok | MpdTypes.mpd_error
-  def previous do
-    MpdClient.send_and_ack("previous\n")
-  end
-
-
-  @doc"""
   Seeks to the position `seconds` entry `songpos` in the queue.
   """
-  @spec seek(MpdTypes.position, number) :: :ok | MpdTypes.mpd_error
-  def seek(songpos, seconds) do
+  @spec seek_pos(MpdTypes.position, number) :: :ok | MpdTypes.mpd_error
+  def seek_pos(songpos, seconds) do
     MpdClient.send_and_ack("seek #{songpos} #{seconds}\n")
   end
 
