@@ -32,10 +32,7 @@ defmodule Paracusia.MpdClient.Queue do
   """
   @spec add_id(String.t, MpdTypes.position) :: {:ok, MpdTypes.id} | MpdTypes.mpd_error
   def add_id(uri, pos) do
-    msg = case pos do
-      nil -> ~s(addid "#{uri}"\n)
-      pos -> ~s(addid "#{uri}" #{pos}"\n)
-    end
+    msg = ~s(addid "#{uri}" #{pos}"\n)
     with {:ok, reply} <- MpdClient.send_and_recv(msg) do
       id = case reply do
         "Id: " <> rest ->
