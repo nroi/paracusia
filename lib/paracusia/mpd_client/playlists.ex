@@ -28,7 +28,7 @@ defmodule Paracusia.MpdClient.Playlists do
   @doc"""
   Returns a map containing all songs from the playlist and their metadata.
   """
-  @spec list_info(String.t) :: {:ok, map} | MpdTypes.mpd_error
+  @spec list_info(String.t) :: {:ok, [map]} | MpdTypes.mpd_error
   def list_info(playlist) do
     msg = "listplaylistinfo #{playlist}\n"
     with {:ok, reply} <- MpdClient.send_and_recv(msg) do
@@ -63,9 +63,9 @@ defmodule Paracusia.MpdClient.Playlists do
   Only songs whose position is between `start` and `until` (excluding `until`) are added to the
   queue. Indexing starts at zero.
   """
-  @spec load(String.t, integer, integer) :: :ok | MpdTypes.mpd_error
-  def load(playlist, start, until) do
-    MpdClient.send_and_ack("load #{playlist} #{start}:#{until}\n")
+  @spec load(String.t, MpdTypes.range) :: :ok | MpdTypes.mpd_error
+  def load(playlist, {start, until}) do
+    MpdClient.send_and_ack(~s(load #{playlist} #{start}:#{until}\n))
   end
 
 

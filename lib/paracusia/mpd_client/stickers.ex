@@ -67,10 +67,11 @@ defmodule Paracusia.MpdClient.Stickers do
   def all(uri) do
     msg = ~s(sticker list song "#{uri}"\n)
     with {:ok, reply} <- MpdClient.send_and_recv(msg) do
-      reply
+      result = reply
       |> String.split("\n", trim: true)
       |> Enum.map(&parse_sticker(&1))
       |> Map.new
+      {:ok, result}
     end
   end
 

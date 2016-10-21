@@ -142,7 +142,7 @@ defmodule Paracusia.MpdClient.Queue do
   @doc"""
   Returns a map containing info about the songs with the given id.
   """
-  @spec song_info_from_id(MpdTypes.id) :: map
+  @spec song_info_from_id(MpdTypes.id) :: {:ok, map} | MpdTypes.mpd_error
   def song_info_from_id(id) do
     with {:ok, reply} <- MpdClient.send_and_recv("playlistid #{id}\n") do
       [item] = reply |> MessageParser.parse_items

@@ -72,7 +72,7 @@ defmodule Paracusia.MpdClient do
     sock = connect_retry(hostname, port,
                                  attempt: 1, retry_after: retry_after, max_attempts: max_attempts)
     {:ok, "OK MPD" <> _} = :gen_tcp.recv(sock, 0)
-    if password do
+    _ = if password do
       :ok = :gen_tcp.send(sock, "password #{password}\n")
       {:ok, "OK\n"} = :gen_tcp.recv(sock, 0)
     end
@@ -158,7 +158,7 @@ defmodule Paracusia.MpdClient do
                                                         prev_msg: "",
                                                         status: :idle,
                                                         queue: []}) do
-    :gen_tcp.send(sock, "idle\n")
+    :ok = :gen_tcp.send(sock, "idle\n")
     {:noreply, state}
   end
   def handle_info({:tcp, _, "OK\n"}, state = %MpdClient{prev_msg: "",
