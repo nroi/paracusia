@@ -59,9 +59,6 @@ defmodule Paracusia.MpdClient.Playlists do
 
   @doc"""
   Loads a given range from the playlist into the queue.
-
-  Only songs whose position is between `start` and `until` (excluding `until`) are added to the
-  queue. Indexing starts at zero.
   """
   @spec load(String.t, MpdTypes.range) :: :ok | MpdTypes.mpd_error
   def load(playlist, {start, until}) do
@@ -96,8 +93,8 @@ defmodule Paracusia.MpdClient.Playlists do
 
   Indexing starts at 0.
   """
-  @spec delete(String.t, integer) :: :ok | MpdTypes.mpd_error
-  def delete(playlist, pos) do
+  @spec delete_pos(String.t, integer) :: :ok | MpdTypes.mpd_error
+  def delete_pos(playlist, pos) do
     msg = ~s(playlistdelete "#{playlist}" #{pos}\n)
     MpdClient.send_and_ack(msg)
   end
@@ -125,8 +122,8 @@ defmodule Paracusia.MpdClient.Playlists do
   @doc"""
   Removes the playlist `playlist`.m3u from the playlist directory.
   """
-  @spec rm(String.t) :: :ok | MpdTypes.mpd_error
-  def rm(playlist) do
+  @spec remove(String.t) :: :ok | MpdTypes.mpd_error
+  def remove(playlist) do
     MpdClient.send_and_ack(~s(rm "#{playlist}"\n))
   end
 
