@@ -129,7 +129,7 @@ defmodule Paracusia.MpdClient.Queue do
     filter_string = filters |> Enum.reduce("", fn ({tag, value}, acc) ->
       acc <> ~s(#{MessageParser.find_tag_to_string(tag)} "#{value}" )
     end)
-    msg = "find #{filter_string}\n"
+    msg = "playlistfind #{filter_string}\n"
     with {:ok, reply} <- MpdClient.send_and_recv(msg) do
       {:ok, reply |> MessageParser.parse_items}
     end
