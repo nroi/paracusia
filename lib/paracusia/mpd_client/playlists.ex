@@ -30,7 +30,7 @@ defmodule Paracusia.MpdClient.Playlists do
   """
   @spec list_info(String.t) :: {:ok, [map]} | MpdTypes.mpd_error
   def list_info(playlist) do
-    msg = "listplaylistinfo #{playlist}\n"
+    msg = ~s(listplaylistinfo "#{playlist}"\n)
     with {:ok, reply} <- MpdClient.send_and_recv(msg) do
       {:ok, reply |> MessageParser.parse_items}
     end
@@ -53,7 +53,7 @@ defmodule Paracusia.MpdClient.Playlists do
   """
   @spec load(String.t) :: :ok | MpdTypes.mpd_error
   def load(playlist) do
-    MpdClient.send_and_ack("load #{playlist}\n")
+    MpdClient.send_and_ack(~s(load "#{playlist}"\n))
   end
 
 
@@ -76,7 +76,7 @@ defmodule Paracusia.MpdClient.Playlists do
   """
   @spec add(String.t, String.t) :: :ok | MpdTypes.mpd_error
   def add(playlist, uri) do
-    msg = "playlistadd #{playlist} #{uri}\n"
+    msg = ~s(playlistadd "#{playlist}" "#{uri}"\n)
     MpdClient.send_and_ack(msg)
   end
 
@@ -86,7 +86,7 @@ defmodule Paracusia.MpdClient.Playlists do
   """
   @spec clear(String.t) :: :ok | MpdTypes.mpd_error
   def clear(playlist) do
-    msg = "playlistclear #{playlist}\n"
+    msg = ~s(playlistclear "#{playlist}"\n)
     MpdClient.send_and_ack(msg)
   end
 
@@ -98,7 +98,7 @@ defmodule Paracusia.MpdClient.Playlists do
   """
   @spec delete(String.t, integer) :: :ok | MpdTypes.mpd_error
   def delete(playlist, pos) do
-    msg = "playlistdelete #{playlist} #{pos}\n"
+    msg = ~s(playlistdelete "#{playlist}" #{pos}\n)
     MpdClient.send_and_ack(msg)
   end
 
@@ -107,7 +107,7 @@ defmodule Paracusia.MpdClient.Playlists do
   """
   @spec move(String.t, integer, integer) :: :ok | MpdTypes.mpd_error
   def move(playlist, from, to) do
-    msg = "playlistmove #{playlist} #{from} #{to}\n"
+    msg = ~s(playlistmove "#{playlist}" #{from} #{to}\n)
     MpdClient.send_and_ack(msg)
   end
 
@@ -117,7 +117,7 @@ defmodule Paracusia.MpdClient.Playlists do
   """
   @spec rename(String.t, String.t) :: :ok | MpdTypes.mpd_error
   def rename(playlist, new_name) do
-    msg = "rename #{playlist} #{new_name}\n"
+    msg = ~s(rename "#{playlist}" "#{new_name}"\n)
     MpdClient.send_and_ack(msg)
   end
 
@@ -127,7 +127,7 @@ defmodule Paracusia.MpdClient.Playlists do
   """
   @spec rm(String.t) :: :ok | MpdTypes.mpd_error
   def rm(playlist) do
-    MpdClient.send_and_ack("rm #{playlist}\n")
+    MpdClient.send_and_ack(~s(rm "#{playlist}"\n))
   end
 
 
@@ -136,7 +136,7 @@ defmodule Paracusia.MpdClient.Playlists do
   """
   @spec save(String.t) :: :ok | MpdTypes.mpd_error
   def save(name) do
-    MpdClient.send_and_ack("save #{name}\n")
+    MpdClient.send_and_ack(~s(save #{name}\n))
   end
 
 end
