@@ -28,8 +28,8 @@ defmodule Paracusia.MpdClient.Playlists do
   @doc"""
   Returns a map containing all songs from the playlist and their metadata.
   """
-  @spec listinfo(String.t) :: {:ok, map} | MpdTypes.mpd_error
-  def listinfo(playlist) do
+  @spec list_info(String.t) :: {:ok, map} | MpdTypes.mpd_error
+  def list_info(playlist) do
     msg = "listplaylistinfo #{playlist}\n"
     with {:ok, reply} <- MpdClient.send_and_recv(msg) do
       {:ok, reply |> MessageParser.parse_items}
