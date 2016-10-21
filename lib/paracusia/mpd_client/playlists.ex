@@ -15,7 +15,7 @@ defmodule Paracusia.MpdClient.Playlists do
   """
   @spec list(String.t) :: {:ok, list} | MpdTypes.mpd_error
   def list(playlist) do
-    msg = "listplaylist #{playlist}\n"
+    msg = ~s(listplaylist "#{playlist}"\n)
     with {:ok, reply} <- MpdClient.send_and_recv(msg) do
       result = reply
       |> String.split("\n", trim: true)
