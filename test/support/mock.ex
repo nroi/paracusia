@@ -53,7 +53,19 @@ defmodule Paracusia.Mock do
   defp answer_from_msg("single" <> _), do: "OK\n"
   defp answer_from_msg("replay_gain_mode" <> _), do: "OK\n"
   defp answer_from_msg("volume " <> _), do: "OK\n"
+  defp answer_from_msg("load " <> _), do: "OK\n"
   defp answer_from_msg("replay_gain_status\n" <> _), do: "replay_gain_mode: off\nOK\n"
+  defp answer_from_msg("playlistadd " <> _), do: "OK\n"
+  defp answer_from_msg("playlistclear\n"), do: "OK\n"
+  defp answer_from_msg("playlistdelete " <> _), do: "OK\n"
+  defp answer_from_msg("playlistmove " <> _), do: "OK\n"
+  defp answer_from_msg("rename " <> _), do: "OK\n"
+  defp answer_from_msg("save " <> _), do: "OK\n"
+  defp answer_from_msg("rm " <> _), do: "OK\n"
+  defp answer_from_msg("listplaylist \"Mutter by Rammstein\"\n"), do:
+    File.read!("test/support/replies/listplaylist")
+  defp answer_from_msg("listplaylistinfo \"Mutter by Rammstein\"\n"), do:
+    File.read!("test/support/replies/listplaylistinfo")
   defp answer_from_msg(unmatched) do
     basename = unmatched |> String.replace_suffix("\n", "")
     File.read!("test/support/replies/#{basename}")
