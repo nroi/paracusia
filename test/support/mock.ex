@@ -12,9 +12,9 @@ defmodule Paracusia.Mock do
 
   defp answer_from_msg("noidle\n"), do: "OK\n"
   defp answer_from_msg("notcommands\n"), do: "OK\n"
-  defp answer_from_msg("disableoutput " <> rest), do: "OK\n"
-  defp answer_from_msg("enableoutput " <> rest), do: "OK\n"
-  defp answer_from_msg("toggleoutput " <> rest), do: "OK\n"
+  defp answer_from_msg("disableoutput " <> _), do: "OK\n"
+  defp answer_from_msg("enableoutput " <> _), do: "OK\n"
+  defp answer_from_msg("toggleoutput " <> _), do: "OK\n"
   defp answer_from_msg("searchadd " <> _), do: "OK\n"
   defp answer_from_msg("searchaddpl " <> _), do: "OK\n"
   defp answer_from_msg("update" <> _), do: "updating_db: 1\nOK\n"
@@ -52,6 +52,8 @@ defmodule Paracusia.Mock do
   defp answer_from_msg("setvol" <> _), do: "OK\n"
   defp answer_from_msg("single" <> _), do: "OK\n"
   defp answer_from_msg("replay_gain_mode" <> _), do: "OK\n"
+  defp answer_from_msg("volume " <> _), do: "OK\n"
+  defp answer_from_msg("replay_gain_status\n" <> _), do: "replay_gain_mode: off\nOK\n"
   defp answer_from_msg(unmatched) do
     basename = unmatched |> String.replace_suffix("\n", "")
     File.read!("test/support/replies/#{basename}")
