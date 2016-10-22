@@ -23,28 +23,28 @@ defmodule Paracusia.Mock do
     "songs: 11\nplaytime: 3048\nOK\n"
   defp answer_from_msg("count albumartist \"Rammstein\" group album\n"), do:
     File.read!("test/support/replies/count_grouped")
-  defp answer_from_msg("find albumartist \"Rammstein\" album \"Mutter\" \n"), do:
+  defp answer_from_msg("find " <> _), do:
     File.read!("test/support/replies/find")
-  defp answer_from_msg("playlistsearch albumartist \"Rammstein\" album \"Mutter\" \n"), do:
+  defp answer_from_msg("playlistsearch " <> _), do:
     File.read!("test/support/replies/find")
   defp answer_from_msg("plchanges " <> _), do:
     File.read!("test/support/replies/find")
   defp answer_from_msg("plchangesposid " <> _), do:
     "cpos: 0\nId: 1\ncpos: 1\nId: 2\ncpos: 2\nId: 3\nOK\n"
-  defp answer_from_msg("search albumartist \"Rammstein\" album \"Mutter\" \n"), do:
+  defp answer_from_msg("search " <> _), do:
     File.read!("test/support/replies/find")
-  defp answer_from_msg("playlistfind albumartist \"Rammstein\" album \"Mutter\" title \"Mutter\" \n"), do:
+  defp answer_from_msg("playlistfind " <> _), do:
     File.read!("test/support/replies/playlistfind")
   defp answer_from_msg("findadd " <> _), do: "OK\n"
-  defp answer_from_msg("list album albumartist \"Rammstein\" date \"2001\" \n"), do:
+  defp answer_from_msg("list " <> _), do:
     "Album: Mutter\nOK\n"
-  defp answer_from_msg("listall \"flac/rammstein_-_mutter_\(2001\)\"\n"), do:
+  defp answer_from_msg("listall " <> _), do:
     File.read!("test/support/replies/listall")
-  defp answer_from_msg("listfiles \"flac/rammstein_-_mutter_\(2001\)\"\n"), do:
+  defp answer_from_msg("listfiles " <> _), do:
     File.read!("test/support/replies/listfiles")
-  defp answer_from_msg("lsinfo \"flac/rammstein_-_mutter_\(2001\)\"\n"), do:
+  defp answer_from_msg("lsinfo " <> _), do:
     File.read!("test/support/replies/lsinfo")
-  defp answer_from_msg("readcomments \"flac/rammstein_-_mutter_\(2001\)/03._rammstein__sonne.flac\"\n"), do:
+  defp answer_from_msg("readcomments " <> _), do:
     File.read!("test/support/replies/readcomments")
   defp answer_from_msg("play\n"), do: "OK\n"
   defp answer_from_msg("play " <> _), do: "OK\n"
