@@ -83,6 +83,10 @@ defmodule Paracusia.Mock do
   defp answer_from_msg("swap" <> _), do: "OK\n"
   defp answer_from_msg("addtagid" <> _), do: "OK\n"
   defp answer_from_msg("cleartagid" <> _), do: "OK\n"
+  defp answer_from_msg("sticker set" <> _), do: "OK\n"
+  defp answer_from_msg("sticker delete" <> _), do: "OK\n"
+  defp answer_from_msg("sticker get" <> _), do: "sticker: rating=1\nOK\n"
+  defp answer_from_msg("sticker list" <> _), do: "sticker: playcount=3\nsticker: rating=1\nOK\n"
   defp answer_from_msg("listplaylist \"Mutter by Rammstein\"\n"), do:
     File.read!("test/support/replies/listplaylist")
   defp answer_from_msg("listplaylistinfo \"Mutter by Rammstein\"\n"), do:
@@ -91,6 +95,10 @@ defmodule Paracusia.Mock do
     File.read!("test/support/replies/playlistid")
   defp answer_from_msg("playlistinfo" <> _), do:
     File.read!("test/support/replies/playlistid")
+  defp answer_from_msg("listplaylist \"Mutter by Rammstein\"\n"), do:
+    File.read!("test/support/replies/listplaylist")
+  defp answer_from_msg("sticker find " <> _), do:
+    File.read!("test/support/replies/sticker_find")
   defp answer_from_msg(unmatched) do
     basename = unmatched |> String.replace_suffix("\n", "")
     File.read!("test/support/replies/#{basename}")
