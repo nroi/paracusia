@@ -83,7 +83,7 @@ defmodule Paracusia.PlayerState do
     init_state = Application.get_env(:paracusia, :initial_state)
     :ok = GenEvent.add_handler(genevent_pid, handler, init_state)
     Process.register(genevent_pid, handler)
-    _ = Logger.debug "Initial player state is: #{inspect player_state}"
+    _ = Logger.debug "Player initialized, playback status: #{inspect player_state.status.state}"
     {:ok, {player_state, genevent_pid}}
   end
 
