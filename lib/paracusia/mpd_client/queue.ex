@@ -17,8 +17,10 @@ defmodule Paracusia.MpdClient.Queue do
   multiple clients are interacting with MPD."
   """
 
+
   @doc"""
   Adds the file `uri` to the queue.
+
   Directories are added recursively. `uri` can also be a single file.
   """
   @spec add(String.t) :: :ok | MpdTypes.mpd_error
@@ -80,7 +82,7 @@ defmodule Paracusia.MpdClient.Queue do
 
 
   @doc"""
-  Deletes multiple songs from the given range from the queue.
+  Deletes songs from the given range from the queue.
   """
   @spec delete_range(MpdTypes.range) :: :ok | MpdTypes.mpd_error
   def delete_range({start, until}) do
@@ -100,7 +102,7 @@ defmodule Paracusia.MpdClient.Queue do
   @doc"""
   Moves the song/songs from the given position/range to `to` in the queue.
 
-  `from` can be either a single position or a range.
+  `from` can be either a position or a range.
   """
   @spec move(MpdTypes.position | MpdTypes.range, MpdTypes.position) :: :ok | MpdTypes.mpd_error
   def move({from, until}, to) do
@@ -174,9 +176,6 @@ defmodule Paracusia.MpdClient.Queue do
 
   @doc"""
   Returns a list of maps containing info about the songs in the given range.
-
-  All returned songs are contained in the playlist in the range from `start` up to (excluding)
-  `until`.
   """
   @spec songs_info_from_range(MpdTypes.range) :: {:ok, [map]} | MpdTypes.mpd_error
   def songs_info_from_range({start, until}) do
@@ -243,8 +242,9 @@ defmodule Paracusia.MpdClient.Queue do
 
   @doc"""
   Similar to `changes/1` but the songs contain only the position and the id instead of the complete
-  metadata. This is more bandwith efficient.
+  metadata.
 
+  This is more bandwith efficient than `changes/1`.
   To detect songs that were deleted at the end of the queue, use the playlist_length key inside
   the map returned by `Paracusia.MpdClient.Status.status/0`.
   """
@@ -268,6 +268,7 @@ defmodule Paracusia.MpdClient.Queue do
     msg = "prio #{prio} #{start}:#{until}\n"
     MpdClient.send_and_ack(msg)
   end
+
 
   @doc"""
   Same as `set_priority/2`, except songs are addressed with their id.

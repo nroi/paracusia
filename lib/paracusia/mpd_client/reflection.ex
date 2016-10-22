@@ -10,7 +10,6 @@ defmodule Paracusia.MpdClient.Reflection do
   """
 
 
-
   @doc"""
   Returns a list of commands the current user has access to.
   """

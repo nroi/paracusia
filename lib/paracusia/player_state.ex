@@ -59,9 +59,6 @@ defmodule Paracusia.PlayerState do
   @doc"""
   Similar to `Paracusia.MpdClient.Status.status/0`, but always returns the status (instead of
   :error).
-
-  Note that calling `Paracusia.MpdClient.Status.status/0` will insert the current timestamp into the
-  result while this function will return the timestamp when the status was last updated.
   """
   @spec status() :: %Paracusia.PlayerState.Status{}
   def status do
