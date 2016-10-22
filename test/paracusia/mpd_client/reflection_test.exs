@@ -11,7 +11,7 @@ defmodule Paracusia.MpdClient.ReflectionTest do
   end
 
   test "Reflection.permitted_commands should yield a list of commands" do
-    {:ok, result} = Paracusia.MpdClient.Reflection.permitted_commands
+    {:ok, result} = Reflection.permitted_commands
     expected = ["add", "addid", "addtagid", "channels", "clear", "clearerror", "cleartagid",
                 "close", "commands", "config", "consume", "count", "crossfade", "currentsong",
                 "decoders", "delete", "deleteid", "disableoutput", "enableoutput", "find",
