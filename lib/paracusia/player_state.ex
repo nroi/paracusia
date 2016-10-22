@@ -5,12 +5,11 @@ defmodule Paracusia.PlayerState do
   use GenServer
 
   @type t :: %PlayerState{current_song: nil | map,
-                          playlist: list,
+                          queue: list,
                           status: %Paracusia.PlayerState.Status{},
                           outputs: list}
   defstruct current_song: nil,
-  # TODO stay consistent with the existing terminology: Use 'queue' for the current playlist.
-            playlist: [],
+            queue: [],
             status: %Paracusia.PlayerState.Status{},
             outputs: []
 
@@ -72,11 +71,11 @@ defmodule Paracusia.PlayerState do
 
   def init(nil) do
     {:ok, current_song} = MpdClient.Status.current_song
-    {:ok, playlist} = MpdClient.Queue.songs_info
+    {:ok, queue} = MpdClient.Queue.songs_info
     {:ok, status} = MpdClient.Status.status
     {:ok, outputs} = MpdClient.AudioOutputs.all
     player_state = %PlayerState{current_song: current_song,
-                                playlist: playlist,
+                                queue: queue,
                                 status: status,
                                 outputs: outputs}
     {:ok, genevent_pid} = GenEvent.start_link()
@@ -112,7 +111,7 @@ defmodule Paracusia.PlayerState do
       {:ok, playlist} = MpdClient.Queue.songs_info
       playlist
     else
-      ps.playlist
+      ps.queue
     end
     status_changed = Enum.any?([:mixer_changed, :player_changed, :options_changed], fn subsystem ->
       Enum.member?(events, subsystem)
@@ -125,7 +124,7 @@ defmodule Paracusia.PlayerState do
     end
     %PlayerState{
       :current_song => new_current_song,
-      :playlist => new_playlist,
+      :queue => new_playlist,
       :status => new_status,
       :outputs => new_outputs,
     }
@@ -169,7 +168,7 @@ defmodule Paracusia.PlayerState do
     {:reply, outputs, state}
   end
 
-  def handle_call(:queue, _from, state = {%PlayerState{:playlist => queue}, _}) do
+  def handle_call(:queue, _from, state = {%PlayerState{:queue => queue}, _}) do
     {:reply, queue, state}
   end
 

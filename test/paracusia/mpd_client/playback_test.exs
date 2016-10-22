@@ -18,7 +18,6 @@ defmodule Paracusia.MpdClient.PlaybackTest do
     :ok = Playback.play()
     :ok = Playback.play_pos(1)
     :ok = Playback.play_id(1)
-    :ok = Playback.play_id()
     :ok = Playback.previous()
     :ok = Playback.seek_pos(0, 30)
     :ok = Playback.seek_id(0, 30)
