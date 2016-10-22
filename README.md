@@ -33,16 +33,17 @@ You can now continue to use most of the commands listed in the MPD protocol
 specification (some of them are not implemented yet). For instance, to obtain
 all files and directories in MPD's root directory:
 ```elixir
-{:ok, uris} = Paracusia.MpdClient.lsinfo("")
+{:ok, uris} = Paracusia.MpdClient.Database.lsinfo("")
 ```
 To play the first song in the current playlist:
 ```elixir
-:ok = Paracusia.MpdClient.play(0)
+:ok = Paracusia.MpdClient.Playback.play_pos(0)
 ```
 Note that functions which are directly related to an MPD command always return
 `:ok` or `{:ok, result}` if everything went well, or `{:error, {errorcode,
-description}}` otherwise. For instance, choose an arbitrary number that is
-larger than your current playlist and try to play it:
+description}}` otherwise. For instance, if we choose a number that is larger than our current
+playlist and try to play it, MPD refuses to do so and instead warns us that the song index is
+invalid:
 ```
 Paracusia.MpdClient.play(999)
 {:error, {"2@0", "error 2@0 while executing command play: Bad song index"}}
