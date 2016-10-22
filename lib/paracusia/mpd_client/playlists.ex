@@ -13,7 +13,7 @@ defmodule Paracusia.MpdClient.Playlists do
   @doc"""
   Returns a list containing all songs in the given playlist.
   """
-  @spec list(String.t) :: {:ok, list} | MpdTypes.mpd_error
+  @spec list(String.t) :: {:ok, [String.t]} | MpdTypes.mpd_error
   def list(playlist) do
     msg = ~s(listplaylist "#{playlist}"\n)
     with {:ok, reply} <- MpdClient.send_and_recv(msg) do
@@ -90,14 +90,13 @@ defmodule Paracusia.MpdClient.Playlists do
 
   @doc"""
   Deletes the song at position `pos` from the playlist.
-
-  Indexing starts at 0.
   """
   @spec delete_pos(String.t, integer) :: :ok | MpdTypes.mpd_error
   def delete_pos(playlist, pos) do
     msg = ~s(playlistdelete "#{playlist}" #{pos}\n)
     MpdClient.send_and_ack(msg)
   end
+
 
   @doc"""
   Moves the song at position `from` in the playlist `playlist`.m3u to the position `to`.
@@ -110,7 +109,7 @@ defmodule Paracusia.MpdClient.Playlists do
 
 
   @doc"""
-  Renames the playlist `playlist.m3u` to `new_name`.m3u
+  Renames the playlist `playlist`.m3u to `new_name`.m3u
   """
   @spec rename(String.t, String.t) :: :ok | MpdTypes.mpd_error
   def rename(playlist, new_name) do
