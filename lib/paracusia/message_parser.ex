@@ -171,8 +171,6 @@ defmodule Paracusia.MessageParser do
   starts with either "file" or "directory", return the corresponding list of maps.
   """
   def parse_items(m) do
-    # Note that we just assume that each new item starts with "file: …" or "directory: …"
-    # This seems to be the case, but it's not officially documented anywhere.
     split_at_id = m
       |> String.split("\n", trim: true)
       |> Enum.reduce([], fn (item, acc) ->
