@@ -36,10 +36,8 @@ defmodule Paracusia.Mixfile do
   defp package do
     [
      maintainers: ["Fabian Muscariello"],
-     licenses: ["MIT"]
-	 # TODO add github URL once it's available.
-     # links: %{"GitHub" => "https://github.com/???",
-     #         "Docs" => "http://???"}]
+     licenses: ["MIT"],
+     links: %{"GitHub" => "https://github.com/nroi/paracusia"}
     ]
   end
 end
