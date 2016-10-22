@@ -16,6 +16,8 @@ defmodule Paracusia.MpdClient.Stickers do
   """
   @spec get(String.t, String.t) :: {:ok, String.t} | MpdTypes.mpd_error
   def get(uri, name) do
+    # The type is always 'song' because that is currently (2016) the only supported type for
+    # stickers.
     msg = ~s(sticker get song "#{uri}" "#{name}"\n)
     with {:ok, "sticker: " <> rest} <- MpdClient.send_and_recv(msg) do
       {:ok, rest |> String.replace_prefix("#{name}=", "") |> String.replace_suffix("\n", "")}
@@ -60,6 +62,7 @@ defmodule Paracusia.MpdClient.Stickers do
     end
   end
 
+
   @doc"""
   Returns all stickers for the song at the given URI.
   """
@@ -77,9 +80,8 @@ defmodule Paracusia.MpdClient.Stickers do
 
 
   @doc"""
-  Returns a list of `{uri, value}` tuples where `value` is the sticker value of `uri` for `name`.
-
-  Only URIs below `parent_uri` are considered.
+  Searches inside `parent_uri` for songs with the given sticker `name` and returns a list of
+  `{uri, value}` tuples where `value` is the sticker value of `uri` for `name`.
   """
   @spec find(String.t, String.t) :: {:ok, [{String.t, String.t}]} | MpdTypes.mpd_error
   def find(parent_uri, name) do
