@@ -23,7 +23,7 @@ defmodule Paracusia.MpdClient.Connection do
   """
   @spec ping() :: :ok
   def ping() do
-    GenServer.call(Paracusia.MpdClient, :ping)
+    Paracusia.MpdClient.send_and_ack("ping\n")
   end
 
 end
