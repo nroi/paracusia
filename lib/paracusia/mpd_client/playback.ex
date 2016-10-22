@@ -3,6 +3,7 @@ defmodule Paracusia.MpdClient.Playback do
   alias Paracusia.MpdTypes
   alias Paracusia.PlayerState
   import Paracusia.MessageParser, only: [boolean_to_binary: 1]
+
   @moduledoc"""
   Functions related to MPD's playback.
 
@@ -29,7 +30,7 @@ defmodule Paracusia.MpdClient.Playback do
 
 
   @doc"""
-  Plays next song in the playlist.
+  Plays next song in the queue.
   """
   @spec next() :: :ok | MpdTypes.mpd_error
   def next do
@@ -38,7 +39,7 @@ defmodule Paracusia.MpdClient.Playback do
 
 
   @doc"""
-  Plays previous song in the playlist.
+  Plays previous song in the queue.
   """
   @spec previous() :: :ok | MpdTypes.mpd_error
   def previous do
@@ -65,7 +66,7 @@ defmodule Paracusia.MpdClient.Playback do
 
 
   @doc"""
-  Seeks to the position `seconds` entry `songpos` in the queue.
+  Seeks to the position `seconds` at entry `songpos` in the queue.
   """
   @spec seek_pos(MpdTypes.position, number) :: :ok | MpdTypes.mpd_error
   def seek_pos(songpos, seconds) do
@@ -212,7 +213,6 @@ defmodule Paracusia.MpdClient.Playback do
   """
   @spec volume(integer) :: :ok | MpdTypes.mpd_error
   def volume(change), do: MpdClient.send_and_ack("volume #{change}\n")
-
 
 
   @doc"""
