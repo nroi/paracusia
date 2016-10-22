@@ -4,8 +4,6 @@ Paracusia is an MPD client library for Elixir.
 
 ## Installation
 
-**TODO: Publish on hex**
-
   1. Add `paracusia` to your list of dependencies in `mix.exs`:
 
     ```elixir
