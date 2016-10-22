@@ -25,8 +25,16 @@ defmodule Paracusia.Mock do
     File.read!("test/support/replies/count_grouped")
   defp answer_from_msg("find albumartist \"Rammstein\" album \"Mutter\" \n"), do:
     File.read!("test/support/replies/find")
+  defp answer_from_msg("playlistsearch albumartist \"Rammstein\" album \"Mutter\" \n"), do:
+    File.read!("test/support/replies/find")
+  defp answer_from_msg("plchanges " <> _), do:
+    File.read!("test/support/replies/find")
+  defp answer_from_msg("plchangesposid " <> _), do:
+    "cpos: 0\nId: 1\ncpos: 1\nId: 2\ncpos: 2\nId: 3\nOK\n"
   defp answer_from_msg("search albumartist \"Rammstein\" album \"Mutter\" \n"), do:
     File.read!("test/support/replies/find")
+  defp answer_from_msg("playlistfind albumartist \"Rammstein\" album \"Mutter\" title \"Mutter\" \n"), do:
+    File.read!("test/support/replies/playlistfind")
   defp answer_from_msg("findadd " <> _), do: "OK\n"
   defp answer_from_msg("list album albumartist \"Rammstein\" date \"2001\" \n"), do:
     "Album: Mutter\nOK\n"
@@ -38,7 +46,9 @@ defmodule Paracusia.Mock do
     File.read!("test/support/replies/lsinfo")
   defp answer_from_msg("readcomments \"flac/rammstein_-_mutter_\(2001\)/03._rammstein__sonne.flac\"\n"), do:
     File.read!("test/support/replies/readcomments")
-  defp answer_from_msg("play" <> _), do: "OK\n"
+  defp answer_from_msg("play\n"), do: "OK\n"
+  defp answer_from_msg("play " <> _), do: "OK\n"
+  defp answer_from_msg("playid" <> _), do: "OK\n"
   defp answer_from_msg("pause " <> _), do: "OK\n"
   defp answer_from_msg("stop\n"), do: "OK\n"
   defp answer_from_msg("next\n"), do: "OK\n"
@@ -56,16 +66,31 @@ defmodule Paracusia.Mock do
   defp answer_from_msg("load " <> _), do: "OK\n"
   defp answer_from_msg("replay_gain_status\n" <> _), do: "replay_gain_mode: off\nOK\n"
   defp answer_from_msg("playlistadd " <> _), do: "OK\n"
-  defp answer_from_msg("playlistclear\n"), do: "OK\n"
+  defp answer_from_msg("playlistclear" <> _), do: "OK\n"
   defp answer_from_msg("playlistdelete " <> _), do: "OK\n"
   defp answer_from_msg("playlistmove " <> _), do: "OK\n"
   defp answer_from_msg("rename " <> _), do: "OK\n"
   defp answer_from_msg("save " <> _), do: "OK\n"
   defp answer_from_msg("rm " <> _), do: "OK\n"
+  defp answer_from_msg("add " <> _), do: "OK\n"
+  defp answer_from_msg("addid " <> _), do: "Id: 20\nOK\n"
+  defp answer_from_msg("clear\n"), do: "OK\n"
+  defp answer_from_msg("delete" <> _), do: "OK\n"
+  defp answer_from_msg("move" <> _), do: "OK\n"
+  defp answer_from_msg("prio" <> _), do: "OK\n"
+  defp answer_from_msg("range" <> _), do: "OK\n"
+  defp answer_from_msg("shuffle" <> _), do: "OK\n"
+  defp answer_from_msg("swap" <> _), do: "OK\n"
+  defp answer_from_msg("addtagid" <> _), do: "OK\n"
+  defp answer_from_msg("cleartagid" <> _), do: "OK\n"
   defp answer_from_msg("listplaylist \"Mutter by Rammstein\"\n"), do:
     File.read!("test/support/replies/listplaylist")
   defp answer_from_msg("listplaylistinfo \"Mutter by Rammstein\"\n"), do:
     File.read!("test/support/replies/listplaylistinfo")
+  defp answer_from_msg("playlistid" <> _), do:
+    File.read!("test/support/replies/playlistid")
+  defp answer_from_msg("playlistinfo" <> _), do:
+    File.read!("test/support/replies/playlistid")
   defp answer_from_msg(unmatched) do
     basename = unmatched |> String.replace_suffix("\n", "")
     File.read!("test/support/replies/#{basename}")
