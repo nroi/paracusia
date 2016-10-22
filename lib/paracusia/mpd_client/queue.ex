@@ -98,7 +98,7 @@ defmodule Paracusia.MpdClient.Queue do
 
 
   @doc"""
-  Moves the song at `from` to `to` in the queue.
+  Moves the song/songs from the given position/range to `to` in the queue.
 
   `from` can be either a single position or a range.
   """
@@ -232,8 +232,8 @@ defmodule Paracusia.MpdClient.Queue do
   To detect songs that were deleted at the end of the queue, use the playlist_length key inside
   the map returned by `Paracusia.MpdClient.Status.status/0`.
   """
-  @spec changes(integer) :: {:ok, [map]} | MpdTypes.mpd_error
-  def changes(version) do
+  @spec changed_since(integer) :: {:ok, [map]} | MpdTypes.mpd_error
+  def changed_since(version) do
     msg = "plchanges #{version}\n"
     with {:ok, reply} <- MpdClient.send_and_recv(msg) do
       {:ok, reply |> MessageParser.parse_items}
@@ -248,8 +248,8 @@ defmodule Paracusia.MpdClient.Queue do
   To detect songs that were deleted at the end of the queue, use the playlist_length key inside
   the map returned by `Paracusia.MpdClient.Status.status/0`.
   """
-  @spec changes_pos_id(integer) :: {:ok, [map]} | MpdTypes.mpd_error
-  def changes_pos_id(version) do
+  @spec changed_since_pos_id(integer) :: {:ok, [map]} | MpdTypes.mpd_error
+  def changed_since_pos_id(version) do
     msg = "plchangesposid #{version}\n"
     with {:ok, reply} <- MpdClient.send_and_recv(msg) do
       {:ok, reply |> parse_plchangesposid}
@@ -258,7 +258,7 @@ defmodule Paracusia.MpdClient.Queue do
 
 
   @doc"""
-  Sets the priority of the specified songs in the given range.
+  Sets the priority of the songs in the given range to `prio`.
 
   A higher priority means that it will be played first when "random" mode is enabled. A priority is
   an integer between 0 and 255. The default priority of new songs is 0.
@@ -336,8 +336,8 @@ defmodule Paracusia.MpdClient.Queue do
   @doc"""
   Swaps the positions of the songs with ids `id1` and `id2`.
   """
-  @spec swapid(MpdTypes.id, MpdTypes.id) :: :ok | MpdTypes.mpd_error
-  def swapid(id1, id2) do
+  @spec swap_id(MpdTypes.id, MpdTypes.id) :: :ok | MpdTypes.mpd_error
+  def swap_id(id1, id2) do
     MpdClient.send_and_ack("swapid #{id1}:#{id2}\n")
   end
 
