@@ -3,10 +3,6 @@ defmodule Paracusia.MpdClient.StatusTest do
   alias Paracusia.MpdClient.Status
 
   setup_all do
-    Application.stop(:paracusia)
-    port = Application.get_env(:paracusia, :test_port)
-    System.put_env("MPD_HOST", "localhost")
-    System.put_env("MPD_PORT", "#{port}")
     Paracusia.Mock.start()
     :ok = Application.start(:paracusia)
     on_exit(fn ->

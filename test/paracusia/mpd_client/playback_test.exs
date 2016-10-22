@@ -3,10 +3,6 @@ defmodule Paracusia.MpdClient.PlaybackTest do
   alias Paracusia.MpdClient.Playback
 
   setup_all do
-    Application.stop(:paracusia)
-    port = Application.get_env(:paracusia, :test_port)
-    System.put_env("MPD_HOST", "localhost")
-    System.put_env("MPD_PORT", "#{port}")
     Paracusia.Mock.start()
     :ok = Application.start(:paracusia)
     on_exit(fn ->
@@ -14,7 +10,7 @@ defmodule Paracusia.MpdClient.PlaybackTest do
     end)
   end
 
-  test "commands that to not return a message should return :ok" do
+  test "commands that do not return a message should return :ok" do
     :ok = Playback.next
     :ok = Playback.pause(false)
     :ok = Playback.pause(true)

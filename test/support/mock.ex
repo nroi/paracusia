@@ -72,7 +72,7 @@ defmodule Paracusia.Mock do
   end
 
   def handle_info(:init, nil) do
-    port = Application.get_env(:paracusia, :test_port)
+    port = Application.get_env(:paracusia, :port)
     {:ok, lsock} = :gen_tcp.listen(port,
                          [:binary, active: true, reuseaddr: true, packet: :line])
     {:ok, sock} = :gen_tcp.accept(lsock)

@@ -4,6 +4,7 @@ defmodule Paracusia.Mixfile do
   def project do
     [
      elixirc_paths: elixirc_paths(Mix.env),
+     aliases: [test: "test --no-start"],
      app: :paracusia,
      version: "0.1.0",
      elixir: "~> 1.3",

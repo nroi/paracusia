@@ -53,18 +53,28 @@ defmodule Paracusia.MpdClient do
   def init(retry_after: retry_after, max_attempts: max_attempts) do
     :erlang.process_flag(:trap_exit, true)  # to close mpd connection after application stop
     # TODO if MPD_HOST is an absolute path, we should attempt to connect to a unix domain socket.
-    {hostname, password} = case System.get_env("MPD_HOST") do
-      nil -> {'localhost', nil}
-      hostname -> case String.split(hostname, "@") do
-        [hostname] -> {to_charlist(hostname), nil}
-        [password, hostname] -> {to_charlist(hostname), password}
-      end
+    hostname_app = case Application.get_env(:paracusia, :hostname) do
+      nil -> nil
+      hostname -> to_char_list(hostname)
     end
-    port = case System.get_env("MPD_PORT") do
+    port_app = Application.get_env(:paracusia, :port)
+    password_app = Application.get_env(:paracusia, :password)
+    {hostname_env, password_env} = case System.get_env("MPD_HOST") do
+      nil -> {nil, nil}
+      hostname ->
+        case String.split(hostname, "@") do
+          [host] -> {host, nil}
+          [password, h] -> {to_char_list(h), password}
+        end
+    end
+    port_env = case System.get_env("MPD_PORT") do
       nil -> 6600
-      port -> case Integer.parse(port) do
-        {p, ""} -> p
-      end
+      p -> p |> String.to_integer
+    end
+    use_app_config = !!(hostname_app || port_app || password_app)
+    {hostname, port, password} = case use_app_config do
+      true  -> {hostname_app, port_app, password_app}
+      false -> {hostname_env, port_env, password_env}
     end
     # When the GenServer is restarted as a result of the MPD server restarting (and therefore
     # closing its connection to Paracusia), connecting to MPD may fail if MPD takes longer to
