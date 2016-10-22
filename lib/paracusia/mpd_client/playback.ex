@@ -65,16 +65,6 @@ defmodule Paracusia.MpdClient.Playback do
 
 
   @doc"""
-  Continues playing the current song.
-  """
-  # TODO what is the difference to play/0?
-  @spec play_id() :: :ok | MpdTypes.mpd_error
-  def play_id() do
-    MpdClient.send_and_ack("playid\n")
-  end
-
-
-  @doc"""
   Seeks to the position `seconds` entry `songpos` in the queue.
   """
   @spec seek_pos(MpdTypes.position, number) :: :ok | MpdTypes.mpd_error
