@@ -1,13 +1,6 @@
 # Paracusia
 
-Paracusia is an MPD client library. It's written entirely in Elixir, without any
-dependencies outside the standard library.
-Paracusia not only exposes the API calls for a running MPD server, but also
-maintains state. This means you can access properties of MPD (such as the
-currently playing song) without sending a new message over the socket.
-
-## Current status
-alpha. Bugs are likely to occur, the API is subject to change.
+Paracusia is an MPD client library for Elixir.
 
 ## Installation
 
@@ -43,6 +36,9 @@ Application variables take precedence over environment variables, i.e., environm
 used as fallback in case the application variables are not specified.
 Once the MPD credentials are configured, you may continue to start your application and control MPD.
 For instance, to play the first song in the current playlist:
+
+## Usage
+
 To play the first song in the current playlist:
 ```elixir
 :ok = Paracusia.MpdClient.Playback.play_pos(0)
@@ -55,7 +51,7 @@ Note that all functions of all submodules of Paracusia.MpdClient always return `
 result}` if everything went well, or `{:error, {errorcode, description}}` otherwise. For instance,
 if we choose a number that is larger than our current playlist and try to play it, MPD refuses to do
 so and instead warns us that the song index is invalid:
-```
+```elixir
 Paracusia.MpdClient.play(999)
 {:error, {"2@0", "error 2@0 while executing command play: Bad song index"}}
 ```
@@ -87,3 +83,8 @@ config :paracusia,
   event_handler: MyProject.MyEventHandler,
   initial_state: []
 ```
+
+## Bugs and general Feedback
+
+Please open an issue in case you find any bugs, have any questions or want to
+suggest improvements.
