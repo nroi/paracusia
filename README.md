@@ -19,20 +19,21 @@ Paracusia is an MPD client library for Elixir.
       [applications: [:paracusia]]
     end
     ```
-If MPD runs on localhost and the standard port 6600, no further configuration is required.
-Otherwise, the environment variables MPD\_HOST and MPD\_PORT can be set. Just like with the command
-line application mpc, a password may be provided by setting MPD\_HOST to "password@host".
-Alternatively, users may set the application variables `hostname` and optionally `password` inside
-the configuration file:
+If MPD runs on localhost and the standard port 6600 without password authorization, no further
+configuration is required.  Otherwise, the environment variables MPD\_HOST and MPD\_PORT can be set.
+Just like with the command line application mpc, a password may be provided by setting MPD\_HOST to
+"password@host".  Alternatively, users may set the application variables `hostname`, `password` and
+`port` in the configuration file:
     ```elixir
     config :paracusia,
       hostname: "192.168.1.5",
       password: "topsecret",
       port: 6696
     ```
-Application variables take precedence over environment variables, i.e., environment variables are
-used as fallback in case the application variables are not specified.
-Once the MPD credentials are configured, you may continue to start your application and control MPD.
+Omit the password if no password authorization is required. Application variables take precedence
+over environment variables, i.e., environment variables are used as fallback in case the application
+variables are not specified.  Once the MPD credentials are configured, you may continue to start
+your application and control MPD.
 For instance, to play the first song in the current playlist:
 
 ## Usage
