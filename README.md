@@ -34,7 +34,6 @@ Omit the password if no password authorization is required. Application variable
 over environment variables, i.e., environment variables are used as fallback in case the application
 variables are not specified.  Once the MPD credentials are configured, you may continue to start
 your application and control MPD.
-For instance, to play the first song in the current playlist:
 
 ## Usage
 
@@ -83,7 +82,7 @@ config :paracusia,
   initial_state: []
 ```
 
-## Bugs and general Feedback
+## Bugs and General Feedback
 
 Please open an issue in case you find any bugs, have any questions or want to
 suggest improvements.
