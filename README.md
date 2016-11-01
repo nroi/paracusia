@@ -1,4 +1,5 @@
 # Paracusia
+[![Hex pm](https://img.shields.io/hexpm/v/paracusia.svg?style=flat)](https://hex.pm/packages/paracusia)
 
 Paracusia is an MPD client library for Elixir.
 
@@ -19,10 +20,11 @@ Paracusia is an MPD client library for Elixir.
       [applications: [:paracusia]]
     end
     ```
+
 If MPD runs on localhost and the standard port 6600 without password authorization, no further
-configuration is required.  Otherwise, the environment variables MPD\_HOST and MPD\_PORT can be set.
+configuration is required. Otherwise, the environment variables MPD\_HOST and MPD\_PORT can be set.
 Just like with the command line application mpc, a password may be provided by setting MPD\_HOST to
-"password@host".  Alternatively, users may set the application variables `hostname`, `password` and
+"password@host". Alternatively, users may set the application variables `hostname`, `password` and
 `port` in the configuration file:
     ```elixir
     config :paracusia,
@@ -32,7 +34,7 @@ Just like with the command line application mpc, a password may be provided by s
     ```
 Omit the password if no password authorization is required. Application variables take precedence
 over environment variables, i.e., environment variables are used as fallback in case the application
-variables are not specified.  Once the MPD credentials are configured, you may continue to start
+variables are not specified. Once the MPD credentials are configured, you may continue to start
 your application and control MPD.
 
 ## Usage
@@ -50,7 +52,7 @@ result}` if everything went well, or `{:error, {errorcode, description}}` otherw
 if we choose a number that is larger than our current playlist and try to play it, MPD refuses to do
 so and instead warns us that the song index is invalid:
 ```elixir
-Paracusia.MpdClient.play(999)
+Paracusia.MpdClient.Playback.play_pos(999)
 {:error, {"2@0", "error 2@0 while executing command play: Bad song index"}}
 ```
 
