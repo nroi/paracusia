@@ -1,4 +1,5 @@
 # Paracusia
+[![Build Status](https://travis-ci.org/nroi/paracusia.svg?branch=master)](https://travis-ci.org/nroi/paracusia)
 [![Hex pm](https://img.shields.io/hexpm/v/paracusia.svg?style=flat)](https://hex.pm/packages/paracusia)
 
 Paracusia is an MPD client library for Elixir.
@@ -83,6 +84,12 @@ config :paracusia,
   event_handler: MyProject.MyEventHandler,
   initial_state: []
 ```
+
+## API
+
+See the [documentation](https://hexdocs.pm/paracusia/api-reference.html) for
+more details.
+
 
 ## Bugs and General Feedback
 
