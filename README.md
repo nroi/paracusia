@@ -27,12 +27,12 @@ configuration is required. Otherwise, the environment variables MPD\_HOST and MP
 Just like with the command line application mpc, a password may be provided by setting MPD\_HOST to
 "password@host". Alternatively, users may set the application variables `hostname`, `password` and
 `port` in the configuration file:
-    ```elixir
-    config :paracusia,
-      hostname: "192.168.1.5",
-      password: "topsecret",
-      port: 6696
-    ```
+```elixir
+config :paracusia,
+  hostname: "192.168.1.5",
+  password: "topsecret",
+  port: 6696
+```
 Omit the password if no password authorization is required. Application variables take precedence
 over environment variables, i.e., environment variables are used as fallback in case the application
 variables are not specified. Once the MPD credentials are configured, you may continue to start
