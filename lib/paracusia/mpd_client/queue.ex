@@ -91,7 +91,7 @@ defmodule Paracusia.MpdClient.Queue do
 
 
   @doc"""
-  Deletes the song with the given `id` from the queue.
+  Deletes the song with the given id from the queue.
   """
   @spec delete_id(MpdTypes.id) :: :ok | MpdTypes.mpd_error
   def delete_id(id) do
