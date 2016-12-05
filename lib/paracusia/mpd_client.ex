@@ -161,7 +161,7 @@ defmodule Paracusia.MpdClient do
     {:noreply, state}
   end
   def handle_info({:tcp, _, "changed: message\n"}, state = %MpdClient{status: :idle}) do
-    # :ok = GenServer.cast(Paracusia.PlayerState, {:event, :message_changed})
+    :ok = GenServer.cast(Paracusia.PlayerState, {:event, :message_changed})
     {:noreply, state}
   end
   def handle_info({:tcp, _, "OK\n"}, state = %MpdClient{sock: sock,
