@@ -17,7 +17,7 @@ defmodule Paracusia.MpdClient.Channels do
   colon.
   """
   def subscribe(channel) do
-    MpdClient.send_and_ack("subscribe #{channel}\n")
+    MpdClient.send_and_ack(~s(subscribe "#{channel}"\n))
   end
 
 
@@ -25,7 +25,7 @@ defmodule Paracusia.MpdClient.Channels do
   Unsubscribe from channel.
   """
   def unsubscribe(channel) do
-    MpdClient.send_and_ack("unsubscribe #{channel}\n")
+    MpdClient.send_and_ack(~s(unsubscribe "#{channel}"\n))
   end
 
   @doc"""
@@ -64,7 +64,7 @@ defmodule Paracusia.MpdClient.Channels do
   """
   @spec send_message(String.t, String.t) :: :ok | MpdTypes.mpd_error
   def send_message(channel, message) do
-    MpdClient.send_and_ack("sendmessage #{channel} #{message}\n")
+    MpdClient.send_and_ack(~s(sendmessage "#{channel}" "#{message}"\n))
   end
 
 end
