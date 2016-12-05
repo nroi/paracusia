@@ -10,7 +10,7 @@ Paracusia is an MPD client library for Elixir.
 
     ```elixir
     def deps do
-      [{:paracusia, "~> 0.1.0"}]
+      [{:paracusia, "~> 0.1.1"}]
     end
     ```
 
