@@ -10,7 +10,7 @@ Paracusia is an MPD client library for Elixir.
 
     ```elixir
     def deps do
-      [{:paracusia, "~> 0.1.1"}]
+      [{:paracusia, "~> 0.2.0"}]
     end
     ```
 
@@ -57,33 +57,25 @@ Paracusia.MpdClient.Playback.play_pos(999)
 {:error, {"2@0", "error 2@0 while executing command play: Bad song index"}}
 ```
 
-You may also have noted logging messages to appear once we play an existing
-song. This is due to the GenEvent handler named `Paracusia.DefaultEventHandler`,
-which is used if you have not specified your own event handler. An event is
-emitted when one of MPD's subsystems changes, see the
+Paracusia maintains a list of subscribers which receive a message whenever the current state of MPD changes.
+Use the `Paracusia.PlayerState` function to become a subscriber, for instance:
+```
+iex(1)> Paracusia.PlayerState.subscribe(self())
+:ok
+iex(2)> Paracusia.MpdClient.Playback.pause(true) # to receive some messages
+iex(3)> flush()
+{:paracusia,
+ {:mixer_changed,
+  %Paracusia.PlayerState{…}
+ }
+}
+```
+
+Check out `Paracusia.DefaultEventHandler` to get an overview of what messages are sent
+for what reasons. In general, Paracusia sends a message whenever one of MPDs subsystems
+has changed. See the
 [idle](https://musicpd.org/doc/protocol/command_reference.html#status_commands)
 command for more details on which changes are associated with which subsystems.
-To use your own event handler, you can copy the file
-`lib/paracusia/default_event_handler.ex` into your own project, rename it as
-desired and implement your own callbacks. As an example, let's show the
-currently playing song whenever it changes. As mentioned in the MPD protocol
-specification, the 'player' subsystem changes after seeking, starting or
-stopping the player, so we need to change the handle\_event clause for the
-`:player_changed` atom:
-
-```elixir
-  def handle_event({:player_changed, ps = %PlayerState{}}, state = nil) do
-    _ = Logger.info "new song: #{inspect ps.current_song}"
-    {:ok, state}
-  end
-```
-Once we have made these changes, we need to install our event handler: Open the config file and add
-the event handler as well as the initial state, for example:
-```elixir
-config :paracusia,
-  event_handler: MyProject.MyEventHandler,
-  initial_state: []
-```
 
 ## API
 
