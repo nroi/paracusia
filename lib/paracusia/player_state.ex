@@ -11,7 +11,8 @@ defmodule Paracusia.PlayerState do
   defstruct current_song: nil,
             queue: [],
             status: %Paracusia.PlayerState.Status{},
-            outputs: []
+            outputs: [],
+            subscribers: []
 
 
   @moduledoc"""
@@ -25,6 +26,14 @@ defmodule Paracusia.PlayerState do
 
   def start_link() do
     GenServer.start_link(__MODULE__, nil, name: __MODULE__)
+  end
+
+  def subscribe(pid) do
+    GenServer.call(__MODULE__, {:subscribe, pid})
+  end
+
+  def unsubscribe(pid) do
+    GenServer.call(__MODULE__, {:unsubscribe, pid})
   end
 
 
@@ -75,13 +84,8 @@ defmodule Paracusia.PlayerState do
                                 queue: queue,
                                 status: status,
                                 outputs: outputs}
-    {:ok, genevent_pid} = GenEvent.start_link()
-    handler = Application.get_env(:paracusia, :event_handler, Paracusia.DefaultEventHandler)
-    init_state = Application.get_env(:paracusia, :initial_state)
-    :ok = GenEvent.add_handler(genevent_pid, handler, init_state)
-    Process.register(genevent_pid, handler)
     _ = Logger.debug "Player initialized, playback status: #{inspect player_state.status.state}"
-    {:ok, {player_state, genevent_pid}}
+    {:ok, player_state}
   end
 
   defp new_ps_from_events(ps, events) do
@@ -120,57 +124,71 @@ defmodule Paracusia.PlayerState do
       ps.status
     end
     %PlayerState{
-      :current_song => new_current_song,
-      :queue => new_playlist,
-      :status => new_status,
-      :outputs => new_outputs,
+      current_song: new_current_song,
+      queue: new_playlist,
+      status: new_status,
+      outputs: new_outputs,
+      subscribers: ps.subscribers
     }
   end
 
-  def handle_cast({:event, e}, {ps = %PlayerState{}, handler}) do
+  def handle_cast({:event, e}, ps = %PlayerState{subscribers: subscribers}) do
     new_ps = new_ps_from_events(ps, [e])
-    case e do
+    msg = case e do
       :database_changed ->
-        GenEvent.notify(handler, e)
+          {:paracusia, e}
       :update_changed ->
-        GenEvent.notify(handler, e)
+          {:paracusia, e}
       :stored_playlist_changed ->
-        GenEvent.notify(handler, e)
+          {:paracusia, e}
       :playlist_changed ->
-        GenEvent.notify(handler, {e, new_ps})
+          {:paracusia, {e, new_ps}}
       :player_changed ->
-        GenEvent.notify(handler, {e, new_ps})
+          {:paracusia, {e, new_ps}}
       :mixer_changed ->
-        GenEvent.notify(handler, {e, new_ps})
+          {:paracusia, {e, new_ps}}
       :outputs_changed ->
-        GenEvent.notify(handler, {e, new_ps})
+          {:paracusia, {e, new_ps}}
       :options_changed ->
-        GenEvent.notify(handler, {e, new_ps})
+          {:paracusia, {e, new_ps}}
       :sticker_changed ->
-        GenEvent.notify(handler, e)
+          {:paracusia, e}
       :subscription_changed ->
-        GenEvent.notify(handler, {e, MpdClient.Channels.all()})
+          {:paracusia, {e, MpdClient.Channels.all()}}
       :message_changed ->
         {:ok, messages} = MpdClient.Channels.__messages__()
-        GenEvent.notify(handler, {e, messages})
+          {:paracusia, {e, messages}}
     end
-    {:noreply, {new_ps, handler}}
+    Enum.each(subscribers, fn subscriber ->
+      send subscriber, msg
+    end)
+    {:noreply, new_ps}
   end
 
-  def handle_call(:current_song, _from, state = {%PlayerState{:current_song => song}, _}) do
+  def handle_call(:current_song, _from, state = %PlayerState{:current_song => song}) do
     {:reply, song, state}
   end
 
-  def handle_call(:audio_outputs, _from, state = {%PlayerState{:outputs => outputs}, _}) do
+  def handle_call(:audio_outputs, _from, state = %PlayerState{:outputs => outputs}) do
     {:reply, outputs, state}
   end
 
-  def handle_call(:queue, _from, state = {%PlayerState{:queue => queue}, _}) do
+  def handle_call(:queue, _from, state = %PlayerState{:queue => queue}) do
     {:reply, queue, state}
   end
 
-  def handle_call(:status, _from, state = {%PlayerState{:status => status}, _}) do
+  def handle_call(:status, _from, state = %PlayerState{:status => status}) do
     {:reply, status, state}
+  end
+
+  def handle_call({:subscribe, pid}, _from, state = %PlayerState{subscribers: subs}) do
+    new_state = Map.put(state, :subscribers, [pid|subs])
+    {:reply, :ok, new_state}
+  end
+
+  def handle_call({:unsubscribe, pid}, _from, state = %PlayerState{subscribers: subs}) do
+    new_state = Map.put(state, :subscribers, :lists.delete(pid, subs))
+    {:reply, :ok, new_state}
   end
 
 end

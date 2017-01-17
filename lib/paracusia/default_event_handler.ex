@@ -1,6 +1,6 @@
 defmodule Paracusia.DefaultEventHandler do
   alias Paracusia.PlayerState
-  use GenEvent
+  use GenServer
   require Logger
 
   @moduledoc"""
@@ -16,62 +16,62 @@ defmodule Paracusia.DefaultEventHandler do
   See https://musicpd.org/doc/protocol/command_reference.html#status_commands for more details.
   """
 
-  def handle_event(:database_changed, state = nil) do
+  def handle_info({:paracusia, :database_changed}, state = nil) do
     _ = Logger.info "database changed."
-    {:ok, state}
+    {:noreply, state}
   end
 
-  def handle_event(:update_changed, state = nil) do
+  def handle_info({:paracusia, :update_changed}, state = nil) do
     _ = Logger.info "database updated."
-    {:ok, state}
+    {:noreply, state}
   end
 
-  def handle_event(:stored_playlist_changed, state = nil) do
+  def handle_info({:paracusia, :stored_playlist_changed}, state = nil) do
     _ = Logger.info "stored playlists changed."
-    {:ok, state}
+    {:noreply, state}
   end
 
-  def handle_event({:playlist_changed, %PlayerState{}}, state = nil) do
+  def handle_info({:paracusia, {:playlist_changed, %PlayerState{}}}, state = nil) do
     _ = Logger.info "queue changed."
-    {:ok, state}
+    {:noreply, state}
   end
 
-  def handle_event({:player_changed, %PlayerState{}}, state = nil) do
+  def handle_info({:paracusia, {:player_changed, %PlayerState{}}}, state = nil) do
     _ = Logger.info "player changed."
-    {:ok, state}
+    {:noreply, state}
   end
 
-  def handle_event({:mixer_changed, %PlayerState{}}, state = nil) do
+  def handle_info({:paracusia, {:mixer_changed, %PlayerState{}}}, state = nil) do
     _ = Logger.info "mixer changed."
-    {:ok, state}
+    {:noreply, state}
   end
 
-  def handle_event({:outputs_changed, %PlayerState{}}, state = nil) do
+  def handle_info({:paracusia, {:outputs_changed, %PlayerState{}}}, state = nil) do
     _ = Logger.info "outputs changed."
-    {:ok, state}
+    {:noreply, state}
   end
 
-  def handle_event({:options_changed, %PlayerState{}}, state = nil) do
+  def handle_info({:paracusia, {:options_changed, %PlayerState{}}}, state = nil) do
     _ = Logger.info "options changed."
-    {:ok, state}
+    {:noreply, state}
   end
 
 
-  def handle_event(:sticker_changed, state = nil) do
+  def handle_info({:paracusia, :sticker_changed}, state = nil) do
     _ = Logger.info "sticker changed."
-    {:ok, state}
+    {:noreply, state}
   end
 
-  def handle_event({:subscription_changed, channels}, state = nil) do
+  def handle_info({:paracusia, {:subscription_changed, channels}}, state = nil) do
     # When the subscribe command is used, the subscribed-to channel will be created if it does not
     # already exist, That is why `channels` is among the arguments, it allows us to always maintain
     # an up-to-date list of all existing channels.
     _ = Logger.info "subscription changed. Currently available channels: #{inspect channels}"
-    {:ok, state}
+    {:noreply, state}
   end
 
-  def handle_event({:message_changed, messages}, state = nil) do
+  def handle_info({:paracusia, {:message_changed, messages}}, state = nil) do
     _ = Logger.info "messages arrived: #{inspect messages}"
-    {:ok, state}
+    {:noreply, state}
   end
 end
