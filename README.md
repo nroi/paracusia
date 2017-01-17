@@ -23,8 +23,8 @@ Paracusia is an MPD client library for Elixir.
     ```
 
 If MPD runs on localhost and the standard port 6600 without password authorization, no further
-configuration is required. Otherwise, the environment variables MPD\_HOST and MPD\_PORT can be set.
-Just like with the command line application mpc, a password may be provided by setting MPD\_HOST to
+configuration is required. Otherwise, the environment variables `MPD_HOST` and `MPD_PORT` can be set.
+Just like with the command line application mpc, a password may be provided by setting `MPD_HOST` to
 "password@host". Alternatively, users may set the application variables `hostname`, `password` and
 `port` in the configuration file:
 ```elixir
@@ -59,7 +59,7 @@ Paracusia.MpdClient.Playback.play_pos(999)
 
 Paracusia maintains a list of subscribers which receive a message whenever the current state of MPD changes.
 Use the `Paracusia.PlayerState` function to become a subscriber, for instance:
-```
+```Elixir
 iex(1)> Paracusia.PlayerState.subscribe(self())
 :ok
 iex(2)> Paracusia.MpdClient.Playback.pause(true) # to receive some messages
@@ -71,8 +71,8 @@ iex(3)> flush()
 }
 ```
 
-Check out `Paracusia.DefaultEventHandler` to get an overview of what messages are sent
-for what reasons. In general, Paracusia sends a message whenever one of MPDs subsystems
+Check out [Paracusia.DefaultEventHandler](https://github.com/nroi/paracusia/blob/master/lib/paracusia/default_event_handler.ex) to get an overview of what messages are sent
+for what reasons. In general, Paracusia sends a message whenever one of MPD's subsystems
 has changed. See the
 [idle](https://musicpd.org/doc/protocol/command_reference.html#status_commands)
 command for more details on which changes are associated with which subsystems.
