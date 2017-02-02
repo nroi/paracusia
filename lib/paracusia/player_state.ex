@@ -11,8 +11,7 @@ defmodule Paracusia.PlayerState do
   defstruct current_song: nil,
             queue: [],
             status: %Paracusia.PlayerState.Status{},
-            outputs: [],
-            subscribers: []
+            outputs: []
 
 
   @moduledoc"""
@@ -85,7 +84,7 @@ defmodule Paracusia.PlayerState do
                                 status: status,
                                 outputs: outputs}
     _ = Logger.debug "Player initialized, playback status: #{inspect player_state.status.state}"
-    {:ok, player_state}
+    {:ok, {player_state, []}}
   end
 
   defp new_ps_from_events(ps, events) do
@@ -128,11 +127,10 @@ defmodule Paracusia.PlayerState do
       queue: new_playlist,
       status: new_status,
       outputs: new_outputs,
-      subscribers: ps.subscribers
     }
   end
 
-  def handle_cast({:event, e}, ps = %PlayerState{subscribers: subscribers}) do
+  def handle_cast({:event, e}, {ps, subscribers}) do
     new_ps = new_ps_from_events(ps, [e])
     msg = case e do
       :database_changed ->
@@ -162,41 +160,41 @@ defmodule Paracusia.PlayerState do
     Enum.each(subscribers, fn {subscriber, _} ->
       send subscriber, msg
     end)
-    {:noreply, new_ps}
+    {:noreply, {new_ps, subscribers}}
   end
 
-  def handle_call(:current_song, _from, state = %PlayerState{:current_song => song}) do
+  def handle_call(:current_song, _from, state = {%PlayerState{:current_song => song}, _}) do
     {:reply, song, state}
   end
 
-  def handle_call(:audio_outputs, _from, state = %PlayerState{:outputs => outputs}) do
+  def handle_call(:audio_outputs, _from, state = {%PlayerState{:outputs => outputs}, _}) do
     {:reply, outputs, state}
   end
 
-  def handle_call(:queue, _from, state = %PlayerState{:queue => queue}) do
+  def handle_call(:queue, _from, state = {%PlayerState{:queue => queue}, _}) do
     {:reply, queue, state}
   end
 
-  def handle_call(:status, _from, state = %PlayerState{:status => status}) do
+  def handle_call(:status, _from, state = {%PlayerState{:status => status}, _}) do
     {:reply, status, state}
   end
 
-  def handle_call({:subscribe, pid}, _from, state = %PlayerState{subscribers: subs}) do
+  def handle_call({:subscribe, pid}, _from, {ps, subs}) do
     ref = Process.monitor(pid)
-    new_state = Map.put(state, :subscribers, [{pid,ref}|subs])
-    {:reply, :ok, new_state}
+    new_subs = [{pid,ref}|subs]
+    {:reply, :ok, {ps, new_subs}}
   end
 
-  def handle_call({:unsubscribe, pid}, _from, state = %PlayerState{subscribers: subs}) do
+  def handle_call({:unsubscribe, pid}, _from, {ps, subs}) do
     ref = Enum.find_value(subs, fn {ppid, ref} -> ppid == pid && ref end)
     Process.demonitor(ref)
-    new_state = Map.put(state, :subscribers, :lists.delete({pid,ref}, subs))
-    {:reply, :ok, new_state}
+    new_subs = :lists.delete({pid,ref}, subs)
+    {:reply, :ok, {ps, new_subs}}
   end
 
-  def handle_info({:DOWN, ref, :process, pid, _status}, state = %PlayerState{subscribers: subs}) do
-    new_state = Map.put(state, :subscribers, :lists.delete({pid,ref}, subs))
-    {:noreply, new_state}
+  def handle_info({:DOWN, ref, :process, pid, _status}, {ps, subs}) do
+    new_subs = :lists.delete({pid,ref}, subs)
+    {:noreply, {ps, new_subs}}
   end
 
 end
