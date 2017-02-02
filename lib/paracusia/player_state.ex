@@ -159,7 +159,7 @@ defmodule Paracusia.PlayerState do
         {:ok, messages} = MpdClient.Channels.__messages__()
           {:paracusia, {e, messages}}
     end
-    Enum.each(subscribers, fn subscriber ->
+    Enum.each(subscribers, fn {subscriber, _} ->
       send subscriber, msg
     end)
     {:noreply, new_ps}
@@ -182,13 +182,21 @@ defmodule Paracusia.PlayerState do
   end
 
   def handle_call({:subscribe, pid}, _from, state = %PlayerState{subscribers: subs}) do
-    new_state = Map.put(state, :subscribers, [pid|subs])
+    ref = Process.monitor(pid)
+    new_state = Map.put(state, :subscribers, [{pid,ref}|subs])
     {:reply, :ok, new_state}
   end
 
   def handle_call({:unsubscribe, pid}, _from, state = %PlayerState{subscribers: subs}) do
-    new_state = Map.put(state, :subscribers, :lists.delete(pid, subs))
+    ref = Enum.find_value(subs, fn {ppid, ref} -> ppid == pid && ref end)
+    Process.demonitor(ref)
+    new_state = Map.put(state, :subscribers, :lists.delete({pid,ref}, subs))
     {:reply, :ok, new_state}
+  end
+
+  def handle_info({:DOWN, ref, :process, pid, _status}, state = %PlayerState{subscribers: subs}) do
+    new_state = Map.put(state, :subscribers, :lists.delete({pid,ref}, subs))
+    {:noreply, new_state}
   end
 
 end
