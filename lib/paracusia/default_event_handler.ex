@@ -16,6 +16,16 @@ defmodule Paracusia.DefaultEventHandler do
   See https://musicpd.org/doc/protocol/command_reference.html#status_commands for more details.
   """
 
+
+  def start_link() do
+    GenServer.start_link(__MODULE__, nil)
+  end
+
+  def init(nil) do
+    PlayerState.subscribe(self())
+    {:ok, nil}
+  end
+
   def handle_info({:paracusia, :database_changed}, state = nil) do
     _ = Logger.info "database changed."
     {:noreply, state}
