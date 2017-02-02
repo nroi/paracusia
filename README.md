@@ -6,21 +6,12 @@ Paracusia is an MPD client library for Elixir.
 
 ## Installation
 
-  1. Add `paracusia` to your list of dependencies in `mix.exs`:
-
-    ```elixir
-    def deps do
-      [{:paracusia, "~> 0.2.0"}]
-    end
-    ```
-
-  2. Ensure `paracusia` is started before your application:
-
-    ```elixir
-    def application do
-      [applications: [:paracusia]]
-    end
-    ```
+Add `paracusia` to your list of dependencies in `mix.exs`:
+```elixir
+def deps do
+  [{:paracusia, "~> 0.2.0"}]
+end
+```
 
 If MPD runs on localhost and the standard port 6600 without password authorization, no further
 configuration is required. Otherwise, the environment variables `MPD_HOST` and `MPD_PORT` can be set.
