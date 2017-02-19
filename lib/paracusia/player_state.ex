@@ -37,7 +37,7 @@ defmodule Paracusia.PlayerState do
 
 
   @doc"""
-  Similar to `Paracusia.MpdClient.status.current_song/0`, but returns `nil` if no song is available.
+  Similar to `Paracusia.MpdClient.Status.current_song/0`, but returns `nil` if no song is available.
   """
   @spec current_song() :: %{String.t => String.t} | nil
   def current_song() do
