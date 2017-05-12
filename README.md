@@ -9,7 +9,7 @@ Paracusia is an MPD client library for Elixir.
 Add `paracusia` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
-  [{:paracusia, "~> 0.2.1"}]
+  [{:paracusia, "~> 0.2.2"}]
 end
 ```
 
@@ -22,7 +22,9 @@ Just like with the command line application mpc, a password may be provided by s
 config :paracusia,
   hostname: "192.168.1.5",
   password: "topsecret",
-  port: 6696
+  port: 6696,
+  retry_after: 100,
+  max_retry_attempts: 3
 ```
 Omit the password if no password authorization is required. Application variables take precedence
 over environment variables, i.e., environment variables are used as fallback in case the application
