@@ -3,8 +3,8 @@
 use Mix.Config
 
 config :paracusia,
-  retry_after: 100,
-  max_retry_attempts: 3
+  retry_after: 100,      # if connecting to MPD failed, try again after x milliseconds
+  max_retry_attempts: 3  # Give up if no connection could be established after x attempts.
 
 # This configuration is loaded before any dependency and is restricted
 # to this project. If another project depends on this project, this
