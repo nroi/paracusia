@@ -47,7 +47,6 @@ defmodule Paracusia.MpdClient do
     end
   end
 
-
   ## Server Callbacks
 
   def init(retry_after: retry_after, max_attempts: max_attempts) do
@@ -67,14 +66,14 @@ defmodule Paracusia.MpdClient do
           [password, h] -> {to_char_list(h), password}
         end
     end
-    port_env = case System.get_env("MPD_PORT") do
-      nil -> 6600
-      p -> p |> String.to_integer
-    end
+    port_env = System.get_env("MPD_PORT")
     use_app_config = !!(hostname_app || port_app || password_app)
     {hostname, port, password} = case use_app_config do
-      true  -> {hostname_app, port_app, password_app}
-      false -> {hostname_env, port_env, password_env}
+      true  ->
+        {hostname_app, port_app || 6600, password_app}
+      false ->
+        port = port_env && String.to_integer(port_env) || 6600
+        {hostname_env, port, password_env}
     end
     # When the GenServer is restarted as a result of the MPD server restarting (and therefore
     # closing its connection to Paracusia), connecting to MPD may fail if MPD takes longer to

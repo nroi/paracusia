@@ -27,8 +27,10 @@ config :paracusia,
   max_retry_attempts: 3
 ```
 Omit the password if no password authorization is required. Application variables take precedence
-over environment variables, i.e., environment variables are used as fallback in case the application
-variables are not specified. Once the MPD credentials are configured, you may continue to start
+over environment variables, i.e., environment variables are used as fallback in case no application
+variables are not specified. If at least one application variable is defined, no environment
+variables will be used.
+Once the MPD credentials are configured, you may continue to start
 your application and control MPD.
 
 ## Usage
