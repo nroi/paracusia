@@ -5,9 +5,11 @@ defmodule Paracusia do
   def start(_type, _args) do
     import Supervisor.Spec, warn: false
 
+    # subscriptions are stored in an agent in order to retain them during restarts.
+    {:ok, agent} = Agent.start_link(fn -> [] end)
     children = [
       worker(Paracusia.MpdClient, [mpd_client_options()]),
-      worker(Paracusia.PlayerState, [])
+      worker(Paracusia.PlayerState, [agent])
     ]
 
     opts = [strategy: :rest_for_one, name: Paracusia.Supervisor]

@@ -23,8 +23,8 @@ defmodule Paracusia.PlayerState do
   """
 
 
-  def start_link() do
-    GenServer.start_link(__MODULE__, nil, name: __MODULE__)
+  def start_link(agent) do
+    GenServer.start_link(__MODULE__, agent, name: __MODULE__)
   end
 
   def subscribe(pid) do
@@ -74,7 +74,7 @@ defmodule Paracusia.PlayerState do
   end
 
 
-  def init(nil) do
+  def init(agent) do
     {:ok, current_song} = MpdClient.Status.current_song
     {:ok, queue} = MpdClient.Queue.songs_info
     {:ok, status} = MpdClient.Status.status
@@ -84,7 +84,7 @@ defmodule Paracusia.PlayerState do
                                 status: status,
                                 outputs: outputs}
     _ = Logger.debug "Player initialized, playback status: #{inspect player_state.status.state}"
-    {:ok, {player_state, []}}
+    {:ok, {player_state, agent}}
   end
 
   defp new_ps_from_events(ps, events) do
@@ -130,7 +130,7 @@ defmodule Paracusia.PlayerState do
     }
   end
 
-  def handle_cast({:event, e}, {ps, subscribers}) do
+  def handle_cast({:event, e}, {ps = %PlayerState{}, agent}) do
     new_ps = new_ps_from_events(ps, [e])
     msg = case e do
       :database_changed ->
@@ -157,10 +157,11 @@ defmodule Paracusia.PlayerState do
         {:ok, messages} = MpdClient.Channels.__messages__()
           {:paracusia, {e, messages}}
     end
+    subscribers = Agent.get(agent, fn subs -> subs end)
     Enum.each(subscribers, fn {subscriber, _} ->
       send subscriber, msg
     end)
-    {:noreply, {new_ps, subscribers}}
+    {:noreply, {new_ps, agent}}
   end
 
   def handle_call(:current_song, _from, state = {%PlayerState{:current_song => song}, _}) do
@@ -179,22 +180,24 @@ defmodule Paracusia.PlayerState do
     {:reply, status, state}
   end
 
-  def handle_call({:subscribe, pid}, _from, {ps, subs}) do
+  def handle_call({:subscribe, pid}, _from, state = {_ps, agent}) do
     ref = Process.monitor(pid)
-    new_subs = [{pid,ref}|subs]
-    {:reply, :ok, {ps, new_subs}}
+    Agent.update(agent, fn subs -> [{pid,ref}|subs] end)
+    {:reply, :ok, state}
   end
 
-  def handle_call({:unsubscribe, pid}, _from, {ps, subs}) do
-    ref = Enum.find_value(subs, fn {ppid, ref} -> ppid == pid && ref end)
+  def handle_call({:unsubscribe, pid}, _from, state = {_ps, agent}) do
+    ref = Agent.get(agent, fn subs ->
+      Enum.find_value(subs, fn {ppid, ref} -> ppid == pid && ref end)
+    end)
     Process.demonitor(ref)
-    new_subs = :lists.delete({pid,ref}, subs)
-    {:reply, :ok, {ps, new_subs}}
+    Agent.update(agent, fn subs -> :lists.delete({pid,ref}, subs) end)
+    {:reply, :ok, state}
   end
 
-  def handle_info({:DOWN, ref, :process, pid, _status}, {ps, subs}) do
-    new_subs = :lists.delete({pid,ref}, subs)
-    {:noreply, {ps, new_subs}}
+  def handle_info({:DOWN, ref, :process, pid, _status}, state = {_ps, agent}) do
+    Agent.update(agent, fn subs -> :lists.delete({pid,ref}, subs) end)
+    {:noreply, state}
   end
 
 end
