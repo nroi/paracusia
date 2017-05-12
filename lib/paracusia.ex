@@ -6,7 +6,7 @@ defmodule Paracusia do
     import Supervisor.Spec, warn: false
 
     children = [
-      worker(Paracusia.MpdClient, [[retry_after: 100, max_attempts: 3]]),
+      worker(Paracusia.MpdClient, [mpd_client_options()]),
       worker(Paracusia.PlayerState, [])
     ]
 
@@ -14,4 +14,10 @@ defmodule Paracusia do
     Supervisor.start_link(children, opts)
   end
 
+  defp mpd_client_options do
+    [
+      retry_after: Application.fetch_env!(:paracusia, :retry_after),
+      max_attempts: Application.fetch_env!(:paracusia, :max_retry_attempts),
+    ]
+  end
 end
