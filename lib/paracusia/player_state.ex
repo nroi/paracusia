@@ -19,7 +19,7 @@ defmodule Paracusia.PlayerState do
 
   All functions in this module have a pendant in a submodule of `Paracusia.MpdClient` (but not vice
   versa). Using these functions instead of the ones in `Paracusia.MpdClient` has the advantage that
-  that latency is lower and no superfluous TCP messages are sent.
+  latency is lower and no superfluous TCP messages are sent.
   """
 
 
