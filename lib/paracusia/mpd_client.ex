@@ -102,8 +102,8 @@ defmodule Paracusia.MpdClient do
     case :gen_tcp.connect(hostname, port, [:binary, active: false, packet: :line, nodelay: true]) do
       {:ok, sock} -> sock
       {:error, :econnrefused} ->
-        :timer.sleep(retry_after)
         _ = Logger.error "Connection refused, retry after #{retry_after} ms."
+        :timer.sleep(retry_after)
         connect_retry(hostname, port,
                         attempt: attempt + 1, retry_after: retry_after, max_attempts: max_attempts)
     end
