@@ -51,7 +51,6 @@ defmodule Paracusia.MpdClient do
 
   def init(retry_after: retry_after, max_attempts: max_attempts) do
     :erlang.process_flag(:trap_exit, true)  # to close mpd connection after application stop
-    # TODO if MPD_HOST is an absolute path, we should attempt to connect to a unix domain socket.
     hostname_app = case Application.get_env(:paracusia, :hostname) do
       nil -> nil
       hostname -> to_char_list(hostname)
