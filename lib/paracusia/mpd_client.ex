@@ -78,8 +78,7 @@ defmodule Paracusia.MpdClient do
     # When the GenServer is restarted as a result of the MPD server restarting (and therefore
     # closing its connection to Paracusia), connecting to MPD may fail if MPD takes longer to
     # restart than Paracusia. For that reason, we retry connection establishment.
-    sock = connect_retry(hostname, port,
-                                 attempt: 1, retry_after: retry_after, max_attempts: max_attempts)
+    sock = connect_retry(ip_addresses(hostname), port, 1, 0, retry_after, max_attempts)
     {:ok, "OK MPD" <> _} = :gen_tcp.recv(sock, 0)
     _ = if password do
       :ok = :gen_tcp.send(sock, "password #{password}\n")
@@ -90,22 +89,49 @@ defmodule Paracusia.MpdClient do
     {:ok, %MpdClient{sock: sock}}
   end
 
+  # Given a host name (which may also be an IPv4, an IPv6 address or a file name), return a list of
+  # {address_family, ip_address} tuples.
+  defp ip_addresses(hostname) do
+    hostname = to_charlist(hostname)
+    if File.exists?(hostname) do
+      [{:local, hostname}]
+    else
+      ipv6 = {:inet6, :inet.getaddr(hostname, :inet6)}
+      ipv4 = {:inet, :inet.getaddr(hostname, :inet)}
+      for {family, {:ok, address}} <- [ipv6, ipv4], do: {family, address}
+    end
+  end
 
-  defp connect_retry(hostname, port, attempt: attempt,
-                                     retry_after: retry_after,
-                                     max_attempts: max_attempts) do
+  defp ip_string(:inet, ip), do: :inet.ntoa(ip)
+  defp ip_string(:inet6, ip), do: :inet.ntoa(ip)
+  defp ip_string(:local, ip), do: ip
+
+  defp connect_retry(addrs, port, attempt, addr_idx, retry_after, max_attempts) do
     if attempt > max_attempts do
       reason = "Connection establishment failed, maximum number of connection attempts exceeded."
       _ = Logger.error reason
       raise reason
     end
-    case :gen_tcp.connect(hostname, port, [:binary, active: false, packet: :line, nodelay: true]) do
-      {:ok, sock} -> sock
-      {:error, :econnrefused} ->
+    {addr_family, hostname} = Enum.at(addrs, addr_idx)
+    next_addr_idx = rem(addr_idx + 1, Enum.count(addrs))
+    opts = [:binary, addr_family, active: false, packet: :line, nodelay: true]
+    {hostname_conn, port_conn} = case addr_family do
+        :local -> {{:local, hostname}, 0}
+        _      -> {hostname, port}
+    end
+    case :gen_tcp.connect(hostname_conn, port_conn, opts) do
+      {:ok, sock} ->
+        _ = Logger.debug "Successfully connected to #{ip_string(addr_family, hostname)}"
+        sock
+      {:error, :econnrefused} when next_addr_idx == 0 ->
         _ = Logger.error "Connection refused, retry after #{retry_after} ms."
         :timer.sleep(retry_after)
-        connect_retry(hostname, port,
-                        attempt: attempt + 1, retry_after: retry_after, max_attempts: max_attempts)
+        connect_retry(addrs, port, attempt + 1, next_addr_idx, retry_after, max_attempts)
+      {:error, :econnrefused} when next_addr_idx >= 0 ->
+        {_, next_hostname} = Enum.at(addrs, next_addr_idx)
+        _ = Logger.warn "Connection refused for hostname #{ip_string(addr_family, hostname)}, " <>
+                        "trying #{ip_string(addr_family, next_hostname)} instead."
+        connect_retry(addrs, port, attempt, next_addr_idx, retry_after, max_attempts)
     end
   end
 
