@@ -54,7 +54,7 @@ Paracusia.MpdClient.Playback.play_pos(999)
 ```
 
 Paracusia maintains a list of subscribers which receive a message whenever the current state of MPD changes.
-Use the `Paracusia.PlayerState` function to become a subscriber, for instance:
+Use the `Paracusia.PlayerState.subscribe/1` function to become a subscriber, for instance:
 ```Elixir
 iex(1)> Paracusia.PlayerState.subscribe(self())
 :ok
