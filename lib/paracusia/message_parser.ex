@@ -96,7 +96,7 @@ defmodule Paracusia.MessageParser do
   @doc"""
   Given a list of tuples, create a the corresponding map with lists as values.
 
-  ## Examples
+  ## Example
       iex> Paracusia.MessageParser.to_list_map(foo: 1, foo: 2, foo: 3, bar: 23)
       %{foo: [1,2,3], bar: [23]}
   """
@@ -120,7 +120,7 @@ defmodule Paracusia.MessageParser do
   @doc"""
   Splits the string into a list of lists using the attribute in the first line as delimiter.
 
-  ## Examples
+  ## Example
 
       iex> Paracusia.MessageParser.split_first_delim(
       ...> "plugin: mad\\nsuffix: mp3\\nsuffix: mp2\\nmime_type: audio/mpeg\\n" <>

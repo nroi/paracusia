@@ -68,7 +68,7 @@ defmodule Paracusia.MpdClient.Database do
   @doc"""
   Same as `count/1`, but results are grouped with the additional parameter `group`.
 
-  ## Examples
+  ## Example
 
       # Show the number of songs and total playlength of each album by "Rammstein":
       Paracusia.MpdClient.Database.count_grouped(:album, albumartist: "Rammstein")
@@ -91,7 +91,7 @@ defmodule Paracusia.MpdClient.Database do
   @doc"""
   Returns all songs that match the given filters.
 
-  ## Examples
+  ## Example
 
       # Return all songs by "Rammstein" in the album "Mutter":
       Paracusia.MpdClient.Database.find(albumartist: "Rammstein", album: "Mutter")
@@ -142,7 +142,7 @@ defmodule Paracusia.MpdClient.Database do
   `tag` specifies which tag values should be returned.
   `filter` allows to specify a list of tag-value pairs to filter the results.
 
-  ## Examples
+  ## Example
 
       # Return all albums released by Rammstein in 2001:
       Paracusia.MpdClient.Database.list(:album, albumartist: "Rammstein", date: 2001)
@@ -278,7 +278,7 @@ defmodule Paracusia.MpdClient.Database do
 
   ## Example
 
-      Paracusia.MpdClient.Database.searchaddpl("Mutter by Rammstein", albumartist: "Rammstein", album: "Mutter")
+      Paracusia.MpdClient.Database.search_add_playlist("Mutter by Rammstein", albumartist: "Rammstein", album: "Mutter")
       :ok
   """
   @spec search_add_playlist(String.t, [{MpdTypes.find_tag, String.t}]) :: :ok | MpdTypes.mpd_error
