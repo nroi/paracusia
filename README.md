@@ -26,11 +26,11 @@ config :paracusia,
   retry_after: 100,
   max_retry_attempts: 3
 ```
-The hostname may refer to an IP address, a domain, or a file in case MPD is accessible by a
-Unix domain socket. Omit the password if no password authorization is required. Application
-variables take precedence over environment variables, i.e., environment variables are used as
-fallback in case no application variables are specified. If at least one application variable is
-defined, no environment variables will be used.
+The hostname may refer to an IPv4 address, an IPv6 address, a domain, or a file in case MPD is
+accessible by a Unix domain socket. Omit the password if no password authorization is required.
+Application variables take precedence over environment variables, i.e., environment variables are
+used as fallback in case no application variables are specified. If at least one application
+variable is defined, no environment variables will be used.
 Once the MPD credentials are configured, you may continue to start
 your application and control MPD.
 
