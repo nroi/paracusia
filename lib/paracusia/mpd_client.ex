@@ -12,10 +12,9 @@ defmodule Paracusia.MpdClient do
   # MpdClient is always in one of the following states:
   #   - idle: when we expect all messages from MPD to be an idle response, or an acknowledgement of
   #       having sent noidle (i.e., "OK\n")
-  #   - non_idle: while waiting for regular messages from MPD
+  #   - non_idle: while waiting for regular messages from MPD.
 
 
-  # Connect to the MPD server.
   def start_link(opts) do
     GenServer.start_link(__MODULE__, opts, name: __MODULE__)
   end
@@ -46,8 +45,6 @@ defmodule Paracusia.MpdClient do
         {:error, {errorcode, "error #{errorcode} while executing command #{command}: #{message}"}}
     end
   end
-
-  ## Server Callbacks
 
   def init(retry_after: retry_after, max_attempts: max_attempts) do
     :erlang.process_flag(:trap_exit, true)  # to close mpd connection after application stop
