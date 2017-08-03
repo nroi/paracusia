@@ -28,7 +28,7 @@ defmodule Paracusia.Mixfile do
   defp deps do
     [
       {:ex_doc, "~> 0.16.2", only: :dev},
-      {:excoveralls, "~> 0.7.1", only: :test}
+      {:excoveralls, "~> 0.7.2", only: :test}
     ]
   end
 
