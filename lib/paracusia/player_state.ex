@@ -78,6 +78,9 @@ defmodule Paracusia.PlayerState do
     {:ok, current_song} = MpdClient.Status.current_song
     {:ok, queue} = MpdClient.Queue.songs_info
     {:ok, status} = MpdClient.Status.status
+    if status.error do
+      _ = Logger.warn status.error
+    end
     {:ok, outputs} = MpdClient.AudioOutputs.all
     player_state = %PlayerState{current_song: current_song,
                                 queue: queue,
