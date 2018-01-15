@@ -50,7 +50,7 @@ defmodule Paracusia.MpdClient do
     :erlang.process_flag(:trap_exit, true)  # to close mpd connection after application stop
     hostname_app = case Application.get_env(:paracusia, :hostname) do
       nil -> nil
-      hostname -> to_char_list(hostname)
+      hostname -> to_charlist(hostname)
     end
     port_app = Application.get_env(:paracusia, :port)
     password_app = Application.get_env(:paracusia, :password)
@@ -59,7 +59,7 @@ defmodule Paracusia.MpdClient do
       hostname ->
         case String.split(hostname, "@") do
           [host] -> {host, nil}
-          [password, h] -> {to_char_list(h), password}
+          [password, h] -> {to_charlist(h), password}
         end
     end
     port_env = System.get_env("MPD_PORT")
