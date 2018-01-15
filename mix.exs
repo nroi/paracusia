@@ -27,16 +27,16 @@ defmodule Paracusia.Mixfile do
 
   defp deps do
     [
-      {:ex_doc, "~> 0.16.2", only: :dev},
-      {:excoveralls, "~> 0.7.2", only: :test}
+      {:ex_doc, "~> 0.18.1", only: :dev},
+      {:excoveralls, "~> 0.8.0", only: :test}
     ]
   end
 
   defp package do
     [
-     maintainers: ["Fabian Muscariello"],
-     licenses: ["MIT"],
-     links: %{"GitHub" => "https://github.com/nroi/paracusia"}
+      maintainers: ["Fabian Muscariello"],
+      licenses: ["MIT"],
+      links: %{"GitHub" => "https://github.com/nroi/paracusia"}
     ]
   end
 end
