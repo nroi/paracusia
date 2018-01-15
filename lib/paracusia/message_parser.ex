@@ -71,7 +71,7 @@ defmodule Paracusia.MessageParser do
   def parse_newline_separated(m) do
     m |> String.split("\n", trim: true)
       |> Enum.map(
-        fn item -> case String.split(item, ": ") do
+        fn item -> case String.split(item, ": ", parts: 2) do
           [key, value] -> {key, value}
         end end)
       |> Map.new
