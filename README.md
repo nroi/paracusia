@@ -9,7 +9,7 @@ Paracusia is an MPD client library for Elixir.
 Add `paracusia` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
-  [{:paracusia, "~> 0.2.3"}]
+  [{:paracusia, "~> 0.2.4"}]
 end
 ```
 
