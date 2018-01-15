@@ -115,6 +115,7 @@ defmodule Paracusia.MpdClient do
         :local -> {{:local, hostname}, 0}
         _      -> {hostname, port}
     end
+    _ = Logger.debug "attempt to connect to: #{inspect hostname_conn} #{inspect port_conn} #{inspect opts}"
     case :gen_tcp.connect(hostname_conn, port_conn, opts) do
       {:ok, sock} ->
         _ = Logger.debug "Successfully connected to #{ip_string(addr_family, hostname)}"
