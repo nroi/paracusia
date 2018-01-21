@@ -7,7 +7,7 @@ defmodule Paracusia.Mixfile do
      aliases: [test: "test --no-start"],
      app: :paracusia,
      version: "0.2.4",
-     elixir: "~> 1.5",
+     elixir: "~> 1.6",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
      deps: deps(),
