@@ -6,7 +6,7 @@ defmodule Paracusia.Mock do
   end
 
   def init(nil) do
-    send self(), :init
+    send(self(), :init)
     {:ok, nil}
   end
 
@@ -19,33 +19,28 @@ defmodule Paracusia.Mock do
   defp answer_from_msg("searchaddpl " <> _), do: "OK\n"
   defp answer_from_msg("update" <> _), do: "updating_db: 1\nOK\n"
   defp answer_from_msg("rescan" <> _), do: "updating_db: 1\nOK\n"
-  defp answer_from_msg("count albumartist \"Rammstein\" album \"Mutter\" \n"), do:
-    "songs: 11\nplaytime: 3048\nOK\n"
-  defp answer_from_msg("count albumartist \"Rammstein\" group album\n"), do:
-    File.read!("test/support/replies/count_grouped")
-  defp answer_from_msg("find " <> _), do:
-    File.read!("test/support/replies/find")
-  defp answer_from_msg("playlistsearch " <> _), do:
-    File.read!("test/support/replies/find")
-  defp answer_from_msg("plchanges " <> _), do:
-    File.read!("test/support/replies/find")
-  defp answer_from_msg("plchangesposid " <> _), do:
-    "cpos: 0\nId: 1\ncpos: 1\nId: 2\ncpos: 2\nId: 3\nOK\n"
-  defp answer_from_msg("search " <> _), do:
-    File.read!("test/support/replies/find")
-  defp answer_from_msg("playlistfind " <> _), do:
-    File.read!("test/support/replies/playlistfind")
+
+  defp answer_from_msg("count albumartist \"Rammstein\" album \"Mutter\" \n"),
+    do: "songs: 11\nplaytime: 3048\nOK\n"
+
+  defp answer_from_msg("count albumartist \"Rammstein\" group album\n"),
+    do: File.read!("test/support/replies/count_grouped")
+
+  defp answer_from_msg("find " <> _), do: File.read!("test/support/replies/find")
+  defp answer_from_msg("playlistsearch " <> _), do: File.read!("test/support/replies/find")
+  defp answer_from_msg("plchanges " <> _), do: File.read!("test/support/replies/find")
+
+  defp answer_from_msg("plchangesposid " <> _),
+    do: "cpos: 0\nId: 1\ncpos: 1\nId: 2\ncpos: 2\nId: 3\nOK\n"
+
+  defp answer_from_msg("search " <> _), do: File.read!("test/support/replies/find")
+  defp answer_from_msg("playlistfind " <> _), do: File.read!("test/support/replies/playlistfind")
   defp answer_from_msg("findadd " <> _), do: "OK\n"
-  defp answer_from_msg("list " <> _), do:
-    "Album: Mutter\nOK\n"
-  defp answer_from_msg("listall " <> _), do:
-    File.read!("test/support/replies/listall")
-  defp answer_from_msg("listfiles " <> _), do:
-    File.read!("test/support/replies/listfiles")
-  defp answer_from_msg("lsinfo " <> _), do:
-    File.read!("test/support/replies/lsinfo")
-  defp answer_from_msg("readcomments " <> _), do:
-    File.read!("test/support/replies/readcomments")
+  defp answer_from_msg("list " <> _), do: "Album: Mutter\nOK\n"
+  defp answer_from_msg("listall " <> _), do: File.read!("test/support/replies/listall")
+  defp answer_from_msg("listfiles " <> _), do: File.read!("test/support/replies/listfiles")
+  defp answer_from_msg("lsinfo " <> _), do: File.read!("test/support/replies/lsinfo")
+  defp answer_from_msg("readcomments " <> _), do: File.read!("test/support/replies/readcomments")
   defp answer_from_msg("play\n"), do: "OK\n"
   defp answer_from_msg("play " <> _), do: "OK\n"
   defp answer_from_msg("playid" <> _), do: "OK\n"
@@ -92,16 +87,17 @@ defmodule Paracusia.Mock do
   defp answer_from_msg("channels\n" <> _), do: "channel: ratings\nchannel: stuff\nOK\n"
   defp answer_from_msg("sticker get" <> _), do: "sticker: rating=1\nOK\n"
   defp answer_from_msg("sticker list" <> _), do: "sticker: playcount=3\nsticker: rating=1\nOK\n"
-  defp answer_from_msg("listplaylist \"Mutter by Rammstein\"\n"), do:
-    File.read!("test/support/replies/listplaylist")
-  defp answer_from_msg("listplaylistinfo \"Mutter by Rammstein\"\n"), do:
-    File.read!("test/support/replies/listplaylistinfo")
-  defp answer_from_msg("playlistid" <> _), do:
-    File.read!("test/support/replies/playlistid")
-  defp answer_from_msg("playlistinfo" <> _), do:
-    File.read!("test/support/replies/playlistid")
-  defp answer_from_msg("sticker find " <> _), do:
-    File.read!("test/support/replies/sticker_find")
+
+  defp answer_from_msg("listplaylist \"Mutter by Rammstein\"\n"),
+    do: File.read!("test/support/replies/listplaylist")
+
+  defp answer_from_msg("listplaylistinfo \"Mutter by Rammstein\"\n"),
+    do: File.read!("test/support/replies/listplaylistinfo")
+
+  defp answer_from_msg("playlistid" <> _), do: File.read!("test/support/replies/playlistid")
+  defp answer_from_msg("playlistinfo" <> _), do: File.read!("test/support/replies/playlistid")
+  defp answer_from_msg("sticker find " <> _), do: File.read!("test/support/replies/sticker_find")
+
   defp answer_from_msg(unmatched) do
     basename = unmatched |> String.replace_suffix("\n", "")
     File.read!("test/support/replies/#{basename}")
@@ -109,8 +105,7 @@ defmodule Paracusia.Mock do
 
   def handle_info(:init, nil) do
     port = Application.get_env(:paracusia, :port)
-    {:ok, lsock} = :gen_tcp.listen(port,
-                         [:binary, active: true, reuseaddr: true, packet: :line])
+    {:ok, lsock} = :gen_tcp.listen(port, [:binary, active: true, reuseaddr: true, packet: :line])
     {:ok, sock} = :gen_tcp.accept(lsock)
     :gen_tcp.send(sock, "OK MPD 0.19.0\n")
     {:noreply, {sock, :init, ""}}
@@ -123,12 +118,12 @@ defmodule Paracusia.Mock do
     {:stop, :normal, nil}
   end
 
-
   def handle_info({:tcp, _, msg}, {sock, :init, prev_msg}) do
     case parse_initial(msg, prev_msg) do
       :ok ->
         :gen_tcp.send(sock, "OK\n")
         {:noreply, {sock, :post_init}}
+
       {:wait, new_msg} ->
         {:noreply, {sock, :init, new_msg}}
     end
@@ -149,6 +144,4 @@ defmodule Paracusia.Mock do
       {:wait, prev_msg <> msg}
     end
   end
-
-
 end

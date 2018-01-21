@@ -5,13 +5,14 @@ defmodule Paracusia.MpdClient.PlaybackTest do
   setup_all do
     Paracusia.Mock.start()
     :ok = Application.start(:paracusia)
+
     on_exit(fn ->
       :ok = Application.stop(:paracusia)
     end)
   end
 
   test "commands that do not return a message should return :ok" do
-    :ok = Playback.next
+    :ok = Playback.next()
     :ok = Playback.pause(false)
     :ok = Playback.pause(true)
     :ok = Playback.stop()
@@ -44,8 +45,6 @@ defmodule Paracusia.MpdClient.PlaybackTest do
   end
 
   test "replay_gain_status should return the current status" do
-    {:ok, "replay_gain_mode: " <> _} = Playback.replay_gain_status
+    {:ok, "replay_gain_mode: " <> _} = Playback.replay_gain_status()
   end
-
-
 end

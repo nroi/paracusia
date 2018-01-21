@@ -1,5 +1,5 @@
 defmodule Paracusia.MpdClient.Connection do
-  @moduledoc"""
+  @moduledoc """
   Functions related to MPD's connection settings.
 
   See also: https://musicpd.org/doc/protocol/connection_commands.html.
@@ -9,8 +9,7 @@ defmodule Paracusia.MpdClient.Connection do
   do that himself.
   """
 
-
-  @doc"""
+  @doc """
   Kills MPD.
   """
   @spec kill() :: :ok
@@ -18,12 +17,11 @@ defmodule Paracusia.MpdClient.Connection do
     GenServer.call(Paracusia.MpdClient, :kill)
   end
 
-  @doc"""
+  @doc """
   Sends 'ping' to MPD and waits for acknowledgement.
   """
   @spec ping() :: :ok
   def ping() do
     Paracusia.MpdClient.send_and_ack("ping\n")
   end
-
 end

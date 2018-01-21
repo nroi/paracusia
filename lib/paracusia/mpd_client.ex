@@ -2,7 +2,8 @@ defmodule Paracusia.MpdClient do
   defstruct sock: nil,
             prev_msg: "",
             status: :idle,
-            queue: []   # contains the PIDs of processes that called send_and_recv/1
+            # contains the PIDs of processes that called send_and_recv/1
+            queue: []
 
   use GenServer
   @moduledoc false
@@ -14,28 +15,31 @@ defmodule Paracusia.MpdClient do
   #       having sent noidle (i.e., "OK\n")
   #   - non_idle: while waiting for regular messages from MPD.
 
-
   def start_link(opts) do
     GenServer.start_link(__MODULE__, opts, name: __MODULE__)
   end
 
   def send_and_recv(msg) do
     GenServer.cast(__MODULE__, {:send_and_recv, msg, self()})
+
     receive do
       {:complete_msg, {:ok, msg}} -> {:ok, msg}
       {:complete_msg, {:error, msg}} -> error_message_to_error(msg)
-    after 300 ->
-      raise "Timeout"
+    after
+      300 ->
+        raise "Timeout"
     end
   end
 
   def send_and_ack(msg) do
     GenServer.cast(__MODULE__, {:send_and_recv, msg, self()})
+
     receive do
       {:complete_msg, {:ok, ""}} -> :ok
       {:complete_msg, {:error, msg}} -> error_message_to_error(msg)
-    after 300 ->
-      raise "Timeout"
+    after
+      300 ->
+        raise "Timeout"
     end
   end
 
@@ -47,41 +51,57 @@ defmodule Paracusia.MpdClient do
   end
 
   def init(retry_after: retry_after, max_attempts: max_attempts) do
-    :erlang.process_flag(:trap_exit, true)  # to close mpd connection after application stop
-    hostname_app = case Application.get_env(:paracusia, :hostname) do
-      nil -> nil
-      hostname -> to_charlist(hostname)
-    end
+    # to close mpd connection after application stop
+    :erlang.process_flag(:trap_exit, true)
+
+    hostname_app =
+      case Application.get_env(:paracusia, :hostname) do
+        nil -> nil
+        hostname -> to_charlist(hostname)
+      end
+
     port_app = Application.get_env(:paracusia, :port)
     password_app = Application.get_env(:paracusia, :password)
-    {hostname_env, password_env} = case System.get_env("MPD_HOST") do
-      nil -> {nil, nil}
-      hostname ->
-        case String.split(hostname, "@") do
-          [host] -> {host, nil}
-          [password, h] -> {to_charlist(h), password}
-        end
-    end
+
+    {hostname_env, password_env} =
+      case System.get_env("MPD_HOST") do
+        nil ->
+          {nil, nil}
+
+        hostname ->
+          case String.split(hostname, "@") do
+            [host] -> {host, nil}
+            [password, h] -> {to_charlist(h), password}
+          end
+      end
+
     port_env = System.get_env("MPD_PORT")
     use_app_config = !!(hostname_app || port_app || password_app)
-    {hostname, port, password} = case use_app_config do
-      true  ->
-        {hostname_app, port_app || 6600, password_app}
-      false ->
-        port = port_env && String.to_integer(port_env) || 6600
-        {hostname_env, port, password_env}
-    end
+
+    {hostname, port, password} =
+      case use_app_config do
+        true ->
+          {hostname_app, port_app || 6600, password_app}
+
+        false ->
+          port = (port_env && String.to_integer(port_env)) || 6600
+          {hostname_env, port, password_env}
+      end
+
     # When the GenServer is restarted as a result of the MPD server restarting (and therefore
     # closing its connection to Paracusia), connecting to MPD may fail if MPD takes longer to
     # restart than Paracusia. For that reason, we retry connection establishment.
     sock = connect_retry(ip_addresses(hostname), port, 1, 0, retry_after, max_attempts)
     {:ok, "OK MPD" <> _} = :gen_tcp.recv(sock, 0)
-    _ = if password do
-      :ok = :gen_tcp.send(sock, "password #{password}\n")
-      {:ok, "OK\n"} = :gen_tcp.recv(sock, 0)
-    end
+
+    _ =
+      if password do
+        :ok = :gen_tcp.send(sock, "password #{password}\n")
+        {:ok, "OK\n"} = :gen_tcp.recv(sock, 0)
+      end
+
     :ok = :gen_tcp.send(sock, "idle\n")
-    :ok = :inet.setopts(sock, active: :true)
+    :ok = :inet.setopts(sock, active: true)
     {:ok, %MpdClient{sock: sock}}
   end
 
@@ -89,6 +109,7 @@ defmodule Paracusia.MpdClient do
   # {address_family, ip_address} tuples.
   defp ip_addresses(hostname) do
     hostname = to_charlist(hostname)
+
     if File.exists?(hostname) do
       [{:local, hostname}]
     else
@@ -105,34 +126,44 @@ defmodule Paracusia.MpdClient do
   defp connect_retry(addrs, port, attempt, addr_idx, retry_after, max_attempts) do
     if attempt > max_attempts do
       reason = "Connection establishment failed, maximum number of connection attempts exceeded."
-      _ = Logger.error reason
+      _ = Logger.error(reason)
       raise reason
     end
+
     {addr_family, hostname} = Enum.at(addrs, addr_idx)
     next_addr_idx = rem(addr_idx + 1, Enum.count(addrs))
     opts = [:binary, addr_family, active: false, packet: :line, nodelay: true]
-    {hostname_conn, port_conn} = case addr_family do
+
+    {hostname_conn, port_conn} =
+      case addr_family do
         :local -> {{:local, hostname}, 0}
-        _      -> {hostname, port}
-    end
+        _ -> {hostname, port}
+      end
+
     case :gen_tcp.connect(hostname_conn, port_conn, opts) do
       {:ok, sock} ->
-        _ = Logger.debug "Successfully connected to #{ip_string(addr_family, hostname)}"
+        _ = Logger.debug("Successfully connected to #{ip_string(addr_family, hostname)}")
         sock
+
       {:error, :econnrefused} when next_addr_idx == 0 ->
-        _ = Logger.error "Connection refused, retry after #{retry_after} ms."
+        _ = Logger.error("Connection refused, retry after #{retry_after} ms.")
         :timer.sleep(retry_after)
         connect_retry(addrs, port, attempt + 1, next_addr_idx, retry_after, max_attempts)
+
       {:error, :econnrefused} when next_addr_idx >= 0 ->
         {_, next_hostname} = Enum.at(addrs, next_addr_idx)
-        _ = Logger.warn "Connection refused for hostname #{ip_string(addr_family, hostname)}, " <>
-                        "trying #{ip_string(addr_family, next_hostname)} instead."
+
+        _ =
+          Logger.warn(
+            "Connection refused for hostname #{ip_string(addr_family, hostname)}, " <>
+              "trying #{ip_string(addr_family, next_hostname)} instead."
+          )
+
         connect_retry(addrs, port, attempt, next_addr_idx, retry_after, max_attempts)
     end
   end
 
-  def handle_cast({:send_and_recv, msg, sender}, state = %MpdClient{sock: sock,
-                                                                    queue: queue}) do
+  def handle_cast({:send_and_recv, msg, sender}, state = %MpdClient{sock: sock, queue: queue}) do
     :ok = :gen_tcp.send(sock, "noidle\n#{msg}idle\n")
     # Note that the current state remains at 'idle': the next answer still needs to be interpreted
     # as the answer to the 'idle' command!
@@ -145,80 +176,98 @@ defmodule Paracusia.MpdClient do
     :ok = GenServer.cast(Paracusia.PlayerState, {:event, :database_changed})
     {:noreply, state}
   end
+
   def handle_info({:tcp, _, "changed: update\n"}, state = %MpdClient{status: :idle}) do
     :ok = GenServer.cast(Paracusia.PlayerState, {:event, :update_changed})
     {:noreply, state}
   end
+
   def handle_info({:tcp, _, "changed: stored_playlist\n"}, state = %MpdClient{status: :idle}) do
     :ok = GenServer.cast(Paracusia.PlayerState, {:event, :stored_playlist_changed})
     {:noreply, state}
   end
+
   def handle_info({:tcp, _, "changed: playlist\n"}, state = %MpdClient{status: :idle}) do
     :ok = GenServer.cast(Paracusia.PlayerState, {:event, :playlist_changed})
     {:noreply, state}
   end
+
   def handle_info({:tcp, _, "changed: player\n"}, state = %MpdClient{status: :idle}) do
     :ok = GenServer.cast(Paracusia.PlayerState, {:event, :player_changed})
     {:noreply, state}
   end
+
   def handle_info({:tcp, _, "changed: mixer\n"}, state = %MpdClient{status: :idle}) do
     :ok = GenServer.cast(Paracusia.PlayerState, {:event, :mixer_changed})
     {:noreply, state}
   end
+
   def handle_info({:tcp, _, "changed: output\n"}, state = %MpdClient{status: :idle}) do
     :ok = GenServer.cast(Paracusia.PlayerState, {:event, :outputs_changed})
     {:noreply, state}
   end
+
   def handle_info({:tcp, _, "changed: options\n"}, state = %MpdClient{status: :idle}) do
     :ok = GenServer.cast(Paracusia.PlayerState, {:event, :options_changed})
     {:noreply, state}
   end
+
   def handle_info({:tcp, _, "changed: sticker\n"}, state = %MpdClient{status: :idle}) do
     :ok = GenServer.cast(Paracusia.PlayerState, {:event, :sticker_changed})
     {:noreply, state}
   end
+
   def handle_info({:tcp, _, "changed: subscription\n"}, state = %MpdClient{status: :idle}) do
     :ok = GenServer.cast(Paracusia.PlayerState, {:event, :subscription_changed})
     {:noreply, state}
   end
+
   def handle_info({:tcp, _, "changed: message\n"}, state = %MpdClient{status: :idle}) do
     :ok = GenServer.cast(Paracusia.PlayerState, {:event, :message_changed})
     {:noreply, state}
   end
-  def handle_info({:tcp, _, "OK\n"}, state = %MpdClient{sock: sock,
-                                                        prev_msg: "",
-                                                        status: :idle,
-                                                        queue: []}) do
+
+  def handle_info(
+        {:tcp, _, "OK\n"},
+        state = %MpdClient{sock: sock, prev_msg: "", status: :idle, queue: []}
+      ) do
     :ok = :gen_tcp.send(sock, "idle\n")
     {:noreply, state}
   end
-  def handle_info({:tcp, _, "OK\n"}, state = %MpdClient{prev_msg: "",
-                                                        status: :idle,
-                                                        queue: [_|_]}) do
+
+  def handle_info(
+        {:tcp, _, "OK\n"},
+        state = %MpdClient{prev_msg: "", status: :idle, queue: [_ | _]}
+      ) do
     # if queue != [], we have already sent "noidle\nmsg\nidle\n, hence, no new idle message
     # needs to be sent.
     {:noreply, %{state | status: :non_idle}}
   end
 
-  def handle_info({:tcp, _, "OK\n"}, state = %MpdClient{prev_msg: prev_msg,
-                                                        status: :non_idle,
-                                                        queue: [recipient|rest]}) do
-    send recipient, {:complete_msg, {:ok, prev_msg}}
+  def handle_info(
+        {:tcp, _, "OK\n"},
+        state = %MpdClient{prev_msg: prev_msg, status: :non_idle, queue: [recipient | rest]}
+      ) do
+    send(recipient, {:complete_msg, {:ok, prev_msg}})
     {:noreply, %{state | status: :idle, prev_msg: "", queue: rest}}
   end
 
-  def handle_info({:tcp, _, recvd = "ACK " <> _}, state = %MpdClient{prev_msg: "",
-                                                                     status: :non_idle,
-                                                                     queue: [recipient|rest]}) do
+  def handle_info(
+        {:tcp, _, recvd = "ACK " <> _},
+        state = %MpdClient{prev_msg: "", status: :non_idle, queue: [recipient | rest]}
+      ) do
     if !String.ends_with?(recvd, "\n") do
       raise "Expected to receive an entire line, got instead: #{recvd}"
     end
-    send recipient, {:complete_msg, {:error, recvd}}
+
+    send(recipient, {:complete_msg, {:error, recvd}})
     {:noreply, %{state | status: :idle, prev_msg: "", queue: rest}}
   end
 
-  def handle_info({:tcp, _, partial_msg}, state = %MpdClient{status: :non_idle,
-                                                             prev_msg: prev_msg}) do
+  def handle_info(
+        {:tcp, _, partial_msg},
+        state = %MpdClient{status: :non_idle, prev_msg: prev_msg}
+      ) do
     {:noreply, %{state | prev_msg: prev_msg <> partial_msg}}
   end
 
@@ -228,10 +277,9 @@ defmodule Paracusia.MpdClient do
   end
 
   def terminate(:shutdown, %MpdClient{sock: sock}) do
-    _ = Logger.debug "Teardown connection."
+    _ = Logger.debug("Teardown connection.")
     :ok = :gen_tcp.send(sock, "close\n")
     :ok = :gen_tcp.close(sock)
     :ok
   end
-
 end

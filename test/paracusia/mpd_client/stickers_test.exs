@@ -6,6 +6,7 @@ defmodule Paracusia.MpdClient.StickersTest do
   setup_all do
     Paracusia.Mock.start()
     :ok = Application.start(:paracusia)
+
     on_exit(fn ->
       :ok = Application.stop(:paracusia)
     end)
@@ -27,13 +28,13 @@ defmodule Paracusia.MpdClient.StickersTest do
 
   test "find should return a list of tuples" do
     {:ok, result} = Stickers.find("flac", "rating")
+
     expected = [
       {"flac/band_of_skulls_-_by_default/01_-_black_magic.flac", "5"},
       {"flac/rammstein_-_mutter_(2001)/02._rammstein__links_2_3_4.flac", "1"},
       {"flac/rammstein_-_mutter_(2001)/03._rammstein__sonne.flac", "1"}
     ]
+
     assert result == expected
   end
-
-
 end
