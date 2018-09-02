@@ -3,8 +3,10 @@
 use Mix.Config
 
 config :paracusia,
-  retry_after: 100,      # if connecting to MPD failed, try again after x milliseconds
-  max_retry_attempts: 3  # Give up if no connection could be established after x attempts.
+  # if connecting to MPD failed, try again after x milliseconds
+  retry_after: 100,
+  # Give up if no connection could be established after x attempts.
+  max_retry_attempts: 3
 
 # This configuration is loaded before any dependency and is restricted
 # to this project. If another project depends on this project, this
@@ -31,4 +33,4 @@ config :paracusia,
 # Configuration from the imported file will override the ones defined
 # here (which is why it is important to import them last).
 #
-import_config "#{Mix.env}.exs"
+import_config "#{Mix.env()}.exs"

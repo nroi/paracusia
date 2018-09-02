@@ -92,7 +92,7 @@ defmodule Paracusia.MpdClient do
     # closing its connection to Paracusia), connecting to MPD may fail if MPD takes longer to
     # restart than Paracusia. For that reason, we retry connection establishment.
     ip_addrs = ip_addresses(hostname)
-    if ip_addrs == [], do: raise "Unable to resolve IP address for hostname #{inspect hostname}"
+    if ip_addrs == [], do: raise("Unable to resolve IP address for hostname #{inspect(hostname)}")
     sock = connect_retry(ip_addresses(hostname), port, 1, 0, retry_after, max_attempts)
     {:ok, "OK MPD" <> _} = :gen_tcp.recv(sock, 0)
 
@@ -238,7 +238,7 @@ defmodule Paracusia.MpdClient do
   end
 
   def handle_info({:tcp_closed, _}, state) do
-    _ = Logger.warn "TCP connection closed by server."
+    _ = Logger.warn("TCP connection closed by server.")
     {:stop, :disconnect_by_server, state}
   end
 

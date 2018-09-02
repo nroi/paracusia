@@ -42,7 +42,8 @@ defmodule Paracusia.MessageParser do
       [{"foo", "bar"}, {"baz", "fam"}]
   """
   def parse_uris(m) do
-    m |> String.split("\n", trim: true)
+    m
+    |> String.split("\n", trim: true)
     |> Enum.map(fn item ->
       case item |> String.split(": ", parts: 2) do
         [first, second] -> {first, second}
@@ -60,7 +61,8 @@ defmodule Paracusia.MessageParser do
       ["Beatles", "Lady Gaga"]
   """
   def parse_newline_separated_enum(m) do
-    m |> parse_uris
+    m
+    |> parse_uris
     |> Enum.map(fn {_, value} -> value end)
   end
 
