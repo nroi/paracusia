@@ -91,6 +91,8 @@ defmodule Paracusia.MpdClient do
     # When the GenServer is restarted as a result of the MPD server restarting (and therefore
     # closing its connection to Paracusia), connecting to MPD may fail if MPD takes longer to
     # restart than Paracusia. For that reason, we retry connection establishment.
+    ip_addrs = ip_addresses(hostname)
+    if ip_addrs == [], do: raise "Unable to resolve IP address for hostname #{inspect hostname}"
     sock = connect_retry(ip_addresses(hostname), port, 1, 0, retry_after, max_attempts)
     {:ok, "OK MPD" <> _} = :gen_tcp.recv(sock, 0)
 
