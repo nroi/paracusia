@@ -6,7 +6,7 @@ defmodule Paracusia.Mixfile do
       elixirc_paths: elixirc_paths(Mix.env()),
       aliases: [test: "test --no-start"],
       app: :paracusia,
-      version: "0.2.4",
+      version: "0.2.5",
       elixir: "~> 1.6",
       build_embedded: Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,
@@ -26,8 +26,8 @@ defmodule Paracusia.Mixfile do
 
   defp deps do
     [
-      {:ex_doc, "~> 0.18.1", only: :dev},
-      {:excoveralls, "~> 0.8.0", only: :test}
+      {:ex_doc, "~> 0.19.1", only: :dev},
+      {:excoveralls, "~> 0.10.0", only: :test}
     ]
   end
 
