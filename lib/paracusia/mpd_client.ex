@@ -237,6 +237,11 @@ defmodule Paracusia.MpdClient do
     {:noreply, state}
   end
 
+  def handle_info({:tcp_closed, _}, state) do
+    _ = Logger.warn "TCP connection closed by server."
+    {:stop, :disconnect_by_server, state}
+  end
+
   def handle_info(
         {:tcp, _, "OK\n"},
         state = %MpdClient{prev_msg: "", status: :idle, queue: [_ | _]}
@@ -281,6 +286,11 @@ defmodule Paracusia.MpdClient do
   def terminate(:shutdown, %MpdClient{sock: sock}) do
     _ = Logger.debug("Teardown connection.")
     :ok = :gen_tcp.send(sock, "close\n")
+    :ok = :gen_tcp.close(sock)
+    :ok
+  end
+
+  def terminate(:disconnect_by_server, %MpdClient{sock: sock}) do
     :ok = :gen_tcp.close(sock)
     :ok
   end
