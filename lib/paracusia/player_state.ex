@@ -18,9 +18,10 @@ defmodule Paracusia.PlayerState do
   @moduledoc """
   Provides access to the current state of MPD, without having to send messages over the socket.
 
-  All functions in this module have a pendant in a submodule of `Paracusia.MpdClient` (but not vice
-  versa). Using these functions instead of the ones in `Paracusia.MpdClient` has the advantage that
-  latency is lower and no superfluous TCP messages are sent.
+  All functions in this module have a counterpart in a submodule of `Paracusia.MpdClient` (but not vice
+  versa). The difference is that functions from this module fetch their information from a local cache, while
+  functions inside `Paracusia.MpdClient` communicate with the MPD server to fetch the required
+  information.
   """
 
   def start_link(agent) do
