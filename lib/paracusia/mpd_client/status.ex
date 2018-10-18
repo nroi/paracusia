@@ -36,7 +36,7 @@ defmodule Paracusia.MpdClient.Status do
       status = reply |> MessageParser.parse_newline_separated()
 
       timestamp =
-        case :erlang.timestamp() do
+        case :os.timestamp() do
           {megasecs, secs, microsecs} ->
             megasecs * 1_000_000_000_000 + secs * 1_000_000 + microsecs
         end
