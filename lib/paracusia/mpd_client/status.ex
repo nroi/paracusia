@@ -41,38 +41,40 @@ defmodule Paracusia.MpdClient.Status do
             megasecs * 1_000_000_000_000 + secs * 1_000_000 + microsecs
         end
 
-      {:ok,
-       %PlayerState.Status{
-         :volume => String.to_integer(status["volume"]),
-         :repeat => string_to_boolean(status["repeat"]),
-         :random => string_to_boolean(status["random"]),
-         :single => string_to_boolean(status["single"]),
-         :consume => string_to_boolean(status["consume"]),
-         :playlist => String.to_integer(status["playlist"]),
-         :playlist_length => String.to_integer(status["playlistlength"]),
-         :state =>
-           case status["state"] do
-             "play" -> :play
-             "stop" -> :stop
-             "pause" -> :pause
-           end,
-         :song_pos => status["song"] |> nil_or_else(&String.to_integer(&1)),
-         :song_id => status["songid"] |> nil_or_else(&String.to_integer(&1)),
-         :next_song_pos => status["nextsong"] |> nil_or_else(&String.to_integer(&1)),
-         :next_song_id => status["nextsongid"] |> nil_or_else(&String.to_integer(&1)),
-         :time => status["time"],
-         :elapsed => status["elapsed"] |> nil_or_else(&String.to_float(&1)),
-         :bitrate => status["bitrate"] |> nil_or_else(&String.to_integer(&1)),
-         :xfade => status["xfade"] |> nil_or_else(&String.to_integer(&1)),
-         :mixrampdb => status["mixrampdb"] |> nil_or_else(&String.to_float(&1)),
-         :mixrampdelay => status["mixrampdelay"] |> nil_or_else(&String.to_integer(&1)),
-         :audio =>
-           status["audio"]
-           |> nil_or_else(&Regex.run(~r/(.*):(.*):(.*)/, &1, capture: :all_but_first)),
-         :updating_db => status["updating_db"] |> nil_or_else(&String.to_integer(&1)),
-         :error => status["error"],
-         :timestamp => timestamp
-       }}
+      new_ps = %PlayerState.Status{
+        :volume => String.to_integer(status["volume"]),
+        :repeat => string_to_boolean(status["repeat"]),
+        :random => string_to_boolean(status["random"]),
+        :single => string_to_boolean(status["single"]),
+        :consume => string_to_boolean(status["consume"]),
+        :playlist => String.to_integer(status["playlist"]),
+        :playlist_length => String.to_integer(status["playlistlength"]),
+        :state =>
+          case status["state"] do
+            "play" -> :play
+            "stop" -> :stop
+            "pause" -> :pause
+          end,
+        :song_pos => status["song"] |> nil_or_else(&String.to_integer(&1)),
+        :song_id => status["songid"] |> nil_or_else(&String.to_integer(&1)),
+        :next_song_pos => status["nextsong"] |> nil_or_else(&String.to_integer(&1)),
+        :next_song_id => status["nextsongid"] |> nil_or_else(&String.to_integer(&1)),
+        :time => status["time"],
+        :elapsed => status["elapsed"] |> nil_or_else(&String.to_float(&1)),
+        :bitrate => status["bitrate"] |> nil_or_else(&String.to_integer(&1)),
+        :xfade => status["xfade"] |> nil_or_else(&String.to_integer(&1)),
+        :mixrampdb => status["mixrampdb"] |> nil_or_else(&String.to_float(&1)),
+        :mixrampdelay => status["mixrampdelay"] |> nil_or_else(&String.to_integer(&1)),
+        :audio =>
+          status["audio"]
+          |> nil_or_else(&Regex.run(~r/(.*):(.*):(.*)/, &1, capture: :all_but_first)),
+        :updating_db => status["updating_db"] |> nil_or_else(&String.to_integer(&1)),
+        :error => status["error"],
+        :timestamp => timestamp
+      }
+
+      :ok = GenServer.cast(Paracusia.PlayerState, {:refresh_status, new_ps})
+      {:ok, new_ps}
     end
   end
 

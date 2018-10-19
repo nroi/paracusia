@@ -7,12 +7,12 @@ defmodule Paracusia.PlayerState do
   @type t :: %PlayerState{
           current_song: nil | map,
           queue: list,
-          status: %Paracusia.PlayerState.Status{},
+          status: %PlayerState.Status{},
           outputs: list
         }
   defstruct current_song: nil,
             queue: [],
-            status: %Paracusia.PlayerState.Status{},
+            status: %PlayerState.Status{},
             outputs: []
 
   @moduledoc """
@@ -199,6 +199,14 @@ defmodule Paracusia.PlayerState do
       send(subscriber, msg)
     end)
 
+    {:noreply, {new_ps, agent}}
+  end
+
+  def handle_cast(
+        {:refresh_status, new_status = %PlayerState.Status{}},
+        {ps = %PlayerState{}, agent}
+      ) do
+    new_ps = %{ps | status: new_status}
     {:noreply, {new_ps, agent}}
   end
 
