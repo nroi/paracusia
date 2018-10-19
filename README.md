@@ -8,7 +8,7 @@ Paracusia is an MPD client library for Elixir.
 Add `paracusia` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
-  [{:paracusia, "~> 0.2.6"}]
+  [{:paracusia, "~> 0.2.7"}]
 end
 ```
 
@@ -66,17 +66,17 @@ iex(3)> flush()
 }
 ```
 
-Check out [Paracusia.DefaultEventHandler](https://github.com/nroi/paracusia/blob/master/lib/paracusia/default_event_handler.ex) to get an overview of what messages are sent
-for what reasons. In general, Paracusia sends a message whenever one of MPD's subsystems
-has changed. See the
-[idle](https://musicpd.org/doc/protocol/command_reference.html#status_commands)
-command for more details on which changes are associated with which subsystems.
+Check out
+[Paracusia.DefaultEventHandler](https://github.com/nroi/paracusia/blob/master/lib/paracusia/default_event_handler.ex)
+to get an overview of what messages are sent for what reasons. In general, Paracusia sends a message
+whenever one of MPD's subsystems has changed. See the
+[idle](https://musicpd.org/doc/protocol/command_reference.html#status_commands) command for more
+details on which changes are associated with which subsystems.
 
 ## API
 
 See the [documentation](https://hexdocs.pm/paracusia/api-reference.html) for
 more details.
-
 
 ## Bugs and General Feedback
 
