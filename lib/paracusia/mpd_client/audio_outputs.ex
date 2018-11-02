@@ -43,3 +43,13 @@ defmodule Paracusia.MpdClient.AudioOutputs do
     end
   end
 end
+
+if Code.ensure_compiled?(Jason) do
+  defimpl Jason.Encoder, for: [Paracusia.MpdClient.AudioOutputs] do
+    def encode(struct, opts) do
+      struct
+      |> Map.delete(:__struct__)
+      |> Jason.Encode.map(opts)
+    end
+  end
+end

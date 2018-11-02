@@ -69,7 +69,16 @@ defmodule Paracusia.PlayerState.Status do
             # error message, if there is an error
             error: nil,
             # indicates when the information was retrieved (not part
+            # of the MPD protocol)
             timestamp: -1
+end
 
-  #   of the MPD protocol)
+if Code.ensure_compiled?(Jason) do
+  defimpl Jason.Encoder, for: [Paracusia.PlayerState.Status] do
+    def encode(struct, opts) do
+      struct
+      |> Map.delete(:__struct__)
+      |> Jason.Encode.map(opts)
+    end
+  end
 end

@@ -248,3 +248,13 @@ defmodule Paracusia.PlayerState do
     {:noreply, state}
   end
 end
+
+if Code.ensure_compiled?(Jason) do
+  defimpl Jason.Encoder, for: [Paracusia.PlayerState] do
+    def encode(struct, opts) do
+      struct
+      |> Map.delete(:__struct__)
+      |> Jason.Encode.map(opts)
+    end
+  end
+end
