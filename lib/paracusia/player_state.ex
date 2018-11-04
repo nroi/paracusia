@@ -7,7 +7,7 @@ defmodule Paracusia.PlayerState do
   @type t :: %PlayerState{
           current_song: nil | map,
           queue: list,
-          status: %PlayerState.Status{},
+          status: PlayerState.Status.t,
           outputs: list
         }
   defstruct current_song: nil,
@@ -65,7 +65,7 @@ defmodule Paracusia.PlayerState do
   Similar to `Paracusia.MpdClient.Status.status/0`, but always returns the status (instead of
   :error).
   """
-  @spec status() :: %Paracusia.PlayerState.Status{}
+  @spec status() :: Paracusia.PlayerState.Status.t
   def status do
     GenServer.call(__MODULE__, :status)
   end

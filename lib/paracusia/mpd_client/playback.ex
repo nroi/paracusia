@@ -22,7 +22,7 @@ defmodule Paracusia.MpdClient.Playback do
   @doc """
   Pauses or resumes playback.
   """
-  @spec pause(true | false) :: :ok | MpdTypes.mpd_error()
+  @spec pause(boolean) :: :ok | MpdTypes.mpd_error()
   def pause(true), do: MpdClient.send_and_ack("pause 1\n")
   def pause(false), do: MpdClient.send_and_ack("pause 0\n")
 

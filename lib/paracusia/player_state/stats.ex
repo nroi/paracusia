@@ -1,5 +1,13 @@
 defmodule Paracusia.PlayerState.Stats do
-  # number of artists
+  @type t :: %Paracusia.PlayerState.Stats{
+          artists: integer,
+          albums: integer,
+          songs: integer,
+          uptime: integer,
+          db_playtime: integer,
+          db_update: integer,
+          playtime: integer
+        }
   defstruct artists: nil,
             # number of albums
             albums: nil,

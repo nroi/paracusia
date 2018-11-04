@@ -30,7 +30,7 @@ defmodule Paracusia.MpdClient.Status do
   @doc """
   Returns the current status of the player.
   """
-  @spec status() :: {:ok, %PlayerState.Status{}} | MpdTypes.mpd_error()
+  @spec status() :: {:ok, PlayerState.Status.t()} | MpdTypes.mpd_error()
   def status() do
     with {:ok, reply} <- MpdClient.send_and_recv("status\n") do
       status = reply |> MessageParser.parse_newline_separated()
@@ -81,7 +81,7 @@ defmodule Paracusia.MpdClient.Status do
   @doc """
   Returns statistics.
   """
-  @spec stats() :: {:ok, %Paracusia.PlayerState.Stats{}} | MpdTypes.mpd_error()
+  @spec stats() :: {:ok, Paracusia.PlayerState.Stats.t()} | MpdTypes.mpd_error()
   def stats() do
     with {:ok, reply} <- MpdClient.send_and_recv("stats\n") do
       string_map = reply |> MessageParser.parse_newline_separated()

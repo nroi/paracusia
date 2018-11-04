@@ -1,4 +1,9 @@
 defmodule Paracusia.MpdClient.AudioOutputs do
+  @type t :: %Paracusia.MpdClient.AudioOutputs{
+          outputenabled: boolean,
+          outputid: integer,
+          outputname: binary
+        }
   defstruct outputenabled: nil, outputid: nil, outputname: nil
   alias Paracusia.MessageParser
   alias Paracusia.MpdClient
@@ -36,7 +41,8 @@ defmodule Paracusia.MpdClient.AudioOutputs do
   @doc """
   Returns a map containing information about all audio outputs.
   """
-  @spec all() :: {:ok, [%Paracusia.MpdClient.AudioOutputs{}]} | {:error, {String.t(), String.t()}}
+  @spec all() ::
+          {:ok, [Paracusia.MpdClient.AudioOutputs.t()]} | {:error, {String.t(), String.t()}}
   def all() do
     with {:ok, reply} <- Paracusia.MpdClient.send_and_recv("outputs\n") do
       {:ok, reply |> MessageParser.parse_outputs()}
