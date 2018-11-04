@@ -42,7 +42,7 @@ defmodule Paracusia.MpdClient.Status do
         end
 
       new_ps = %PlayerState.Status{
-        :volume => String.to_integer(status["volume"]),
+        :volume => status["volume"] |> nil_or_else(&String.to_integer(&1)),
         :repeat => string_to_boolean(status["repeat"]),
         :random => string_to_boolean(status["random"]),
         :single => string_to_boolean(status["single"]),
