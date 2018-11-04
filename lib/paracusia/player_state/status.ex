@@ -2,7 +2,7 @@ defmodule Paracusia.PlayerState.Status do
   alias Paracusia.PlayerState.Status
 
   @type t :: %Status{
-          volume: integer,
+          volume: integer | nil,
           repeat: boolean,
           random: boolean,
           single: boolean,
