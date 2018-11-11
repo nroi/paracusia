@@ -1,5 +1,6 @@
 defmodule Paracusia.MpdClient.Database do
   alias Paracusia.MpdClient
+  alias Paracusia.MpdClient.Database.FindExpression
   alias Paracusia.MpdTypes
   alias Paracusia.MessageParser
   require Logger
@@ -116,18 +117,114 @@ defmodule Paracusia.MpdClient.Database do
       }
   """
   @spec find([{MpdTypes.find_tag(), String.t()}]) :: {:ok, [map]} | MpdTypes.mpd_error()
-  def find(filters) do
+  def find(filters) when is_list(filters) do
+    get(%FindExpression{filters: filters})
+  end
+
+  def find(expr = %{filters: filters, sort_by: tag, sort_direction: sort_direction}) do
+    window = expr.window
+    sort = expr.sort
+  end
+
+  @spec filter([{MpdTypes.find_tag(), String.t()}]) :: FindExpression.t
+  def filter(filters) when is_list(filters) do
+    %FindExpression{filters: filters}
+  end
+
+  # input: filter_expr. Returns a filter_expr.
+  @spec order_by(FindExpression.t, String.t()) :: FindExpression.t
+  def order_by(fe = %FindExpression{}, tag) when is_binary(tag) do
+    %{fe | :order_by => tag, :sort_direction => :asc}
+  end
+
+  # input: filter_expr. Returns a filter_expr.
+  @spec order_by(FindExpression.t, String.t(), :asc) :: FindExpression.t
+  def order_by(fe = %FindExpression{}, tag, :asc) when is_binary(tag) do
+    %{fe | :order_by => tag, :sort_direction => :asc}
+  end
+
+  # input: filter_expr. Returns a filter_expr.
+  def order_by(fe = %FindExpression{}, tag, :desc) when is_binary(tag) do
+    %{fe | :order_by => tag, :sort_direction => :desc}
+  end
+
+  def window(fe = %FindExpression{}, from, until) do
+    %{fe | :window => {from, until}}
+  end
+
+  @doc """
+  Returns all songs that match the given filter expression.
+
+  ## Example
+
+      # Return the first three songs by "Koan" in the album "Proteus", in descending order sorted by
+      # their title:
+        Paracusia.MpdClient.Database.filter(albumartist: "Koan", album: "Proteus")
+        |> Paracusia.MpdClient.Database.order_by("Title", :desc)
+        |> Paracusia.MpdClient.Database.window(0, 3)
+        |> Paracusia.MpdClient.Database.get
+        {:ok,
+          [
+            %{
+              "Album" => "Proteus",
+              "AlbumArtist" => "Koan",
+              "AlbumArtistSort" => "Koan",
+              "Title" => "Splice (White mix)",
+              …
+            },
+            %{
+              "Album" => "Proteus",
+              "AlbumArtist" => "Koan",
+              "AlbumArtistSort" => "Koan",
+              "Artist" => "Koan",
+              "Title" => "Eidotheia (radio version)",
+              …
+            },
+            %{
+              "Album" => "Proteus",
+              "AlbumArtist" => "Koan",
+              "AlbumArtistSort" => "Koan",
+              "Title" => "Arachne (Fatum Sci-Fi version)",
+              }
+          ]
+        }
+  """
+  def get(fe = %FindExpression{}) do
     filter_string =
-      filters
+      fe.filters
       |> Enum.reduce("", fn {tag, value}, acc ->
         acc <> ~s(#{MessageParser.find_tag_to_string(tag)} "#{value}" )
       end)
 
-    msg = "find #{filter_string}\n"
+    filter_msg = "find #{filter_string}"
+
+    sort_msg = case fe.order_by do
+      nil -> ""
+      tag ->
+        prefix = case fe.sort_direction do
+          :asc -> ""
+          :desc -> "-"
+        end
+        " sort #{prefix}#{tag}"
+    end
+
+    window_msg = case fe.window do
+      nil -> ""
+      {from, until} ->
+        " window #{from}:#{until}"
+    end
+
+    msg = filter_msg <> sort_msg <> window_msg <> "\n"
 
     with {:ok, reply} <- MpdClient.send_and_recv(msg) do
       {:ok, reply |> MessageParser.parse_items()}
     end
+  end
+
+  @spec add(FindExpression.t) :: :ok | MpdTypes.mpd_error()
+  def add(fe = %FindExpression{}) do
+    # TODO
+    :ok
   end
 
   @doc """
