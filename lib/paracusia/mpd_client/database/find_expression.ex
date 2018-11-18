@@ -1,5 +1,4 @@
 defmodule Paracusia.MpdClient.Database.FindExpression do
-
   alias Paracusia.MpdTypes
 
   @typedoc """
@@ -8,7 +7,7 @@ defmodule Paracusia.MpdClient.Database.FindExpression do
   @type t :: %Paracusia.MpdClient.Database.FindExpression{
           filters: [{MpdTypes.tag(), String.t()}],
           window: {integer, integer} | nil,
-          order_by: MpdTypes.tag,
+          order_by: MpdTypes.tag(),
           sort_direction: :asc | :desc | nil
         }
   defstruct filters: nil,

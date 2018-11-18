@@ -56,21 +56,29 @@ defmodule Paracusia.MpdClient.Database do
 
     filter_msg = "#{filter_string}"
 
-    sort_msg = case fe.order_by do
-      nil -> ""
-      tag ->
-        prefix = case fe.sort_direction do
-          :asc -> ""
-          :desc -> "-"
-        end
-        " sort #{prefix}#{tag}"
-    end
+    sort_msg =
+      case fe.order_by do
+        nil ->
+          ""
 
-    window_msg = case fe.window do
-      nil -> ""
-      {from, until} ->
-        " window #{from}:#{until}"
-    end
+        tag ->
+          prefix =
+            case fe.sort_direction do
+              :asc -> ""
+              :desc -> "-"
+            end
+
+          " sort #{prefix}#{tag}"
+      end
+
+    window_msg =
+      case fe.window do
+        nil ->
+          ""
+
+        {from, until} ->
+          " window #{from}:#{until}"
+      end
 
     filter_msg <> sort_msg <> window_msg
   end
@@ -149,7 +157,7 @@ defmodule Paracusia.MpdClient.Database do
     get(%FindExpression{filters: filters})
   end
 
-  @spec filter([{MpdTypes.find_tag(), String.t()}]) :: FindExpression.t
+  @spec filter([{MpdTypes.find_tag(), String.t()}]) :: FindExpression.t()
   def filter(filters) when is_list(filters) do
     %FindExpression{filters: filters}
   end
@@ -158,7 +166,7 @@ defmodule Paracusia.MpdClient.Database do
   Returns the given `FindExpression` with the `order_by` restriction added.
   See `get/1` for an example.
   """
-  @spec order_by(FindExpression.t, MpdTypes.tag()) :: FindExpression.t
+  @spec order_by(FindExpression.t(), MpdTypes.tag()) :: FindExpression.t()
   def order_by(fe = %FindExpression{}, tag) do
     %{fe | :order_by => tag, :sort_direction => :asc}
   end
@@ -168,7 +176,8 @@ defmodule Paracusia.MpdClient.Database do
   will be sorted by `tag` in ascending order.
   See `get/1` for an example.
   """
-  @spec order_by(FindExpression.t, MpdTypes.tag(), MpdTypes.sort_direction()) :: FindExpression.t
+  @spec order_by(FindExpression.t(), MpdTypes.tag(), MpdTypes.sort_direction()) ::
+          FindExpression.t()
   def order_by(fe = %FindExpression{}, tag, sort_direction = :asc) do
     %{fe | :order_by => tag, :sort_direction => sort_direction}
   end
@@ -242,7 +251,6 @@ defmodule Paracusia.MpdClient.Database do
 
     MpdClient.send_and_ack(msg)
   end
-
 
   @doc """
   Returns unique tag values that match the given query.
