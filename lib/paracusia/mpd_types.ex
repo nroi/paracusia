@@ -54,4 +54,10 @@ defmodule Paracusia.MpdTypes do
   position.
   """
   @type range :: {position, position}
+
+  @typedoc """
+  Results returned by MPD can be sorted in ascending order or descending order (`:asc` or `:desc`,
+  respectively).
+  """
+  @type sort_direction :: :asc | :desc
 end

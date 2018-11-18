@@ -47,6 +47,34 @@ defmodule Paracusia.MpdClient.Database do
     |> Enum.reverse()
   end
 
+  defp find_expression_to_string(fe = %FindExpression{}) do
+    filter_string =
+      fe.filters
+      |> Enum.reduce("", fn {tag, value}, acc ->
+        acc <> ~s(#{MessageParser.find_tag_to_string(tag)} "#{value}" )
+      end)
+
+    filter_msg = "#{filter_string}"
+
+    sort_msg = case fe.order_by do
+      nil -> ""
+      tag ->
+        prefix = case fe.sort_direction do
+          :asc -> ""
+          :desc -> "-"
+        end
+        " sort #{prefix}#{tag}"
+    end
+
+    window_msg = case fe.window do
+      nil -> ""
+      {from, until} ->
+        " window #{from}:#{until}"
+    end
+
+    filter_msg <> sort_msg <> window_msg
+  end
+
   @doc """
   Returns the total playtime and number of songs that match the given filters.
 
@@ -121,30 +149,32 @@ defmodule Paracusia.MpdClient.Database do
     get(%FindExpression{filters: filters})
   end
 
-  def find(expr = %{filters: filters, sort_by: tag, sort_direction: sort_direction}) do
-    window = expr.window
-    sort = expr.sort
-  end
-
   @spec filter([{MpdTypes.find_tag(), String.t()}]) :: FindExpression.t
   def filter(filters) when is_list(filters) do
     %FindExpression{filters: filters}
   end
 
-  # input: filter_expr. Returns a filter_expr.
-  @spec order_by(FindExpression.t, String.t()) :: FindExpression.t
-  def order_by(fe = %FindExpression{}, tag) when is_binary(tag) do
+  @doc """
+  Returns the given `FindExpression` with the `order_by` restriction added.
+  See `get/1` for an example.
+  """
+  @spec order_by(FindExpression.t, MpdTypes.tag()) :: FindExpression.t
+  def order_by(fe = %FindExpression{}, tag) do
     %{fe | :order_by => tag, :sort_direction => :asc}
   end
 
-  # input: filter_expr. Returns a filter_expr.
-  @spec order_by(FindExpression.t, String.t(), :asc) :: FindExpression.t
-  def order_by(fe = %FindExpression{}, tag, :asc) when is_binary(tag) do
+  @doc """
+  Returns the given `FindExpression` with the `order_by` restriction added. Results
+  will be sorted by `tag` in ascending order.
+  See `get/1` for an example.
+  """
+  @spec order_by(FindExpression.t, MpdTypes.tag(), MpdTypes.sort_direction()) :: FindExpression.t
+  def order_by(fe = %FindExpression{}, tag, :asc) do
     %{fe | :order_by => tag, :sort_direction => :asc}
   end
 
-  # input: filter_expr. Returns a filter_expr.
-  def order_by(fe = %FindExpression{}, tag, :desc) when is_binary(tag) do
+  @spec order_by(FindExpression.t, MpdTypes.tag(), MpdTypes.sort_direction()) :: FindExpression.t
+  def order_by(fe = %FindExpression{}, tag, :desc) do
     %{fe | :order_by => tag, :sort_direction => :desc}
   end
 
@@ -190,41 +220,11 @@ defmodule Paracusia.MpdClient.Database do
         }
   """
   def get(fe = %FindExpression{}) do
-    filter_string =
-      fe.filters
-      |> Enum.reduce("", fn {tag, value}, acc ->
-        acc <> ~s(#{MessageParser.find_tag_to_string(tag)} "#{value}" )
-      end)
-
-    filter_msg = "find #{filter_string}"
-
-    sort_msg = case fe.order_by do
-      nil -> ""
-      tag ->
-        prefix = case fe.sort_direction do
-          :asc -> ""
-          :desc -> "-"
-        end
-        " sort #{prefix}#{tag}"
-    end
-
-    window_msg = case fe.window do
-      nil -> ""
-      {from, until} ->
-        " window #{from}:#{until}"
-    end
-
-    msg = filter_msg <> sort_msg <> window_msg <> "\n"
+    msg = "find #{find_expression_to_string(fe)}\n"
 
     with {:ok, reply} <- MpdClient.send_and_recv(msg) do
       {:ok, reply |> MessageParser.parse_items()}
     end
-  end
-
-  @spec add(FindExpression.t) :: :ok | MpdTypes.mpd_error()
-  def add(fe = %FindExpression{}) do
-    # TODO
-    :ok
   end
 
   @doc """
@@ -237,15 +237,13 @@ defmodule Paracusia.MpdClient.Database do
       :ok
   """
   @spec find_add([{MpdTypes.find_tag(), String.t()}]) :: :ok | MpdTypes.mpd_error()
-  def find_add(filters) do
-    filter_string =
-      filters
-      |> Enum.reduce("", fn {tag, value}, acc ->
-        acc <> ~s(#{MessageParser.find_tag_to_string(tag)} "#{value}" )
-      end)
+  def find_add(filters) when is_list(filters) do
+    fe = %FindExpression{filters: filters}
+    msg = "findadd #{find_expression_to_string(fe)}\n"
 
-    MpdClient.send_and_ack("findadd #{filter_string}\n")
+    MpdClient.send_and_ack(msg)
   end
+
 
   @doc """
   Returns unique tag values that match the given query.
