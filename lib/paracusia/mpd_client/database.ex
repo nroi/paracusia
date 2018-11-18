@@ -169,13 +169,12 @@ defmodule Paracusia.MpdClient.Database do
   See `get/1` for an example.
   """
   @spec order_by(FindExpression.t, MpdTypes.tag(), MpdTypes.sort_direction()) :: FindExpression.t
-  def order_by(fe = %FindExpression{}, tag, :asc) do
-    %{fe | :order_by => tag, :sort_direction => :asc}
+  def order_by(fe = %FindExpression{}, tag, sort_direction = :asc) do
+    %{fe | :order_by => tag, :sort_direction => sort_direction}
   end
 
-  @spec order_by(FindExpression.t, MpdTypes.tag(), MpdTypes.sort_direction()) :: FindExpression.t
-  def order_by(fe = %FindExpression{}, tag, :desc) do
-    %{fe | :order_by => tag, :sort_direction => :desc}
+  def order_by(fe = %FindExpression{}, tag, sort_direction = :desc) do
+    %{fe | :order_by => tag, :sort_direction => sort_direction}
   end
 
   def window(fe = %FindExpression{}, from, until) do
