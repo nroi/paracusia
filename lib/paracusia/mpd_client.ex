@@ -149,13 +149,15 @@ defmodule Paracusia.MpdClient do
         _ -> {hostname, port}
       end
 
+    target_description = "#{ip_string(addr_family, hostname)}:#{port_conn} (#{addr_family})"
+
     case :gen_tcp.connect(hostname_conn, port_conn, opts) do
       {:ok, sock} ->
-        _ = Logger.debug("Successfully connected to #{ip_string(addr_family, hostname)}")
+        _ = Logger.debug("Successfully connected to #{target_description}")
         sock
 
       {:error, :econnrefused} when next_addr_idx == 0 ->
-        _ = Logger.error("Connection refused, retry after #{retry_after} ms.")
+        _ = Logger.error("Connection to #{target_description} refused, retry after #{retry_after} ms.")
         :timer.sleep(retry_after)
         connect_retry(addrs, port, attempt + 1, next_addr_idx, retry_after, max_attempts)
 
@@ -164,7 +166,7 @@ defmodule Paracusia.MpdClient do
 
         _ =
           Logger.warn(
-            "Connection refused for hostname #{ip_string(addr_family, hostname)}, " <>
+            "Connection refused for #{target_description}, " <>
               "trying #{ip_string(addr_family, next_hostname)} instead."
           )
 
