@@ -112,7 +112,7 @@ defmodule Paracusia.MpdClient do
   defp ip_addresses(hostname) do
     hostname = to_charlist(hostname)
 
-    if File.exists?(hostname) do
+    if socket?(hostname) do
       [{:local, hostname}]
     else
       ipv6 = {:inet6, :inet.getaddr(hostname, :inet6)}
@@ -124,6 +124,13 @@ defmodule Paracusia.MpdClient do
   defp ip_string(:inet, ip), do: :inet.ntoa(ip)
   defp ip_string(:inet6, ip), do: :inet.ntoa(ip)
   defp ip_string(:local, ip), do: ip
+
+  defp socket?(hostname) do
+    case File.stat(hostname) do
+      {:ok, %File.Stat{type: :other}} -> true
+      _ -> false
+    end
+  end
 
   defp connect_retry(addrs, port, attempt, addr_idx, retry_after, max_attempts) do
     if attempt > max_attempts do
