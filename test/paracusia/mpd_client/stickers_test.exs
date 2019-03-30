@@ -4,7 +4,7 @@ defmodule Paracusia.MpdClient.StickersTest do
   @uri "flac/rammstein_-_mutter_\(2001\)/03._rammstein__sonne.flac"
 
   setup_all do
-    Paracusia.Mock.start()
+    {:ok, _} = Paracusia.Mock.start_link()
     :ok = Application.start(:paracusia)
 
     on_exit(fn ->

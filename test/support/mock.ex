@@ -1,13 +1,17 @@
 defmodule Paracusia.Mock do
   use GenServer
+  require Logger
 
-  def start() do
-    GenServer.start(__MODULE__, nil, name: __MODULE__)
+  def start_link() do
+    GenServer.start_link(__MODULE__, nil, name: __MODULE__)
   end
 
   def init(nil) do
+    port = Application.get_env(:paracusia, :port)
+    {:ok, lsock} = :gen_tcp.listen(port, [:binary, active: true, reuseaddr: true, packet: :line])
+    _ = Logger.debug("Start listening on #{port}.")
     send(self(), :init)
-    {:ok, nil}
+    {:ok, lsock}
   end
 
   defp answer_from_msg("noidle\n"), do: "OK\n"
@@ -103,10 +107,9 @@ defmodule Paracusia.Mock do
     File.read!("test/support/replies/#{basename}")
   end
 
-  def handle_info(:init, nil) do
-    port = Application.get_env(:paracusia, :port)
-    {:ok, lsock} = :gen_tcp.listen(port, [:binary, active: true, reuseaddr: true, packet: :line])
+  def handle_info(:init, lsock) do
     {:ok, sock} = :gen_tcp.accept(lsock)
+    _ = Logger.debug("Accepted new connection.")
     :gen_tcp.send(sock, "OK MPD 0.19.0\n")
     {:noreply, {sock, :init, ""}}
   end
@@ -144,4 +147,5 @@ defmodule Paracusia.Mock do
       {:wait, prev_msg <> msg}
     end
   end
+
 end

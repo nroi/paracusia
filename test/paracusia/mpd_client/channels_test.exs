@@ -1,9 +1,10 @@
 defmodule Paracusia.MpdClient.ChannelsTest do
   use ExUnit.Case
+  require Logger
   alias Paracusia.MpdClient.Channels
 
   setup_all do
-    Paracusia.Mock.start()
+    {:ok, _} = Paracusia.Mock.start_link()
     :ok = Application.start(:paracusia)
 
     on_exit(fn ->

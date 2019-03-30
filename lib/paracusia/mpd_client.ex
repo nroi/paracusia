@@ -294,7 +294,9 @@ defmodule Paracusia.MpdClient do
 
   def terminate(:shutdown, %MpdClient{sock: sock}) do
     _ = Logger.debug("Teardown connection.")
-    :ok = :gen_tcp.send(sock, "close\n")
+    # Ignore result of send operation: If we want to close the connection anyway, there's no need to throw
+    # stacktraces if, for example, the server itself has already closed the connection before us.
+    _ = :gen_tcp.send(sock, "close\n")
     :ok = :gen_tcp.close(sock)
     :ok
   end

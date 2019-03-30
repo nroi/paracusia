@@ -3,7 +3,7 @@ defmodule Paracusia.MpdClient.ReflectionTest do
   alias Paracusia.MpdClient.Reflection
 
   setup_all do
-    Paracusia.Mock.start()
+    {:ok, _} = Paracusia.Mock.start_link()
     :ok = Application.start(:paracusia)
 
     on_exit(fn ->
