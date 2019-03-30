@@ -85,7 +85,8 @@ defmodule Paracusia.MpdClient do
 
         false ->
           port = (port_env && String.to_integer(port_env)) || 6600
-          {hostname_env, port, password_env}
+          hostname = hostname_env || "localhost"
+          {hostname, port, password_env}
       end
 
     # When the GenServer is restarted as a result of the MPD server restarting (and therefore
