@@ -158,7 +158,11 @@ defmodule Paracusia.MpdClient do
         sock
 
       {:error, :econnrefused} when next_addr_idx == 0 ->
-        _ = Logger.error("Connection to #{target_description} refused, retry after #{retry_after} ms.")
+        _ =
+          Logger.error(
+            "Connection to #{target_description} refused, retry after #{retry_after} ms."
+          )
+
         :timer.sleep(retry_after)
         connect_retry(addrs, port, attempt + 1, next_addr_idx, retry_after, max_attempts)
 
@@ -295,6 +299,7 @@ defmodule Paracusia.MpdClient do
 
   def terminate(:shutdown, %MpdClient{sock: sock}) do
     _ = Logger.debug("Teardown connection.")
+
     # Ignore result of send operation: If we want to close the connection anyway, there's no need to throw
     # stacktraces if, for example, the server itself has already closed the connection before us.
     _ = :gen_tcp.send(sock, "close\n")

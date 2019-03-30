@@ -147,5 +147,4 @@ defmodule Paracusia.Mock do
       {:wait, prev_msg <> msg}
     end
   end
-
 end
